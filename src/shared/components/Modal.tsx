@@ -22,9 +22,9 @@ export function Modal({children, dialogRef, setOpen, className}: Props) {
       onClick={handleBackdropClick}
       className="
         w-full mt-auto mb-0 max-h-[92dvh] rounded-t-2xl rounded-b-none
-        lg:m-auto lg:w-fit lg:max-h-[90vh] lg:rounded-lg
-        bg-white border border-gray-200
-        backdrop:backdrop-blur-sm shadow-xl focus:outline-none
+        mx-auto lg:m-auto lg:w-fit lg:max-h-[90vh] lg:rounded-lg
+        bg-white
+        backdrop:backdrop-blur-sm shadow-[12px_12px_5px_1px] focus:outline-none
         overflow-hidden
       "
     >

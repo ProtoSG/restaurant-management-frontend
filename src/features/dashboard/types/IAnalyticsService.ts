@@ -7,7 +7,8 @@ import type {
   TableTransfersResponse,
   DailySalesByPayment,
   WeeklySales,
-  CategoryProducts
+  CategoryProducts,
+  RecentPaidOrdersResponse
 } from "./Analytics";
 
 export interface IAnalyticsService {
@@ -20,4 +21,5 @@ export interface IAnalyticsService {
   getDailySalesByPayment(date?: string): Promise<DailySalesByPayment>;
   getWeeklySales(startDate?: string, endDate?: string): Promise<WeeklySales>;
   getTopProductsByCategory(categoryId: number, limit?: number, startDate?: string, endDate?: string): Promise<CategoryProducts>;
+  getRecentPaidOrders(date?: string, limit?: number): Promise<RecentPaidOrdersResponse>;
 }

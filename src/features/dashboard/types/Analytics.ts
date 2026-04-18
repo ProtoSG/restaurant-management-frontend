@@ -143,3 +143,22 @@ export interface CategoryProducts {
   categoryName: string;
   products: ProductRanking[];
 }
+
+export interface RecentPaidOrder {
+  transactionId: number;
+  orderId: number;
+  orderCode: string;
+  tableNumber: string | null;
+  customerName: string | null;
+  orderType: string;
+  total: number;
+  paymentMethod: string;
+  paidAt: string;
+  cashierName: string;
+}
+
+export interface RecentPaidOrdersResponse {
+  date: string;
+  totalTransactions: number;
+  orders: RecentPaidOrder[];
+}

@@ -27,8 +27,11 @@ export function Login() {
   }
 
   return (
-    <section className="w-full flex items-center justify-center" >
-      <div className="bg-white p-8 rounded-lg flex flex-col gap-8 border-2 shadow-[12px_12px_5px_1px] shadow-background">
+    <section className="w-full min-h-screen bg-white flex items-center justify-center">
+      <div className="
+        w-full min-h-screen flex flex-col justify-center gap-8 p-8 bg-white
+        md:min-h-fit md:w-auto md:rounded-lg md:border-2 md:shadow-[12px_12px_5px_1px] md:shadow-background
+      ">
         <h2 className="font-semibold text-xl tracking-wider text-center">¡Bienvenido!</h2>
         <form className="flex flex-col gap-4" onSubmit={handleSubmit(onSubmit)}>
           <Input
@@ -39,7 +42,7 @@ export function Login() {
             { ...register("username")}
           />
           <div className="relative">
-            <Input 
+            <Input
               type={showPassword ? "text" : "password"}
               placeholder="******"
               label="Contraseña"
@@ -49,7 +52,7 @@ export function Login() {
             <button
               type="button"
               onClick={() => setShowPassword(!showPassword)}
-              className="absolute right-3 top-[42px] text-gray-600  transition-colors cursor-pointer hover:text-green"
+              className="absolute right-3 top-[42px] text-gray-600 transition-colors cursor-pointer hover:text-green"
               aria-label={showPassword ? "Ocultar contraseña" : "Mostrar contraseña"}
             >
               {showPassword ? <FaRegEyeSlash size={20} /> : <FaRegEye size={20} />}
