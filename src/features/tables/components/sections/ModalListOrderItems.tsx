@@ -1,9 +1,9 @@
 import { Modal, TitleModal, Button, Tag } from "@/shared/components";
 import { useModal } from "@/shared/hooks/useModal";
 import { useOrderActive, useCreateOrder, useUpdateOrderItem as useUpdateOrderItemTable, useRemoveOrderItem as useRemoveOrderItemTable, useSelectedTable, useOrderItemsModal, useProductListModal, usePaymentConfirmationModal } from "@/features/tables";
-import { useOrderById, useUpdateOrderItem as useUpdateOrderItemOrder, useRemoveOrderItem as useRemoveOrderItemOrder, useCancelOrder } from "@/features/orders";
+import { useOrderById, useUpdateOrderItem as useUpdateOrderItemOrder, useRemoveOrderItem as useRemoveOrderItemOrder, useCancelOrder, useMarkOrderAsReady } from "@/features/orders";
 import { Variant } from "@/shared/enums/VariantEnum";
-import { PaymentMethod, PaymentMethodLabels } from "@/shared/enums/PaymentMethod";
+import { PaymentMethodLabels } from "@/shared/enums/PaymentMethod";
 import { OrderStatus, OrderStatusLabels } from "@/shared/enums/OrderStatus";
 import { FaMinus, FaPlus, FaTrash } from "react-icons/fa";
 import { useState, useEffect } from "react";
@@ -22,11 +22,10 @@ export function ModalListOrderItems({ orderItemsModal, productListModal, selecte
   const dialogRef = useModal(orderItemsModal.isOpen);
   const { user } = useAuth();
   const canPay = user?.role === 'ADMIN' || user?.role === 'CASHIER';
-  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>(PaymentMethod.CASH);
+  const isAdmin = user?.role === 'ADMIN' || user?.role === 'CHEF';
   const [showCancelConfirm, setShowCancelConfirm] = useState(false);
   const cancelOrderMutation = useCancelOrder();
-  const [isPartialPayment, setIsPartialPayment] = useState(false);
-  const [partialAmount, setPartialAmount] = useState<string>("");
+  const markAsReadyMutation = useMarkOrderAsReady();
   const [showTransactions, setShowTransactions] = useState(false);
 
   const isOrderMode = orderId !== undefined && orderId > 0;
@@ -47,22 +46,10 @@ export function ModalListOrderItems({ orderItemsModal, productListModal, selecte
   const removeOrderItemMutation = isOrderMode ? removeOrderItemOrder : removeOrderItemTable;
 
   useEffect(() => {
-    if (order && orderItemsModal.isOpen) {
-      const paidAmount = order.paidAmount ?? 0;
-      const remainingAmount = order.remainingAmount ?? order.total;
-
-      if (paidAmount > 0) {
-        setIsPartialPayment(true);
-        setPartialAmount(remainingAmount.toFixed(2));
-      } else {
-        setIsPartialPayment(false);
-        setPartialAmount("");
-      }
-    }
     if (!orderItemsModal.isOpen) {
       setShowCancelConfirm(false);
     }
-  }, [order?.id, order?.paidAmount, order?.remainingAmount, orderItemsModal.isOpen]);
+  }, [orderItemsModal.isOpen]);
 
   const handleAddItem = async () => {
     if (!isOrderMode && !selectedTable.selectedTable) return;
@@ -122,22 +109,6 @@ export function ModalListOrderItems({ orderItemsModal, productListModal, selecte
 
   const handlePay = () => {
     if (!order) return;
-    
-    if (isPartialPayment || order.status === OrderStatus.PARTIALLY_PAID) {
-      const amount = parseFloat(partialAmount);
-      const remaining = order.remainingAmount ?? order.total;
-      
-      if (!amount || amount <= 0) {
-        alert("Por favor ingrese un monto válido");
-        return;
-      }
-      
-      if (amount > remaining) {
-        alert(`El monto (S/ ${amount.toFixed(2)}) excede el monto restante (S/ ${remaining.toFixed(2)})`);
-        return;
-      }
-    }
-    
     paymentModal.open();
   };
 
@@ -152,7 +123,6 @@ export function ModalListOrderItems({ orderItemsModal, productListModal, selecte
     : `Mesa ${table?.number}`;
 
   const hasPreviousPayments = (order?.paidAmount ?? 0) > 0;
-  const remaining = order?.remainingAmount ?? order?.total ?? 0;
   const paidProgress = order?.total ? Math.round(((order.paidAmount ?? 0) / order.total) * 100) : 0;
 
   return (
@@ -304,101 +274,11 @@ export function ModalListOrderItems({ orderItemsModal, productListModal, selecte
               </div>
             )}
 
-            {/* Sección de pago — solo ADMIN y CASHIER */}
-            {canPay && (
-              <div className="space-y-3 pt-1">
-                {/* Toggle pago parcial (solo si no está auto-activado) */}
-                {order.status !== OrderStatus.PARTIALLY_PAID && (
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm font-medium text-gray-700">Pago parcial</span>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setIsPartialPayment(!isPartialPayment);
-                        if (!isPartialPayment) setPartialAmount(remaining.toFixed(2));
-                        else setPartialAmount("");
-                      }}
-                      className={`relative inline-flex h-5 w-10 items-center rounded-full transition-colors cursor-pointer ${isPartialPayment ? 'bg-green' : 'bg-gray-300'}`}
-                    >
-                      <span className={`inline-block h-3.5 w-3.5 transform rounded-full bg-white transition-transform ${isPartialPayment ? 'translate-x-5' : 'translate-x-0.5'}`} />
-                    </button>
-                  </div>
-                )}
-
-                {/* Input monto parcial */}
-                {(isPartialPayment || order.status === OrderStatus.PARTIALLY_PAID) && (
-                  <div className="space-y-1">
-                    <label className="text-xs font-medium text-gray-500 uppercase tracking-wide">Monto a pagar</label>
-                    <div className="flex items-center border-2 border-gray-200 rounded-xl overflow-hidden focus-within:border-orange transition-colors">
-                      <span className="px-3 py-2.5 text-sm font-semibold text-gray-500 bg-gray-50 border-r border-gray-200">S/</span>
-                      <input
-                        type="number"
-                        value={partialAmount}
-                        onChange={(e) => setPartialAmount(e.target.value)}
-                        placeholder={remaining.toFixed(2)}
-                        min={0.01}
-                        max={remaining}
-                        step={0.01}
-                        className="flex-1 px-3 py-2.5 text-sm font-semibold focus:outline-none [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-                      />
-                      <span className="px-3 text-xs text-gray-400">máx. {remaining.toFixed(2)}</span>
-                    </div>
-                  </div>
-                )}
-
-                {/* Método de pago */}
-                <div className="space-y-1.5">
-                  <label className="text-xs font-medium text-gray-500 uppercase tracking-wide">Método de pago</label>
-                  <div className="grid grid-cols-3 gap-2">
-                    {Object.values(PaymentMethod).map((method) => (
-                      <button
-                        key={method}
-                        onClick={() => setPaymentMethod(method)}
-                        className={`py-2 rounded-xl border-2 text-sm font-medium transition-all cursor-pointer ${
-                          paymentMethod === method
-                            ? 'border-green bg-green text-white'
-                            : 'border-gray-200 bg-white text-gray-600 hover:border-gray-300 hover:bg-gray-50'
-                        }`}
-                      >
-                        {PaymentMethodLabels[method]}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Resumen final con opciones de pago */}
-                <div className="rounded-xl bg-gray-900 text-white p-4 space-y-2">
-                  <div className="flex justify-between text-sm text-gray-400">
-                    <span>Total cuenta</span>
-                    <span>S/ {order.total.toFixed(2)}</span>
-                  </div>
-                  {hasPreviousPayments && (
-                    <div className="flex justify-between text-sm text-orange">
-                      <span>Ya pagado</span>
-                      <span>- S/ {(order.paidAmount ?? 0).toFixed(2)}</span>
-                    </div>
-                  )}
-                  <div className="flex justify-between items-center border-t border-gray-700 pt-2 mt-1">
-                    <span className="font-semibold">
-                      {hasPreviousPayments ? 'Restante' : 'Total a pagar'}
-                    </span>
-                    <span className="text-xl font-bold">
-                      S/ {(isPartialPayment || order.status === OrderStatus.PARTIALLY_PAID)
-                        ? (parseFloat(partialAmount) || remaining).toFixed(2)
-                        : remaining.toFixed(2)}
-                    </span>
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* Resumen simple — solo para roles sin permiso de pago */}
-            {!canPay && (
-              <div className="rounded-xl bg-gray-50 border border-gray-200 p-4 flex justify-between items-center">
-                <span className="text-sm text-gray-500">Total del pedido</span>
-                <span className="text-xl font-bold text-gray-900">S/ {order.total.toFixed(2)}</span>
-              </div>
-            )}
+            {/* Total del pedido */}
+            <div className="rounded-xl bg-gray-50 border border-gray-200 p-4 flex justify-between items-center">
+              <span className="text-sm text-gray-500">Total del pedido</span>
+              <span className="text-xl font-bold text-gray-900">S/ {order.total.toFixed(2)}</span>
+            </div>
 
             {/* Botones de acción */}
             {canPay ? (
@@ -440,25 +320,35 @@ export function ModalListOrderItems({ orderItemsModal, productListModal, selecte
                   </div>
                 </div>
               ) : (
-                <div className="flex gap-2 pt-1">
-                  <Button
-                    className="flex-1"
-                    variant={Variant.RED}
-                    styleButton="Secondary"
-                    onClick={() => setShowCancelConfirm(true)}
-                  >
-                    Cancelar Orden
-                  </Button>
-                  <Button
-                    variant={Variant.GREEN}
-                    className="flex-1"
-                    onClick={handlePay}
-                    disabled={!order.items || order.items.length === 0}
-                  >
-                    {(isPartialPayment || order.status === OrderStatus.PARTIALLY_PAID)
-                      ? `Pagar S/ ${partialAmount || remaining.toFixed(2)}`
-                      : 'Pagar Total'}
-                  </Button>
+                <div className="flex flex-col gap-2 pt-1">
+                  {isAdmin && order.status === OrderStatus.IN_PROGRESS && (
+                    <Button
+                      variant={Variant.ORANGE}
+                      className="w-full"
+                      onClick={() => markAsReadyMutation.mutate({ orderId: order.id })}
+                      disabled={markAsReadyMutation.isLoading || !order.items?.length}
+                    >
+                      {markAsReadyMutation.isLoading ? 'Marcando...' : 'Marcar como Listo'}
+                    </Button>
+                  )}
+                  <div className="flex gap-2">
+                    <Button
+                      className="flex-1"
+                      variant={Variant.RED}
+                      styleButton="Secondary"
+                      onClick={() => setShowCancelConfirm(true)}
+                    >
+                      Cancelar Orden
+                    </Button>
+                    <Button
+                      variant={Variant.GREEN}
+                      className="flex-1"
+                      onClick={handlePay}
+                      disabled={!order.items?.length || order.status === OrderStatus.IN_PROGRESS}
+                    >
+                      Pagar
+                    </Button>
+                  </div>
                 </div>
               )
             ) : (
@@ -479,9 +369,6 @@ export function ModalListOrderItems({ orderItemsModal, productListModal, selecte
       </Modal>
       <ModalPaymentConfirmation
         order={order}
-        paymentMethod={paymentMethod}
-        isPartialPayment={isPartialPayment || order?.status === OrderStatus.PARTIALLY_PAID}
-        partialAmount={(isPartialPayment || order?.status === OrderStatus.PARTIALLY_PAID) ? parseFloat(partialAmount) : undefined}
         paymentModal={paymentModal}
         selectedTable={selectedTable}
         orderItemsModal={orderItemsModal}

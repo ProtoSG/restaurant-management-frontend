@@ -118,6 +118,23 @@ export function useCancelOrder() {
   );
 }
 
+export function useMarkOrderAsReady() {
+  const queryClient = useQueryClient();
+
+  return useMutation(
+    ({ orderId }: { orderId: number }) => orderService.markAsReady(orderId),
+    {
+      onSuccess: (_, { orderId }) => {
+        queryClient.invalidateQueries(['order', orderId]);
+        queryClient.invalidateQueries('active-orders');
+      },
+      onError: (error) => {
+        console.error('Error al marcar orden como lista:', error);
+      }
+    }
+  );
+}
+
 export function usePayOrder() {
   const queryClient = useQueryClient();
 

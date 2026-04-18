@@ -56,6 +56,11 @@ export class OrderServiceImpl {
     return orderAdapter(data);
   }
 
+  async markAsReady(orderId: number): Promise<Order> {
+    const { data } = await defaultApiClient.post<Order>(`/orders/${orderId}/ready`);
+    return orderAdapter(data);
+  }
+
   async payOrder(orderId: number, paymentMethod: string): Promise<Order> {
     const { data } = await defaultApiClient.post<Order>(`/orders/${orderId}/pay/${paymentMethod}`);
     return orderAdapter(data);

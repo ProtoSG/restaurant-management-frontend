@@ -115,7 +115,7 @@ export function Orders() {
                 if (!order.items || order.items.length === 0) productListModal.open();
                 else orderItemsModal.open();
               }}
-              className="bg-foreground rounded-xl border border-gray-200 shadow-sm hover:shadow-md transition-shadow p-4 flex flex-col cursor-pointer"
+              className="bg-white rounded-2xl border shadow-md border-gray-100 hover:shadow-md transition-shadow p-4 flex flex-col cursor-pointer"
             >
               <div className="flex justify-between items-start mb-3">
                 <div className="flex items-center gap-2">

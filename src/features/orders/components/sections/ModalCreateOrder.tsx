@@ -9,6 +9,7 @@ import { useCreateOrder, useOrderModal } from "@/features/orders";
 import type { CreateOrderRequest } from "../../schemas/Order.schema";
 import { OrderType, OrderTypeLabels } from "@/shared/enums/OrderType";
 import type { Order } from "@/shared/types/Order";
+import { FaConciergeBell, FaShoppingBag, FaTruck } from "react-icons/fa";
 
 interface FormData {
   tableId: string;
@@ -111,22 +112,27 @@ export function ModalCreateOrder({ modal, onOrderCreated }: Props) {
 
       <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-4">
         <div>
-          <label className="flex flex-col gap-2">
-            <p>Tipo de Pedido</p>
-            <select
-              {...register("type")}
-              className={`border-2 rounded px-2 py-1 focus:outline-2 focus:outline-orange ${
-                formErrors.type ? "border-red" : "border-background"
-              }`}
-            >
-              <option value="">Selecciona el tipo de pedido</option>
-              {Object.values(OrderType).map((type) => (
-                <option key={type} value={type}>
-                  {OrderTypeLabels[type]}
-                </option>
-              ))}
-            </select>
-          </label>
+          <p className="mb-2">Tipo de Pedido</p>
+          <input type="hidden" {...register("type")} />
+          <div className={`grid grid-cols-3 gap-2 p-1 rounded-xl border-2 ${formErrors.type ? "border-red" : "border-transparent"}`}>
+            {Object.values(OrderType).map((type) => (
+              <button
+                key={type}
+                type="button"
+                onClick={() => { setValue("type", type); }}
+                className={`flex flex-col items-center gap-1.5 py-3 px-2 rounded-xl border-2 text-sm font-medium transition-all cursor-pointer ${
+                  typeValue === type
+                    ? "border-orange bg-orange text-white shadow-md"
+                    : `border-gray-200 bg-white text-gray-600 hover:border-orange/40 hover:bg-orange/5 ${formErrors.type ? "border-red/40" : ""}`
+                }`}
+              >
+                {type === OrderType.DINE_IN && <FaConciergeBell className="text-xl" />}
+                {type === OrderType.TAKEAWAY && <FaShoppingBag className="text-xl" />}
+                {type === OrderType.DELIVERY && <FaTruck className="text-xl" />}
+                <span>{OrderTypeLabels[type]}</span>
+              </button>
+            ))}
+          </div>
           {formErrors.type && (
             <p className="text-red font-semibold text-sm mt-1">
               {formErrors.type}

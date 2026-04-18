@@ -6,6 +6,7 @@ import { Layout } from "./shared/layouts/Layout"
 import { ProtectedRoute } from "./ProtectedRoute"
 import { Login } from "./features/auth"
 import { Orders } from "./features/orders/Orders"
+import { ChefOrders } from "./features/chef/ChefOrders"
 import { useAuth } from "./features/auth"
 import type { RoleName } from "./features/auth/types/Login"
 import type { ReactNode } from "react"
@@ -14,7 +15,7 @@ const ROLE_HOME: Record<RoleName, string> = {
   ADMIN:   '/',
   CASHIER: '/orders',
   WAITER:  '/tables',
-  CHEF:    '/orders',
+  CHEF:    '/chef',
 }
 
 interface RoleGuardProps {
@@ -46,8 +47,13 @@ function App() {
             </RoleGuard>
           } />
           <Route path="/orders" element={
-            <RoleGuard allowed={['ADMIN', 'CASHIER', 'WAITER', 'CHEF']}>
+            <RoleGuard allowed={['ADMIN', 'CASHIER', 'WAITER']}>
               <Orders />
+            </RoleGuard>
+          } />
+          <Route path="/chef" element={
+            <RoleGuard allowed={['ADMIN', 'CHEF']}>
+              <ChefOrders />
             </RoleGuard>
           } />
           <Route path="/tables" element={
