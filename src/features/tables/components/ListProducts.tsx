@@ -1,4 +1,4 @@
-import { useProductsByCategoryId, useSelectedCategory, type Product } from "@/features/menu"
+import { useProductsByCategoryId, useProducts, useSelectedCategory, type Product } from "@/features/menu"
 import { useSelectedTable, useAddItemToOrder as useAddItemToOrderTable } from "@/features/tables"
 import { useAddItemToOrder as useAddItemToOrderOrders } from "@/features/orders"
 import { FaSearch } from "react-icons/fa";
@@ -15,9 +15,15 @@ interface Props {
 
 export function ListProducts({ searchTerm, setSearchTerm, selectedTable, selectedCategory, orderId }: Props) {
   const inputRef = useRef<HTMLInputElement>(null);
-  const { products, isLoading, error } = useProductsByCategoryId(selectedCategory.selectedCategory?.id || 0);
+  const isSearching = searchTerm.trim().length > 0;
+  const { products: categoryProducts, isLoading: isLoadingCategory, error: errorCategory } = useProductsByCategoryId(selectedCategory.selectedCategory?.id || 0);
+  const { products: allProducts, isLoading: isLoadingAll, error: errorAll } = useProducts();
   const addItemTableMutation = useAddItemToOrderTable();
   const addItemOrdersMutation = useAddItemToOrderOrders();
+
+  const products = isSearching ? allProducts : categoryProducts;
+  const isLoading = isSearching ? isLoadingAll : isLoadingCategory;
+  const error = isSearching ? errorAll : errorCategory;
 
   const handleAddItem = async (productId: number) => {
     try {

@@ -1,5 +1,5 @@
 import { Link, useLocation } from "react-router-dom"
-import { MdDashboard, MdTableBar } from "react-icons/md"
+import { MdDashboard, MdTableBar, MdOutlineKitchen } from "react-icons/md"
 import { BiSolidDish } from "react-icons/bi"
 import { PiBowlFoodFill } from "react-icons/pi"
 import { useAuth } from "@/features/auth"
@@ -14,10 +14,11 @@ interface NavItem {
 }
 
 const NAV_ITEMS: NavItem[] = [
-  { name: "Dashboard", link: "/",       icon: <MdDashboard />,   roles: ["ADMIN", "CASHIER"] },
-  { name: "Pedidos",   link: "/orders", icon: <BiSolidDish />,   roles: ["ADMIN", "CASHIER", "WAITER", "CHEF"] },
-  { name: "Mesas",     link: "/tables", icon: <MdTableBar />,    roles: ["ADMIN", "CASHIER", "WAITER"] },
-  { name: "Carta",     link: "/menu",   icon: <PiBowlFoodFill />, roles: ["ADMIN"] },
+  { name: "Dashboard", link: "/",       icon: <MdDashboard />,        roles: ["ADMIN", "CASHIER"] },
+  { name: "Pedidos",   link: "/orders", icon: <BiSolidDish />,        roles: ["ADMIN", "CASHIER", "WAITER"] },
+  { name: "Cocina",    link: "/chef",   icon: <MdOutlineKitchen />,   roles: ["ADMIN", "CHEF"] },
+  { name: "Mesas",     link: "/tables", icon: <MdTableBar />,         roles: ["ADMIN", "CASHIER", "WAITER"] },
+  { name: "Carta",     link: "/menu",   icon: <PiBowlFoodFill />,     roles: ["ADMIN"] },
 ]
 
 export function BottomNav() {

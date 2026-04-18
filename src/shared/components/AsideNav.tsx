@@ -5,8 +5,9 @@ import { IoLogOutOutline } from "react-icons/io5";
 import { useAuth } from "@/features/auth";
 import { useNavigate } from "react-router-dom";
 import { PiBowlFoodFill } from "react-icons/pi";
-import { HiOutlineChevronLeft, HiOutlineChevronRight } from "react-icons/hi";
+import { HiOutlineChevronRight } from "react-icons/hi";
 import { BiSolidDish } from "react-icons/bi"
+import { MdOutlineKitchen } from "react-icons/md"
 import type { RoleName } from "@/features/auth/types/Login";
 
 export interface Section {
@@ -27,7 +28,13 @@ const SECTIONS: Section[] = [
     name: "Pedidos",
     link: "/orders",
     icon: <BiSolidDish />,
-    roles: ['ADMIN', 'CASHIER', 'WAITER', 'CHEF']
+    roles: ['ADMIN', 'CASHIER', 'WAITER']
+  },
+  {
+    name: "Cocina",
+    link: "/chef",
+    icon: <MdOutlineKitchen />,
+    roles: ['ADMIN', 'CHEF']
   },
   {
     name: "Mesas",
@@ -66,13 +73,15 @@ export function AsideNav() {
   });
 
   return (
-    <aside className={`flex flex-col justify-between bg-background text-foreground px-3 py-6 transition-all duration-300 ${isExpanded ? 'min-w-52' : 'w-16'}`}>
+    <aside className={`flex flex-col justify-between bg-background text-foreground px-3 py-6 transition-[width] duration-200 ease-in-out overflow-hidden shrink-0 ${isExpanded ? 'w-52' : 'w-16'}`}>
       <section className="flex flex-col gap-5">
         <button
           onClick={toggleExpanded}
-          className={`flex items-center justify-center text-xl py-2 rounded cursor-pointer hover:bg-foreground/50 transition-all duration-300`}
+          className="flex items-center justify-center text-xl py-2 rounded cursor-pointer hover:bg-foreground/50 transition-colors duration-200"
         >
-          {isExpanded ? <HiOutlineChevronLeft /> : <HiOutlineChevronRight /> }
+          <HiOutlineChevronRight
+            className={`transition-transform duration-300 ${isExpanded ? "rotate-180" : "rotate-0"}`}
+          />
         </button>
         <hr className="" />
         <nav className="flex flex-col gap-2">
@@ -87,8 +96,14 @@ export function AsideNav() {
       `}
         onClick={logout}
       >
-        <IoLogOutOutline className="rotate-180 text-xl" />
-        {isExpanded && <span>Salir</span>}
+        <IoLogOutOutline className="rotate-180 text-xl shrink-0" />
+        <span
+          className={`overflow-hidden whitespace-nowrap transition-all duration-300 ${
+            isExpanded ? "max-w-24 opacity-100 translate-x-0" : "max-w-0 opacity-0 -translate-x-2"
+          }`}
+        >
+          Salir
+        </span>
       </button>
     </aside>
   )
