@@ -10,7 +10,8 @@ import type {
   TableTransfersResponse,
   DailySalesByPayment,
   WeeklySales,
-  CategoryProducts
+  CategoryProducts,
+  RecentPaidOrdersResponse
 } from "../types/Analytics";
 import {
   DashboardOverviewAdapter,
@@ -21,7 +22,8 @@ import {
   TableTransfersAdapter,
   DailySalesByPaymentAdapter,
   WeeklySalesAdapter,
-  CategoryProductsAdapter
+  CategoryProductsAdapter,
+  RecentPaidOrdersAdapter
 } from "../adapters/AnalyticsAdapter";
 
 export class AnalyticsServiceImpl implements IAnalyticsService {
@@ -93,5 +95,13 @@ export class AnalyticsServiceImpl implements IAnalyticsService {
     if (endDate) params.endDate = endDate;
     const { data } = await this.apiClient.get('/analytics/products/top-by-category', { params });
     return CategoryProductsAdapter(data);
+  }
+
+  async getRecentPaidOrders(date?: string, limit?: number): Promise<RecentPaidOrdersResponse> {
+    const params: Record<string, string | number> = {};
+    if (date) params.date = date;
+    if (limit) params.limit = limit;
+    const { data } = await this.apiClient.get('/analytics/recent-paid-orders', { params });
+    return RecentPaidOrdersAdapter(data);
   }
 }

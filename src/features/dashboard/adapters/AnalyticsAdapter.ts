@@ -7,7 +7,8 @@ import type {
   TableTransfersResponse,
   DailySalesByPayment,
   WeeklySales,
-  CategoryProducts
+  CategoryProducts,
+  RecentPaidOrdersResponse
 } from "../types/Analytics";
 
 // ─── Dashboard Overview ──────────────────────────────────────────────────────
@@ -427,4 +428,47 @@ export function CategoryProductsAdapter(apiData: CategoryProductsApiResponse): C
 
 function getDefaultCategoryProducts(): CategoryProducts {
   return { categoryId: 0, categoryName: '', products: [] };
+}
+
+// ─── Recent Paid Orders ──────────────────────────────────────────────────────
+
+interface RecentPaidOrdersApiResponse {
+  date?: string;
+  totalTransactions?: number;
+  orders?: {
+    transactionId: number;
+    orderId: number;
+    orderCode: string;
+    tableNumber: string | null;
+    customerName: string | null;
+    orderType: string;
+    total: number;
+    paymentMethod: string;
+    paidAt: string;
+    cashierName: string;
+  }[];
+}
+
+export function RecentPaidOrdersAdapter(apiData: RecentPaidOrdersApiResponse): RecentPaidOrdersResponse {
+  if (!apiData) return getDefaultRecentPaidOrders();
+  return {
+    date: apiData.date ?? '',
+    totalTransactions: apiData.totalTransactions ?? 0,
+    orders: (apiData.orders ?? []).map(o => ({
+      transactionId: o.transactionId ?? 0,
+      orderId: o.orderId ?? 0,
+      orderCode: o.orderCode ?? '',
+      tableNumber: o.tableNumber ?? null,
+      customerName: o.customerName ?? null,
+      orderType: o.orderType ?? 'DINE_IN',
+      total: Number(o.total ?? 0),
+      paymentMethod: o.paymentMethod ?? '',
+      paidAt: o.paidAt ?? '',
+      cashierName: o.cashierName ?? ''
+    }))
+  };
+}
+
+function getDefaultRecentPaidOrders(): RecentPaidOrdersResponse {
+  return { date: '', totalTransactions: 0, orders: [] };
 }

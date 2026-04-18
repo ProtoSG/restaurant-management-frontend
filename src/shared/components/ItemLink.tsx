@@ -21,8 +21,14 @@ export function ItemLink({item, isExpanded}: Props) {
         ${isActive ? "bg-zinc-700" : ""}
       `}
     >
-      <span className="text-xl"> {item.icon} </span>
-      {isExpanded && <span className={`${isActive ? "font-semibold" : "font-normal"}`}> {item.name} </span>}
+      <span className="text-xl shrink-0"> {item.icon} </span>
+      <span
+        className={`overflow-hidden whitespace-nowrap transition-all duration-300 ${
+          isActive ? "font-semibold" : "font-normal"
+        } ${isExpanded ? "max-w-40 opacity-100 translate-x-0" : "max-w-0 opacity-0 -translate-x-2"}`}
+      >
+        {item.name}
+      </span>
     </Link>
   )
 }

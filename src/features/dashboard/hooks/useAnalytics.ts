@@ -9,7 +9,8 @@ import type {
   TableTransfersResponse,
   DailySalesByPayment,
   WeeklySales,
-  CategoryProducts
+  CategoryProducts,
+  RecentPaidOrdersResponse
 } from "../types/Analytics";
 
 const analyticsService = new AnalyticsServiceImpl();
@@ -129,6 +130,17 @@ export function useDailyBalance(startDate?: string, endDate?: string) {
   });
 }
 
+export function useRecentPaidOrders(date?: string, limit: number = 10) {
+  const queryDate = date || getTodayDate();
+
+  return useQuery<RecentPaidOrdersResponse, Error>({
+    queryKey: ['analytics', 'recent-paid-orders', queryDate, limit],
+    queryFn: () => analyticsService.getRecentPaidOrders(queryDate, limit),
+    staleTime: 30000,
+    refetchInterval: 30000
+  });
+}
+
 export function useTopProductsByCategory(categoryId: number, limit: number = 5) {
   const { startDate, endDate } = getWeekDates();
   
@@ -150,6 +162,7 @@ export function useAllDashboardData() {
   const tableTransfers = useTableTransfers(today, 10);
   const dailySalesByPayment = useDailySalesByPayment(today);
   const weeklySales = useWeeklySales();
+  const recentPaidOrders = useRecentPaidOrders(today, 10);
 
   const hasAnyError =
     dashboardOverview.error ||
@@ -186,6 +199,7 @@ export function useAllDashboardData() {
     tableTransfers,
     dailySalesByPayment,
     weeklySales,
+    recentPaidOrders,
     isLoading,
     error: hasAnyError && hasData ? hasAnyError : null
   };

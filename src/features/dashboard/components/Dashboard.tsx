@@ -31,7 +31,7 @@ export function Dashboard() {
     dailyBalance,
     earningsSummary,
     topProducts,
-    tableTransfers,
+    recentPaidOrders,
     weeklySales,
     error
   } = useAllDashboardData();
@@ -40,7 +40,7 @@ export function Dashboard() {
   const dailyBalanceData = dailyBalance?.data;
   const earningsData = earningsSummary?.data;
   const topProductsData = topProducts?.data;
-  const transfersData = tableTransfers?.data;
+  const paidOrdersData = recentPaidOrders?.data;
   const weeklyData = weeklySales?.data;
 
   const defaultSparkline = [
@@ -112,28 +112,36 @@ export function Dashboard() {
   }, [topProductsData]);
 
   const recentTransactions = useMemo((): Transaction[] => {
-    if (transfersData?.transfers && transfersData.transfers.length > 0) {
-      return transfersData.transfers.slice(0, 5).map((t, idx) => ({
-        id: idx,
-        from: `Mesa ${t.fromTable.tableNumber}`,
-        amount: t.orderTotal,
-        time: new Date(t.transferDate).toLocaleString('es-PE', {
-          hour: '2-digit',
-          minute: '2-digit',
-          day: 'numeric',
-          month: 'numeric'
-        }),
-        change: 0
-      }));
+    if (paidOrdersData?.orders && paidOrdersData.orders.length > 0) {
+      return paidOrdersData.orders.slice(0, 5).map((o, idx) => {
+        let label: string;
+        if (o.orderType === 'DINE_IN' && o.tableNumber) {
+          label = `Mesa ${o.tableNumber}`;
+        } else if (o.orderType === 'DELIVERY' && o.customerName) {
+          label = `Delivery - ${o.customerName}`;
+        } else if (o.customerName) {
+          label = o.customerName;
+        } else {
+          label = o.orderCode;
+        }
+        return {
+          id: o.transactionId ?? idx,
+          from: label,
+          amount: o.total,
+          time: new Date(o.paidAt).toLocaleString('es-PE', {
+            hour: '2-digit',
+            minute: '2-digit',
+            day: 'numeric',
+            month: 'numeric'
+          }),
+          change: 0,
+          paymentMethod: o.paymentMethod,
+          orderId: o.orderId
+        };
+      });
     }
-    return [
-      { id: 1, from: "Mesa 5", amount: 125.50, time: "Hoy, 14:22", change: 2.45 },
-      { id: 2, from: "Mesa 12", amount: -85.00, time: "Hoy, 13:54", change: -4.75 },
-      { id: 3, from: "Mesa 3", amount: 210.75, time: "Hoy, 12:18", change: 2.45 },
-      { id: 4, from: "Mesa 8", amount: 95.25, time: "Hoy, 11:45", change: 1.20 },
-      { id: 5, from: "Delivery #124", amount: 156.00, time: "Hoy, 10:32", change: 3.15 },
-    ];
-  }, [transfersData]);
+    return [];
+  }, [paidOrdersData]);
 
   const displayName = user?.username ?? 'Usuario';
 

@@ -82,7 +82,7 @@ export function ListProducts({ products, isLoading, onEdit, onToggleActive }: Pr
   ];
 
   return (
-    <div className="overflow-x-auto w-full">
+    <div className="overflow-x-auto w-full bg-white rounded-2xl shadow-md">
       <DataTable
         columns={columns}
         data={parsedProducts}
