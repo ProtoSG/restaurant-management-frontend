@@ -1,7 +1,6 @@
 import { Outlet } from "react-router-dom"
 import { AsideNav } from "../components"
 import { BottomNav } from "../components/BottomNav"
-import { TopBar } from "../components/TopBar"
 
 export function Layout() {
   return (
@@ -13,9 +12,6 @@ export function Layout() {
 
       {/* Área principal */}
       <div className="flex flex-col flex-1 min-w-0 overflow-hidden">
-        {/* Top bar — solo tablet/móvil */}
-        <TopBar />
-
         {/* Contenido */}
         <main className="flex-1 overflow-auto p-4 lg:p-6 pb-20 lg:pb-6">
           <Outlet />
