@@ -16,11 +16,22 @@
 
 body {
   background: oklch(98.5% 0 0);
-  min-height: 100dvh;
   font-family: 'onest', sans-serif;
+}
+
+@keyframes slide-up {
+  from { transform: translateY(100%); }
+  to   { transform: translateY(0); }
+}
+
+@media (max-width: 1023px) {
+  dialog[open] {
+    animation: slide-up 0.25s ease-out;
+  }
 }
 
 #root {
   display: flex;
   min-height: 100dvh;
+  max-height: 100dvh;
 }

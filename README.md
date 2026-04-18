@@ -1,75 +1,54 @@
-# React + TypeScript + Vite
+# Restaurant Management — Frontend
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+Sistema de gestión para restaurante peruano. Interfaz web para administración de pedidos, mesas, carta y cocina.
 
-Currently, two official plugins are available:
+## Stack
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+- **React 19** + TypeScript
+- **Vite 7**
+- **Tailwind CSS**
+- **React Query v3** — cache y sincronización de datos
+- **Zustand v5** — estado de autenticación
+- **React Router DOM** — navegación
+- **Axios** — cliente HTTP
 
-## React Compiler
+## Roles y acceso
 
-The React Compiler is enabled on this template. See [this documentation](https://react.dev/learn/react-compiler) for more information.
+| Rol | Rutas disponibles |
+|-----|------------------|
+| `ADMIN` | Dashboard, Pedidos, Cocina, Mesas, Carta |
+| `CASHIER` | Dashboard, Pedidos, Mesas |
+| `WAITER` | Pedidos, Mesas |
+| `CHEF` | Cocina |
 
-Note: This will impact Vite dev & build performances.
+## Funcionalidades
 
-## Expanding the ESLint configuration
+- **Dashboard** — métricas de ventas, balance, productos top, transacciones recientes
+- **Pedidos** — gestión de órdenes activas (DINE_IN, TAKEAWAY, DELIVERY)
+- **Mesas** — vista de mesas con estado, agregar/editar items por mesa
+- **Carta** — administración de productos y categorías
+- **Cocina** — vista para chef con pedidos IN_PROGRESS y botón "Marcar como Listo"
+- **Pagos** — pago total y parcial con múltiples métodos (efectivo, tarjeta, Yape)
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+## Flujo de estado de pedidos
 
-```js
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-
-      // Remove tseslint.configs.recommended and replace with this
-      tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      tseslint.configs.stylisticTypeChecked,
-
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```
+CREATED → IN_PROGRESS → READY → PAID
+                              ↘ PARTIALLY_PAID → PAID
+         CANCELLED (en cualquier punto)
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+## Instalación
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+```bash
+npm install
+npm run dev
+```
 
-export default defineConfig([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+Requiere backend corriendo en el puerto configurado en `.env`.
+
+## Variables de entorno
+
+```env
+VITE_API_URL=http://localhost:8080
 ```
