@@ -110,10 +110,11 @@ export function useMarkOrderAsReady() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: ({ orderId }: { orderId: number }) => orderService.markAsReady(orderId),
-    onSuccess: (_, { orderId }) => {
+    mutationFn: ({ orderId }: { orderId: number; tableId?: number }) => orderService.markAsReady(orderId),
+    onSuccess: (_, { orderId, tableId }) => {
       queryClient.invalidateQueries({ queryKey: ['order', orderId] });
       queryClient.invalidateQueries({ queryKey: ['active-orders'] });
+      if (tableId) queryClient.invalidateQueries({ queryKey: [`order-${tableId}`] });
     },
     onError: (error) => {
       console.error('Error al marcar orden como lista:', error);
@@ -125,10 +126,11 @@ export function useMarkOrderAsPending() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: ({ orderId }: { orderId: number }) => orderService.markAsPending(orderId),
-    onSuccess: (_, { orderId }) => {
+    mutationFn: ({ orderId }: { orderId: number; tableId?: number }) => orderService.markAsPending(orderId),
+    onSuccess: (_, { orderId, tableId }) => {
       queryClient.invalidateQueries({ queryKey: ['order', orderId] });
       queryClient.invalidateQueries({ queryKey: ['active-orders'] });
+      if (tableId) queryClient.invalidateQueries({ queryKey: [`order-${tableId}`] });
     },
     onError: (error) => {
       console.error('Error al marcar orden como pendiente:', error);
