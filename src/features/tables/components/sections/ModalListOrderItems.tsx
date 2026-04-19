@@ -1,11 +1,11 @@
 import { Modal, TitleModal, Button, Tag } from "@/shared/components";
 import { useModal } from "@/shared/hooks/useModal";
 import { useOrderActive, useCreateOrder, useUpdateOrderItem as useUpdateOrderItemTable, useRemoveOrderItem as useRemoveOrderItemTable, useSelectedTable, useOrderItemsModal, useProductListModal, usePaymentConfirmationModal } from "@/features/tables";
-import { useOrderById, useUpdateOrderItem as useUpdateOrderItemOrder, useRemoveOrderItem as useRemoveOrderItemOrder, useCancelOrder, useMarkOrderAsReady } from "@/features/orders";
+import { useOrderById, useUpdateOrderItem as useUpdateOrderItemOrder, useRemoveOrderItem as useRemoveOrderItemOrder, useCancelOrder, useMarkOrderAsReady, useMarkOrderAsPending } from "@/features/orders";
 import { Variant } from "@/shared/enums/VariantEnum";
 import { PaymentMethodLabels } from "@/shared/enums/PaymentMethod";
 import { OrderStatus, OrderStatusLabels } from "@/shared/enums/OrderStatus";
-import { FaMinus, FaPlus, FaTrash } from "react-icons/fa";
+import { FaMinus, FaPlus, FaTrash, FaClock } from "react-icons/fa";
 import { useState, useEffect } from "react";
 import { ModalPaymentConfirmation } from "./ModalPaymentConfirmation";
 import { useAuth } from "@/features/auth";
@@ -26,6 +26,7 @@ export function ModalListOrderItems({ orderItemsModal, productListModal, selecte
   const [showCancelConfirm, setShowCancelConfirm] = useState(false);
   const cancelOrderMutation = useCancelOrder();
   const markAsReadyMutation = useMarkOrderAsReady();
+  const markAsPendingMutation = useMarkOrderAsPending();
   const [showTransactions, setShowTransactions] = useState(false);
 
   const isOrderMode = orderId !== undefined && orderId > 0;
@@ -184,14 +185,27 @@ export function ModalListOrderItems({ orderItemsModal, productListModal, selecte
                 <Tag>{OrderStatusLabels[order.status]}</Tag>
               </div>
               {canPay && (
-                <button
-                  onClick={handleAddItem}
-                  disabled={createOrderMutation.isPending}
-                  className="flex items-center gap-1.5 text-sm font-medium text-orange border border-orange rounded-lg px-3 py-1.5 hover:bg-orange hover:text-white transition-colors cursor-pointer disabled:opacity-50"
-                >
-                  <FaPlus className="text-xs" />
-                  Agregar
-                </button>
+                <div className="flex items-center gap-2">
+                  {order && (order.status === OrderStatus.CREATED || order.status === OrderStatus.IN_PROGRESS) && (
+                    <button
+                      onClick={() => markAsPendingMutation.mutate({ orderId: order.id })}
+                      disabled={markAsPendingMutation.isPending}
+                      title="Marcar como Pendiente"
+                      className="flex items-center gap-1.5 text-sm font-medium text-yellow-600 border border-yellow-400 rounded-lg px-3 py-1.5 hover:bg-yellow-400 hover:text-white transition-colors cursor-pointer disabled:opacity-50"
+                    >
+                      <FaClock className="text-xs" />
+                      Pendiente
+                    </button>
+                  )}
+                  <button
+                    onClick={handleAddItem}
+                    disabled={createOrderMutation.isPending}
+                    className="flex items-center gap-1.5 text-sm font-medium text-orange border border-orange rounded-lg px-3 py-1.5 hover:bg-orange hover:text-white transition-colors cursor-pointer disabled:opacity-50"
+                  >
+                    <FaPlus className="text-xs" />
+                    Agregar
+                  </button>
+                </div>
               )}
             </div>
 
