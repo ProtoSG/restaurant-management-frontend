@@ -36,7 +36,6 @@ export function ModalPaymentConfirmation({
   const payOrderOrdersMutation = usePayOrderOrders();
   const payPartialOrdersMutation = usePayPartialOrderOrders();
   const printThermalMutation = usePrintThermal();
-
   useEffect(() => {
     if (order && paymentModal.isOpen) {
       const paidAmount = order.paidAmount ?? 0;
@@ -257,7 +256,7 @@ export function ModalPaymentConfirmation({
             <span>PDF</span>
           </button>
           <button
-            onClick={() => order && printThermalMutation.mutate({ orderId: order.id })}
+            onClick={() => order && printThermalMutation.mutate({ order })}
             disabled={isProcessing || !order.items?.length || printThermalMutation.isPending}
             className="flex flex-1 items-center justify-center gap-1.5 py-2.5 border-2 border-gray-200 rounded-xl text-sm font-medium text-gray-600 hover:border-gray-300 hover:bg-gray-50 active:bg-gray-100 transition-colors cursor-pointer disabled:opacity-40"
             aria-label="Imprimir ticket térmico"

@@ -75,7 +75,15 @@ export class OrderServiceImpl {
     return orderAdapter(data);
   }
 
-  async printThermal(orderId: number): Promise<void> {
-    await defaultApiClient.post(`/orders/${orderId}/print-thermal`);
+  async printThermal(order: import("@/shared/types/Order").Order): Promise<void> {
+    const res = await fetch("http://127.0.0.1:3001/print", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(order),
+    });
+    if (!res.ok) {
+      const err = await res.json().catch(() => ({}));
+      throw new Error(err.error ?? "Error al imprimir");
+    }
   }
 }

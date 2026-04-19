@@ -141,3 +141,89 @@ export function generatePrecuentaPDF({ order, tableNumber }: PrecuentaTicketProp
 
   doc.save(`precuenta-mesa-${tableNumber}-${order.orderCode}.pdf`);
 }
+
+export function printThermalTicket({ order, tableNumber }: PrecuentaTicketProps) {
+  const now = new Date();
+  const fecha = now.toLocaleDateString("es-PE", { day: "2-digit", month: "2-digit", year: "numeric" });
+  const hora = now.toLocaleTimeString("es-PE", { hour: "2-digit", minute: "2-digit", hour12: false });
+
+  const itemsByCategory = order.items.reduce((acc, item) => {
+    const cat = item.product.category?.name ?? "General";
+    if (!acc[cat]) acc[cat] = [];
+    acc[cat].push(item);
+    return acc;
+  }, {} as Record<string, typeof order.items>);
+
+  const categoryEntries = Object.entries(itemsByCategory);
+  const showHeaders = categoryEntries.length > 1;
+
+  const itemsHtml = categoryEntries.map(([cat, items]) => `
+    ${showHeaders ? `<tr><td colspan="3" class="cat">${cat.toUpperCase()}</td></tr>` : ""}
+    ${items.map(item => `
+      <tr>
+        <td class="name">${item.product.name.length > 18 ? item.product.name.substring(0, 17) + "." : item.product.name}</td>
+        <td class="qty">${item.quantity}x</td>
+        <td class="price">S/${item.subTotal.toFixed(2)}</td>
+      </tr>
+    `).join("")}
+  `).join("<tr><td colspan='3'>&nbsp;</td></tr>");
+
+  const mesaLabel = tableNumber > 0 ? `Mesa: ${tableNumber}` : "Pedido";
+
+  const html = `<!DOCTYPE html>
+<html>
+<head>
+<meta charset="utf-8">
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { font-family: monospace; font-size: 11px; width: 80mm; }
+  h1 { text-align: center; font-size: 14px; font-weight: bold; margin-bottom: 2px; }
+  .sep { border-top: 1px dashed #000; margin: 3px 0; }
+  .row { display: flex; justify-content: space-between; margin: 1px 0; }
+  table { width: 100%; border-collapse: collapse; }
+  td { padding: 1px 0; vertical-align: top; }
+  td.name { width: 55%; }
+  td.qty { width: 15%; text-align: center; }
+  td.price { width: 30%; text-align: right; }
+  td.cat { font-weight: bold; padding-top: 3px; }
+  .total-row { display: flex; justify-content: space-between; font-weight: bold; font-size: 13px; }
+  .footer { text-align: center; margin-top: 4px; font-size: 10px; }
+  @media print {
+    @page { margin: 0; size: 80mm auto; }
+    body { width: 80mm; }
+  }
+</style>
+</head>
+<body>
+  <h1>PRECUENTA</h1>
+  <div class="sep"></div>
+  <div class="row"><span>${mesaLabel}</span><span>Cod: ${order.orderCode}</span></div>
+  <div>Fecha: ${fecha} ${hora}</div>
+  <div class="sep"></div>
+  <table>
+    <thead>
+      <tr>
+        <td class="name"><strong>Producto</strong></td>
+        <td class="qty"><strong>Cant</strong></td>
+        <td class="price"><strong>Total</strong></td>
+      </tr>
+    </thead>
+    <tbody>${itemsHtml}</tbody>
+  </table>
+  <div class="sep"></div>
+  <div class="total-row"><span>TOTAL:</span><span>S/ ${order.total.toFixed(2)}</span></div>
+  <div class="sep"></div>
+  <div class="footer">Gracias por su visita</div>
+</body>
+</html>`;
+
+  const win = window.open("", "_blank", "width=400,height=600");
+  if (!win) return;
+  win.document.write(html);
+  win.document.close();
+  win.focus();
+  setTimeout(() => {
+    win.print();
+    win.close();
+  }, 300);
+}
