@@ -51,7 +51,7 @@ export function ChefOrders() {
         </div>
       )}
 
-      {error && (
+      {!!error && (
         <div className="flex justify-center py-8">
           <p className="text-red">Error al cargar pedidos</p>
         </div>
@@ -72,16 +72,23 @@ export function ChefOrders() {
               className="bg-white rounded-2xl border-2 border-orange/30 shadow-sm p-4 flex flex-col gap-3"
             >
               {/* Header */}
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                  <span className="text-orange">{getTypeIcon(order.type)}</span>
+              <div className="flex items-start justify-between gap-2">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-orange/10 flex items-center justify-center text-orange text-lg shrink-0">
+                    {getTypeIcon(order.type)}
+                  </div>
                   <div>
-                    <p className="font-bold text-gray-900">{order.orderCode}</p>
-                    <p className="text-xs text-gray-500">
-                      {OrderTypeLabels[order.type]}
-                      {order.tableNumber ? ` · Mesa ${order.tableNumber}` : ''}
-                      {order.customerName ? ` · ${order.customerName}` : ''}
+                    <p className="text-xs text-gray-400 font-mono">{order.orderCode}</p>
+                    <p className="text-lg font-extrabold text-gray-900 leading-tight">
+                      {order.tableNumber
+                        ? `Mesa ${order.tableNumber}`
+                        : order.customerName
+                          ? order.customerName
+                          : OrderTypeLabels[order.type]}
                     </p>
+                    {!order.tableNumber && order.customerName && (
+                      <p className="text-xs text-gray-400">{OrderTypeLabels[order.type]}</p>
+                    )}
                   </div>
                 </div>
                 <Tag variant={Variant.ORANGE}>{OrderStatusLabels[order.status]}</Tag>
