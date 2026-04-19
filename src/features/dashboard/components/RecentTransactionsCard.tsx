@@ -2,6 +2,7 @@ import { useState } from "react";
 import { FiPrinter } from "react-icons/fi";
 import { BsFiletypePdf } from "react-icons/bs";
 import defaultApiClient from "@/shared/utils/apiClient";
+import type { Order } from "@/shared/types/Order";
 
 export interface Transaction {
   id: number;
@@ -54,7 +55,16 @@ export function RecentTransactionsCard({ transactions }: Props) {
     if (t.orderId == null) return;
     setPrinting(t.id);
     try {
-      await defaultApiClient.post(`/orders/${t.orderId}/print-thermal`);
+      const { data } = await defaultApiClient.get<Order>(`/orders/${t.orderId}`);
+      const res = await fetch("http://127.0.0.1:3001/print", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(data),
+      });
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        throw new Error(err.error ?? "Error al imprimir");
+      }
     } finally {
       setPrinting(null);
     }
