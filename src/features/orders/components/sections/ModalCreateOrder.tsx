@@ -189,8 +189,8 @@ export function ModalCreateOrder({ modal, onOrderCreated }: Props) {
           />
         )}
 
-        <Button variant={Variant.GREEN} disabled={createOrderMutation.isLoading}>
-          {createOrderMutation.isLoading ? "Creando..." : "Crear Pedido"}
+        <Button variant={Variant.GREEN} disabled={createOrderMutation.isPending}>
+          {createOrderMutation.isPending ? "Creando..." : "Crear Pedido"}
         </Button>
 
         {createOrderMutation.error !== undefined && createOrderMutation.error !== null && (

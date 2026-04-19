@@ -101,8 +101,8 @@ export function ModalPaymentConfirmation({
   if (!isOrderMode && !selectedTable.selectedTable) return null;
 
   const isProcessing =
-    payOrderTableMutation.isLoading || payPartialTableMutation.isLoading ||
-    payOrderOrdersMutation.isLoading || payPartialOrdersMutation.isLoading;
+    payOrderTableMutation.isPending || payPartialTableMutation.isPending ||
+    payOrderOrdersMutation.isPending || payPartialOrdersMutation.isPending;
 
   const table = selectedTable.selectedTable;
   const tableNumber = isOrderMode ? parseInt(order.tableNumber ?? '0', 10) : parseInt(table!.number, 10);
@@ -258,12 +258,12 @@ export function ModalPaymentConfirmation({
           </button>
           <button
             onClick={() => order && printThermalMutation.mutate({ orderId: order.id })}
-            disabled={isProcessing || !order.items?.length || printThermalMutation.isLoading}
+            disabled={isProcessing || !order.items?.length || printThermalMutation.isPending}
             className="flex flex-1 items-center justify-center gap-1.5 py-2.5 border-2 border-gray-200 rounded-xl text-sm font-medium text-gray-600 hover:border-gray-300 hover:bg-gray-50 active:bg-gray-100 transition-colors cursor-pointer disabled:opacity-40"
             aria-label="Imprimir ticket térmico"
           >
             <FaPrint className="text-sm" />
-            <span>{printThermalMutation.isLoading ? '...' : 'Ticket'}</span>
+            <span>{printThermalMutation.isPending ? '...' : 'Ticket'}</span>
           </button>
         </div>
         <button

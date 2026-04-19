@@ -42,7 +42,7 @@ export function ListProducts({ searchTerm, setSearchTerm, selectedTable, selecte
     }
   };
 
-  const isAdding = addItemTableMutation.isLoading || addItemOrdersMutation.isLoading;
+  const isAdding = addItemTableMutation.isPending || addItemOrdersMutation.isPending;
 
   const filteredProducts = products.filter((product: Product) =>
     product.name.toLowerCase().includes(searchTerm.toLowerCase())

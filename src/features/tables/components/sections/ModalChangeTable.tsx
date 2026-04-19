@@ -118,7 +118,7 @@ export function ModalChangeTable({ changeTableModal, selectedTable }: Props) {
             className="flex-1"
             onClick={handleCancel}
             styleButton="Secondary"
-            disabled={changeOrderTableMutation.isLoading}
+            disabled={changeOrderTableMutation.isPending}
           >
             Cancelar
           </Button>
@@ -126,9 +126,9 @@ export function ModalChangeTable({ changeTableModal, selectedTable }: Props) {
             variant={Variant.GREEN} 
             className="flex-1"
             onClick={handleConfirmChange}
-            disabled={!selectedDestinationTable || changeOrderTableMutation.isLoading || availableTables.length === 0}
+            disabled={!selectedDestinationTable || changeOrderTableMutation.isPending || availableTables.length === 0}
           >
-            {changeOrderTableMutation.isLoading ? 'Transfiriendo...' : 'Confirmar Cambio'}
+            {changeOrderTableMutation.isPending ? 'Transfiriendo...' : 'Confirmar Cambio'}
           </Button>
         </div>
       </div>

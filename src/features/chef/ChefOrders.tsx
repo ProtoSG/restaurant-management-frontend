@@ -109,11 +109,11 @@ export function ChefOrders() {
               {/* Action */}
               <button
                 onClick={() => markAsReadyMutation.mutate({ orderId: order.id })}
-                disabled={markAsReadyMutation.isLoading}
+                disabled={markAsReadyMutation.isPending}
                 className="w-full py-2.5 bg-green text-white font-semibold rounded-xl hover:opacity-90 active:opacity-75 transition-opacity disabled:opacity-40 cursor-pointer flex items-center justify-center gap-2 min-h-[44px]"
               >
                 <FaCheck className="text-sm" />
-                {markAsReadyMutation.isLoading ? 'Marcando...' : 'Marcar como Listo'}
+                {markAsReadyMutation.isPending ? 'Marcando...' : 'Marcar como Listo'}
               </button>
             </div>
           ))}
