@@ -5,6 +5,7 @@ export interface OrderItem {
   quantity: number;
   subTotal: number;
   product: OrderProduct;
+  notes?: string;
 }
 
 export interface OrderItemResponse {
@@ -12,4 +13,5 @@ export interface OrderItemResponse {
   quantity: number;
   subTotal: number;
   product: OrderProductResponse;
+  notes?: string;
 }

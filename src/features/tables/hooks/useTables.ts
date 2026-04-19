@@ -87,8 +87,8 @@ export function useAddItemToOrder() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: ({ tableId, productId, quantity }: { tableId: number; productId: number; quantity?: number }) =>
-      tableService.addItemToOrder(tableId, productId, quantity),
+    mutationFn: ({ tableId, productId, quantity, notes }: { tableId: number; productId: number; quantity?: number; notes?: string }) =>
+      tableService.addItemToOrder(tableId, productId, quantity, notes),
     onSuccess: (_, { tableId }) => {
       queryClient.invalidateQueries({ queryKey: [`order-${tableId}`] });
       queryClient.invalidateQueries({ queryKey: ['tables'] });
@@ -104,8 +104,8 @@ export function useUpdateOrderItem() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: ({ tableId, itemId, quantity }: { tableId: number; itemId: number; quantity: number }) =>
-      tableService.updateOrderItem(tableId, itemId, quantity),
+    mutationFn: ({ tableId, itemId, quantity, notes }: { tableId: number; itemId: number; quantity: number; notes?: string }) =>
+      tableService.updateOrderItem(tableId, itemId, quantity, notes),
     onSuccess: (_, { tableId }) => {
       queryClient.invalidateQueries({ queryKey: [`order-${tableId}`] });
       queryClient.invalidateQueries({ queryKey: ['tables'] });

@@ -29,8 +29,8 @@ export function Login() {
   return (
     <section className="w-full min-h-screen bg-white flex items-center justify-center">
       <div className="
-        w-full min-h-screen flex flex-col justify-center gap-8 p-8 bg-white
-        md:min-h-fit md:w-auto md:rounded-lg md:border-2 md:shadow-[12px_12px_5px_1px] md:shadow-background
+        w-full min-h-screen flex flex-col justify-center gap-8 p-8
+        md:min-h-fit md:w-auto md:rounded-lg md:border-0 md:shadow-[12px_12px_5px_1px] md:shadow-background
       ">
         <h2 className="font-semibold text-xl tracking-wider text-center">¡Bienvenido!</h2>
         <form className="flex flex-col gap-4" onSubmit={handleSubmit(onSubmit)}>
