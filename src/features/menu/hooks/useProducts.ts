@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { useQueryClient } from "react-query";
+import { useQueryClient } from "@tanstack/react-query";
 import { ProductServiceImpl } from "../services/ProductServiceImpl";
 import type { Product } from "../types/Product";
 import type { CreateProductRequest } from "../schemas/Product.schema";

@@ -1,4 +1,4 @@
-import { useQuery } from "react-query";
+import { useQuery } from "@tanstack/react-query";
 import { CategoryServiceImpl } from "../services/CategoryServiceImpl";
 
 const categoryService = new CategoryServiceImpl();
