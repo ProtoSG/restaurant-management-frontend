@@ -5,6 +5,7 @@ export function orderItemAdapter(orderItem: OrderItemResponse): OrderItem {
     id: orderItem.id,
     quantity: orderItem.quantity,
     subTotal: orderItem.subTotal,
-    product: orderItem.product
+    product: orderItem.product,
+    notes: orderItem.notes
   };
 }

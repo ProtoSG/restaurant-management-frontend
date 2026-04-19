@@ -29,10 +29,11 @@ export class OrderServiceImpl {
     return orderAdapter(response);
   }
 
-  async addItemToOrder(orderId: number, productId: number, quantity = 1): Promise<void> {
+  async addItemToOrder(orderId: number, productId: number, quantity = 1, notes?: string): Promise<void> {
     await defaultApiClient.post(`/orders/${orderId}/items`, {
       productId,
-      quantity
+      quantity,
+      notes
     });
   }
 

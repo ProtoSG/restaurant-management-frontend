@@ -65,7 +65,7 @@ export function ChefOrders() {
       )}
 
       {!isLoading && !error && pending.length > 0 && (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
           {pending.map((order) => (
             <div
               key={order.id}
@@ -94,17 +94,36 @@ export function ChefOrders() {
                 <Tag variant={Variant.ORANGE}>{OrderStatusLabels[order.status]}</Tag>
               </div>
 
-              {/* Items */}
-              <ul className="flex flex-col gap-1.5 flex-1">
-                {order.items?.map((item) => (
-                  <li key={item.id} className="flex items-center gap-2 py-1.5 border-b border-gray-100 last:border-0">
-                    <span className="min-w-[28px] h-7 flex items-center justify-center rounded-lg bg-orange/10 text-orange font-bold text-sm">
-                      {item.quantity}
-                    </span>
-                    <span className="text-sm font-medium text-gray-800">{item.product.name}</span>
-                  </li>
+              {/* Items agrupados por categoría */}
+              <div className="flex flex-col gap-2 flex-1">
+                {Object.entries(
+                  (order.items ?? [])
+                    .filter(item => item.product.category?.name?.toLowerCase() !== "bebidas")
+                    .reduce<Record<string, typeof order.items>>((acc, item) => {
+                    const cat = item.product.category?.name ?? "Sin categoría";
+                    if (!acc[cat]) acc[cat] = [];
+                    acc[cat]!.push(item);
+                    return acc;
+                  }, {})
+                ).map(([category, items]) => (
+                  <div key={category}>
+                    <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">{category}</p>
+                    <ul className="flex flex-col">
+                      {items!.map((item) => (
+                        <li key={item.id} className="flex items-center gap-2 py-1.5 border-b border-gray-100 last:border-0">
+                          <span className="min-w-[32px] h-8 flex items-center justify-center rounded-lg bg-orange/10 text-orange font-bold text-xl">
+                            {item.quantity}
+                          </span>
+                          <div className="flex flex-col">
+                            <span className="text-sm font-medium text-gray-800">{item.product.name}</span>
+                            {item.notes && <span className="text-base font-semibold text-red italic">{item.notes}</span>}
+                          </div>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
                 ))}
-              </ul>
+              </div>
 
               {/* Action */}
               <button
