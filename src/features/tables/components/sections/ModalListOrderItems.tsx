@@ -188,7 +188,7 @@ export function ModalListOrderItems({ orderItemsModal, productListModal, selecte
                 <div className="flex items-center gap-2">
                   {order && (
                     <button
-                      onClick={() => markAsPendingMutation.mutate({ orderId: order.id })}
+                      onClick={() => markAsPendingMutation.mutate({ orderId: order.id, tableId: selectedTable.selectedTable?.id })}
                       disabled={markAsPendingMutation.isPending}
                       title="Marcar como Pendiente"
                       className="flex items-center gap-1.5 text-sm font-medium text-yellow-600 border border-yellow-400 rounded-lg px-3 py-1.5 hover:bg-yellow-400 hover:text-white transition-colors cursor-pointer disabled:opacity-50"
@@ -339,7 +339,7 @@ export function ModalListOrderItems({ orderItemsModal, productListModal, selecte
                     <Button
                       variant={Variant.ORANGE}
                       className="w-full"
-                      onClick={() => markAsReadyMutation.mutate({ orderId: order.id })}
+                      onClick={() => markAsReadyMutation.mutate({ orderId: order.id, tableId: selectedTable.selectedTable?.id })}
                       disabled={markAsReadyMutation.isPending || !order.items?.length}
                     >
                       {markAsReadyMutation.isPending ? 'Marcando...' : 'Marcar como Listo'}
