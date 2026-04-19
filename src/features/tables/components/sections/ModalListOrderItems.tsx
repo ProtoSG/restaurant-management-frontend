@@ -186,7 +186,7 @@ export function ModalListOrderItems({ orderItemsModal, productListModal, selecte
               </div>
               {canPay && (
                 <div className="flex items-center gap-2">
-                  {order && (order.status === OrderStatus.CREATED || order.status === OrderStatus.IN_PROGRESS) && (
+                  {order && (
                     <button
                       onClick={() => markAsPendingMutation.mutate({ orderId: order.id })}
                       disabled={markAsPendingMutation.isPending}
