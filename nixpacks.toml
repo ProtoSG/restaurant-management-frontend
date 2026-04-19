@@ -5,4 +5,4 @@ cmds = ["bun install --frozen-lockfile"]
 cmds = ["bun run build"]
 
 [start]
-cmd = "bunx serve dist -l 3000"
+cmd = "caddy run --config /app/Caddyfile"
