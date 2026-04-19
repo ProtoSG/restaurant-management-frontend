@@ -134,11 +134,11 @@ export function ModalFormTable({ modal }: Props) {
           />
           <Button 
             variant={Variant.GREEN}
-            disabled={updateTable.isLoading || createTable.isLoading}
+            disabled={updateTable.isPending || createTable.isPending}
           >
             {!modal.isEdit ? 
-              (createTable.isLoading ? 'Creando...' : 'Crear Mesa') : 
-              (updateTable.isLoading ? 'Actualizando...' : 'Actualizar Mesa')
+              (createTable.isPending ? 'Creando...' : 'Crear Mesa') : 
+              (updateTable.isPending ? 'Actualizando...' : 'Actualizar Mesa')
             }
           </Button>
           {modal.isEdit && (
@@ -146,9 +146,9 @@ export function ModalFormTable({ modal }: Props) {
               variant={Variant.RED}
               type="button"
               onClick={handleDelete}
-              disabled={deleteTable.isLoading}
+              disabled={deleteTable.isPending}
             >
-              {deleteTable.isLoading ? 'Eliminando...' : 'Eliminar Mesa'}
+              {deleteTable.isPending ? 'Eliminando...' : 'Eliminar Mesa'}
             </Button>
           )}
           {(updateTable.isError || createTable.isError || deleteTable.isError) && (
@@ -205,7 +205,7 @@ export function ModalFormTable({ modal }: Props) {
                   variant={Variant.DEFAULT}
                   onClick={cancelDelete}
                   className="flex-1"
-                  disabled={deleteTable.isLoading}
+                  disabled={deleteTable.isPending}
                 >
                   Cancelar
                 </Button>
@@ -213,9 +213,9 @@ export function ModalFormTable({ modal }: Props) {
                   variant={Variant.RED}
                   onClick={confirmDelete}
                   className="flex-1"
-                  disabled={deleteTable.isLoading}
+                  disabled={deleteTable.isPending}
                 >
-                  {deleteTable.isLoading ? 'Eliminando...' : 'Eliminar'}
+                  {deleteTable.isPending ? 'Eliminando...' : 'Eliminar'}
                 </Button>
               </>
             ) : (

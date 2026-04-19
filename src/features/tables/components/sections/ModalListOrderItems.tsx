@@ -166,10 +166,10 @@ export function ModalListOrderItems({ orderItemsModal, productListModal, selecte
             <Button
               variant={Variant.GREEN}
               onClick={handleAddItem}
-              disabled={createOrderMutation.isLoading}
+              disabled={createOrderMutation.isPending}
               className="w-full"
             >
-              {createOrderMutation.isLoading ? 'Creando pedido...' : 'Crear Pedido y Agregar Items'}
+              {createOrderMutation.isPending ? 'Creando pedido...' : 'Crear Pedido y Agregar Items'}
             </Button>
           </div>
         ) : (
@@ -186,7 +186,7 @@ export function ModalListOrderItems({ orderItemsModal, productListModal, selecte
               {canPay && (
                 <button
                   onClick={handleAddItem}
-                  disabled={createOrderMutation.isLoading}
+                  disabled={createOrderMutation.isPending}
                   className="flex items-center gap-1.5 text-sm font-medium text-orange border border-orange rounded-lg px-3 py-1.5 hover:bg-orange hover:text-white transition-colors cursor-pointer disabled:opacity-50"
                 >
                   <FaPlus className="text-xs" />
@@ -207,7 +207,7 @@ export function ModalListOrderItems({ orderItemsModal, productListModal, selecte
                     <div className="flex items-center gap-1 flex-shrink-0">
                       <button
                         onClick={() => handleUpdateQuantity(item.id, item.quantity, false)}
-                        disabled={updateOrderItemMutation.isLoading || removeOrderItemMutation.isLoading}
+                        disabled={updateOrderItemMutation.isPending || removeOrderItemMutation.isPending}
                         aria-label={item.quantity === 1 ? `Eliminar ${item.product.name}` : `Reducir cantidad de ${item.product.name}`}
                         className="min-w-[44px] min-h-[44px] flex items-center justify-center rounded-lg border border-gray-200 hover:bg-red/10 hover:border-red/40 transition-colors cursor-pointer disabled:opacity-40"
                       >
@@ -216,7 +216,7 @@ export function ModalListOrderItems({ orderItemsModal, productListModal, selecte
                       <span className="w-7 text-center font-bold text-sm">{item.quantity}</span>
                       <button
                         onClick={() => handleUpdateQuantity(item.id, item.quantity, true)}
-                        disabled={updateOrderItemMutation.isLoading}
+                        disabled={updateOrderItemMutation.isPending}
                         aria-label={`Aumentar cantidad de ${item.product.name}`}
                         className="min-w-[44px] min-h-[44px] flex items-center justify-center rounded-lg border border-gray-200 hover:bg-green/10 hover:border-green/40 transition-colors cursor-pointer disabled:opacity-40"
                       >
@@ -294,7 +294,7 @@ export function ModalListOrderItems({ orderItemsModal, productListModal, selecte
                       variant={Variant.DEFAULT}
                       styleButton="Secondary"
                       onClick={() => setShowCancelConfirm(false)}
-                      disabled={cancelOrderMutation.isLoading}
+                      disabled={cancelOrderMutation.isPending}
                     >
                       Volver
                     </Button>
@@ -313,9 +313,9 @@ export function ModalListOrderItems({ orderItemsModal, productListModal, selecte
                           // error manejado en el hook
                         }
                       }}
-                      disabled={cancelOrderMutation.isLoading}
+                      disabled={cancelOrderMutation.isPending}
                     >
-                      {cancelOrderMutation.isLoading ? 'Cancelando...' : 'Sí, cancelar'}
+                      {cancelOrderMutation.isPending ? 'Cancelando...' : 'Sí, cancelar'}
                     </Button>
                   </div>
                 </div>
@@ -326,9 +326,9 @@ export function ModalListOrderItems({ orderItemsModal, productListModal, selecte
                       variant={Variant.ORANGE}
                       className="w-full"
                       onClick={() => markAsReadyMutation.mutate({ orderId: order.id })}
-                      disabled={markAsReadyMutation.isLoading || !order.items?.length}
+                      disabled={markAsReadyMutation.isPending || !order.items?.length}
                     >
-                      {markAsReadyMutation.isLoading ? 'Marcando...' : 'Marcar como Listo'}
+                      {markAsReadyMutation.isPending ? 'Marcando...' : 'Marcar como Listo'}
                     </Button>
                   )}
                   <div className="flex gap-2">
@@ -357,10 +357,10 @@ export function ModalListOrderItems({ orderItemsModal, productListModal, selecte
                   variant={Variant.GREEN}
                   className="flex-1"
                   onClick={handleAddItem}
-                  disabled={createOrderMutation.isLoading}
+                  disabled={createOrderMutation.isPending}
                 >
                   <FaPlus className="text-xs mr-2" />
-                  {createOrderMutation.isLoading ? 'Abriendo...' : 'Agregar Producto'}
+                  {createOrderMutation.isPending ? 'Abriendo...' : 'Agregar Producto'}
                 </Button>
               </div>
             )}
