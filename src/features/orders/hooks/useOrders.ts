@@ -154,7 +154,7 @@ export function usePayPartialOrder() {
 
 export function usePrintThermal() {
   return useMutation({
-    mutationFn: ({ orderId }: { orderId: number }) => orderService.printThermal(orderId),
+    mutationFn: ({ order }: { order: import("@/shared/types/Order").Order }) => orderService.printThermal(order),
     onError: (error) => {
       console.error('Error al imprimir en impresora térmica:', error);
     }
