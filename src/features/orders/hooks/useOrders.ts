@@ -121,6 +121,21 @@ export function useMarkOrderAsReady() {
   });
 }
 
+export function useMarkOrderAsPending() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ orderId }: { orderId: number }) => orderService.markAsPending(orderId),
+    onSuccess: (_, { orderId }) => {
+      queryClient.invalidateQueries({ queryKey: ['order', orderId] });
+      queryClient.invalidateQueries({ queryKey: ['active-orders'] });
+    },
+    onError: (error) => {
+      console.error('Error al marcar orden como pendiente:', error);
+    }
+  });
+}
+
 export function usePayOrder() {
   const queryClient = useQueryClient();
 
