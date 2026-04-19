@@ -117,28 +117,29 @@ export function Orders() {
               }}
               className="bg-white rounded-2xl border shadow-md border-gray-100 hover:shadow-md transition-shadow p-4 flex flex-col cursor-pointer"
             >
-              <div className="flex justify-between items-start mb-3">
-                <div className="flex items-center gap-2">
-                  <div className="bg-orange/10 p-2 rounded-lg text-orange">
+              <div className="flex justify-between items-start mb-3 gap-2">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-xl bg-orange/10 flex items-center justify-center text-orange text-lg shrink-0">
                     {getTypeIcon(order.type)}
                   </div>
                   <div>
-                    <p className="font-bold text-lg text-gray-900">{order.orderCode}</p>
-                    <p className="text-xs text-gray-500">{OrderTypeLabels[order.type]}{order.tableNumber ? ` · Mesa ${order.tableNumber}` : ''}</p>
+                    <p className="text-xs text-gray-400 font-mono">{order.orderCode}</p>
+                    <p className="text-lg font-extrabold text-gray-900 leading-tight">
+                      {order.tableNumber
+                        ? `Mesa ${order.tableNumber}`
+                        : order.customerName
+                          ? order.customerName
+                          : OrderTypeLabels[order.type]}
+                    </p>
+                    {!order.tableNumber && order.customerName && (
+                      <p className="text-xs text-gray-400">{OrderTypeLabels[order.type]}</p>
+                    )}
                   </div>
                 </div>
                 <Tag variant={getStatusVariant(order.status)}>
                   {OrderStatusLabels[order.status]}
                 </Tag>
               </div>
-
-              {order.type !== OrderType.DINE_IN && order.customerName && (
-                <div className="mb-3 px-2 py-1.5 bg-gray-100 rounded-lg">
-                  <p className="text-sm text-gray-700 font-medium truncate">
-                    {order.customerName}
-                  </p>
-                </div>
-              )}
 
               <div className="flex-1">
                 {order.items && order.items.length > 0 ? (
