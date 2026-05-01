@@ -1,6 +1,5 @@
 import { useState } from "react";
 import { FiPrinter } from "react-icons/fi";
-import { BsFiletypePdf } from "react-icons/bs";
 import defaultApiClient from "@/shared/utils/apiClient";
 import type { Order } from "@/shared/types/Order";
 

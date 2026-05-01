@@ -1,21 +1,21 @@
 import { orderAdapter } from "../adapters/OrderAdapter";
 import defaultApiClient from "@/shared/utils/apiClient";
-import type { Order } from "@/shared/types/Order";
+import type { Order, OrderResponse } from "@/shared/types/Order";
 import type { CreateOrderRequest } from "../schemas/Order.schema";
 
 export class OrderServiceImpl {
   async getActiveOrders(): Promise<Order[]> {
-    const { data } = await defaultApiClient.get<Order[]>("/orders/active");
+    const { data } = await defaultApiClient.get<OrderResponse[]>("/orders/active");
     return data.map(orderAdapter);
   }
 
   async getAllOrders(): Promise<Order[]> {
-    const { data } = await defaultApiClient.get<Order[]>("/orders");
+    const { data } = await defaultApiClient.get<OrderResponse[]>("/orders");
     return data.map(orderAdapter);
   }
 
   async getOrderById(id: number): Promise<Order> {
-    const { data } = await defaultApiClient.get<Order>(`/orders/${id}`);
+    const { data } = await defaultApiClient.get<OrderResponse>(`/orders/${id}`);
     return orderAdapter(data);
   }
 
@@ -25,7 +25,7 @@ export class OrderServiceImpl {
       type: data.type,
       customerName: data.customerName || null
     };
-    const { data: response } = await defaultApiClient.post<Order>("/orders", payload);
+    const { data: response } = await defaultApiClient.post<OrderResponse>("/orders", payload);
     return orderAdapter(response);
   }
 
@@ -48,27 +48,27 @@ export class OrderServiceImpl {
   }
 
   async cancelOrder(id: number): Promise<Order> {
-    const { data } = await defaultApiClient.post<Order>(`/orders/${id}/cancel`);
+    const { data } = await defaultApiClient.post<OrderResponse>(`/orders/${id}/cancel`);
     return orderAdapter(data);
   }
 
   async markAsReady(orderId: number): Promise<Order> {
-    const { data } = await defaultApiClient.post<Order>(`/orders/${orderId}/ready`);
+    const { data } = await defaultApiClient.post<OrderResponse>(`/orders/${orderId}/ready`);
     return orderAdapter(data);
   }
 
   async markAsPending(orderId: number): Promise<Order> {
-    const { data } = await defaultApiClient.post<Order>(`/orders/${orderId}/pending`);
+    const { data } = await defaultApiClient.post<OrderResponse>(`/orders/${orderId}/pending`);
     return orderAdapter(data);
   }
 
   async payOrder(orderId: number, paymentMethod: string): Promise<Order> {
-    const { data } = await defaultApiClient.post<Order>(`/orders/${orderId}/pay/${paymentMethod}`);
+    const { data } = await defaultApiClient.post<OrderResponse>(`/orders/${orderId}/pay/${paymentMethod}`);
     return orderAdapter(data);
   }
 
   async payPartialOrder(orderId: number, amount: number, paymentMethod: string): Promise<Order> {
-    const { data } = await defaultApiClient.post<Order>(`/orders/${orderId}/pay-partial`, {
+    const { data } = await defaultApiClient.post<OrderResponse>(`/orders/${orderId}/pay-partial`, {
       amount,
       paymentMethod
     });

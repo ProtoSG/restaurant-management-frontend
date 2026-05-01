@@ -3,7 +3,7 @@ import { orderItemAdapter } from "../adapters/OrderItemAdapter";
 import { tableAdapater } from "../adapters/TableAdapter";
 import defaultApiClient from "@/shared/utils/apiClient";
 import type { ITableService } from "../types/ITableService";
-import type { Order } from "@/shared/types/Order";
+import type { Order, OrderResponse } from "@/shared/types/Order";
 import type { OrderItem } from "@/shared/types/OrderItem";
 import type { Table, TableResponse } from "../types/Table";
 import type { CreateTableRequest, UpdateTableRequest } from "../schemas/Table.schema";
@@ -30,12 +30,12 @@ export class TableServiceImpl implements ITableService {
   }
 
   async createOrder(tableId: number): Promise<Order> {
-    const { data } = await defaultApiClient.post<Order>('/orders', { tableId, type: 'DINE_IN' });
+    const { data } = await defaultApiClient.post<OrderResponse>('/orders', { tableId, type: 'DINE_IN' });
     return orderAdapter(data);
   }
 
   async getOrderActive(id: number): Promise<Order> {
-    const { data } = await defaultApiClient.get<Order>(`/orders/active/tables/${id}`);
+    const { data } = await defaultApiClient.get<OrderResponse>(`/orders/active/tables/${id}`);
     return orderAdapter(data);
   }
 
@@ -54,17 +54,17 @@ export class TableServiceImpl implements ITableService {
   }
 
   async payOrder(orderId: number, paymentMethod: string): Promise<Order> {
-    const { data } = await defaultApiClient.post<Order>(`/orders/${orderId}/pay/${paymentMethod}`);
+    const { data } = await defaultApiClient.post<OrderResponse>(`/orders/${orderId}/pay/${paymentMethod}`);
     return orderAdapter(data);
   }
 
   async payPartialOrder(orderId: number, amount: number, paymentMethod: string): Promise<Order> {
-    const { data } = await defaultApiClient.post<Order>(`/orders/${orderId}/pay-partial`, { amount, paymentMethod });
+    const { data } = await defaultApiClient.post<OrderResponse>(`/orders/${orderId}/pay-partial`, { amount, paymentMethod });
     return orderAdapter(data);
   }
 
   async changeOrderTable(orderId: number, destinationTableId: number): Promise<Order> {
-    const { data } = await defaultApiClient.put<Order>(`/orders/${orderId}/table/${destinationTableId}`);
+    const { data } = await defaultApiClient.put<OrderResponse>(`/orders/${orderId}/table/${destinationTableId}`);
     return orderAdapter(data);
   }
 }
