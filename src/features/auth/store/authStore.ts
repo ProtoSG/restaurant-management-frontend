@@ -26,11 +26,11 @@ export const useAuthStore = create<AuthState>()(
         try {
           set({ loading: true });
           const userData = await new AuthServiceImpl().verifyAuth();
-          set({
-            user: userData,
-            isAuthenticated: !!userData,
-            loading: false
-          });
+          if (userData) {
+            set({ user: userData, isAuthenticated: true, loading: false });
+          } else {
+            set({ user: null, isAuthenticated: false, loading: false });
+          }
         } catch {
           set({ loading: false });
         }
@@ -42,7 +42,8 @@ export const useAuthStore = create<AuthState>()(
           const { status, data } = await new AuthServiceImpl().login(credentials);
 
           if (status >= 200 && status < 300 && data && !('message' in data)) {
-            set({ user: data as LoginResponse, isAuthenticated: true, loading: false });
+            const loginData = data as LoginResponse;
+            set({ user: loginData, isAuthenticated: true, loading: false });
           } else if (data && 'message' in data) {
             set({ errors: [(data as { message: string }).message], loading: false });
           } else {
