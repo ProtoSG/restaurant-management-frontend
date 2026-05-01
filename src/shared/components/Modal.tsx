@@ -24,7 +24,7 @@ export function Modal({children, dialogRef, setOpen, className}: Props) {
         w-full mt-auto mb-0 max-h-[92dvh] rounded-t-2xl rounded-b-none
         mx-auto lg:m-auto lg:w-fit lg:max-h-[90vh] lg:rounded-lg
         bg-white
-        backdrop:backdrop-blur-sm shadow-[12px_12px_5px_1px] focus:outline-none
+        backdrop:backdrop-blur-sm shadow-[12px_12px_5px_1px] shadow-card-background focus:outline-none
         overflow-hidden
       "
     >

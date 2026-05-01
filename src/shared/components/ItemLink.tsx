@@ -16,12 +16,12 @@ export function ItemLink({item, isExpanded}: Props) {
       to={item.link}
       key={item.link}
       className={`
-        flex items-center px-2 gap-2  h-10 rounded-md cursor-pointer transition-colors
+        flex items-center pl-2.5 pr-2 gap-2 h-10 rounded-md cursor-pointer transition-colors
         hover:bg-zinc-700
         ${isActive ? "bg-zinc-700" : ""}
       `}
     >
-      <span className="text-xl shrink-0"> {item.icon} </span>
+      <span className="text-xl shrink-0 flex items-center justify-center"> {item.icon} </span>
       <span
         className={`overflow-hidden whitespace-nowrap transition-all duration-300 ${
           isActive ? "font-semibold" : "font-normal"

@@ -4,7 +4,7 @@ import { BottomNav } from "../components/BottomNav"
 
 export function Layout() {
   return (
-    <div className="flex min-h-dvh max-h-dvh w-full">
+    <div className="flex min-h-dvh max-h-dvh w-full p-6 bg-background">
       {/* Sidebar — solo desktop */}
       <div className="hidden lg:flex">
         <AsideNav />
@@ -13,7 +13,7 @@ export function Layout() {
       {/* Área principal */}
       <div className="flex flex-col flex-1 min-w-0 overflow-hidden">
         {/* Contenido */}
-        <main className="flex-1 overflow-auto p-4 lg:p-6 pb-20 lg:pb-6">
+        <main className="flex-1 overflow-auto lg:pl-6 lg:pb-6">
           <Outlet />
         </main>
       </div>
