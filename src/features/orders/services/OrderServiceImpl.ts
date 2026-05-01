@@ -52,11 +52,6 @@ export class OrderServiceImpl {
     return orderAdapter(data);
   }
 
-  async changeOrderType(id: number, type: string): Promise<Order> {
-    const { data } = await defaultApiClient.put<Order>(`/orders/${id}/type`, { type });
-    return orderAdapter(data);
-  }
-
   async markAsReady(orderId: number): Promise<Order> {
     const { data } = await defaultApiClient.post<Order>(`/orders/${orderId}/ready`);
     return orderAdapter(data);
