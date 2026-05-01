@@ -1,11 +1,11 @@
 import { Modal, TitleModal, Button, Tag } from "@/shared/components";
 import { useModal } from "@/shared/hooks/useModal";
 import { useOrderActive, useCreateOrder, useUpdateOrderItem as useUpdateOrderItemTable, useRemoveOrderItem as useRemoveOrderItemTable, useSelectedTable, useOrderItemsModal, useProductListModal, usePaymentConfirmationModal } from "@/features/tables";
-import { useOrderById, useUpdateOrderItem as useUpdateOrderItemOrder, useRemoveOrderItem as useRemoveOrderItemOrder, useCancelOrder, useMarkOrderAsReady, useMarkOrderAsPending } from "@/features/orders";
+import { useOrderById, useUpdateOrderItem as useUpdateOrderItemOrder, useRemoveOrderItem as useRemoveOrderItemOrder, useCancelOrder, useMarkOrderAsReady } from "@/features/orders";
 import { Variant } from "@/shared/enums/VariantEnum";
 import { PaymentMethodLabels } from "@/shared/enums/PaymentMethod";
 import { OrderStatus, OrderStatusLabels } from "@/shared/enums/OrderStatus";
-import { FaMinus, FaPlus, FaTrash, FaClock } from "react-icons/fa";
+import { FaMinus, FaPlus, FaTrash } from "react-icons/fa";
 import { useState, useEffect } from "react";
 import { ModalPaymentConfirmation } from "./ModalPaymentConfirmation";
 import { useAuth } from "@/features/auth";
@@ -26,7 +26,6 @@ export function ModalListOrderItems({ orderItemsModal, productListModal, selecte
   const [showCancelConfirm, setShowCancelConfirm] = useState(false);
   const cancelOrderMutation = useCancelOrder();
   const markAsReadyMutation = useMarkOrderAsReady();
-  const markAsPendingMutation = useMarkOrderAsPending();
   const [showTransactions, setShowTransactions] = useState(false);
 
   const isOrderMode = orderId !== undefined && orderId > 0;
