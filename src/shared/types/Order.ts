@@ -19,7 +19,8 @@ export interface Order {
 }
 
 export interface OrderResponse {
-  id: number;
+  orderId: number;
+  id?: number;
   orderCode: string;
   tableId?: number;
   tableNumber?: string;
