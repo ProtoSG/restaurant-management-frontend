@@ -78,7 +78,7 @@ export function BottomNav() {
         </div>
       )}
 
-      <nav className="lg:hidden fixed bottom-0 left-0 right-0 z-50 bg-white border-t border-gray-200 pb-[env(safe-area-inset-bottom)]">
+      <nav className="lg:hidden fixed bottom-4 left-0 right-0 z-50 mx-4 rounded-2xl bg-card-background pb-[env(safe-area-inset-bottom)]">
         <div className="flex items-stretch">
           {visible.map(item => {
             const isActive = location.pathname === item.link
@@ -90,8 +90,8 @@ export function BottomNav() {
                   flex flex-col items-center justify-center gap-1 flex-1 py-3 min-h-[56px]
                   transition-colors text-xs font-medium
                   ${isActive
-                    ? "text-orange border-t-2 border-orange -mt-[2px]"
-                    : "text-gray-400 hover:text-gray-600"
+                    ? "text-orange"
+                    : "text-foreground hover:text-foreground/80"
                   }
                 `}
               >
@@ -104,7 +104,7 @@ export function BottomNav() {
           {/* Usuario */}
           <button
             onClick={() => setShowUserSheet(!showUserSheet)}
-            className={`flex flex-col items-center justify-center gap-1 flex-1 py-3 min-h-[56px] transition-colors text-xs font-medium cursor-pointer ${showUserSheet ? 'text-orange border-t-2 border-orange -mt-[2px]' : 'text-gray-400 hover:text-gray-600'}`}
+            className={`flex flex-col items-center justify-center gap-1 flex-1 py-3 min-h-[56px] transition-colors text-xs font-medium cursor-pointer ${showUserSheet ? 'text-orange' : 'text-gray-400 hover:text-gray-600'}`}
           >
             <span className="w-6 h-6 rounded-full bg-orange/20 flex items-center justify-center text-orange font-bold text-sm">
               {getInitial(user?.username)}

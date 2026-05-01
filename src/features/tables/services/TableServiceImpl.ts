@@ -29,28 +29,28 @@ export class TableServiceImpl implements ITableService {
     await defaultApiClient.delete<void>(`/tables/${id}`);
   }
 
-  async createOrder(id: number): Promise<Order> {
-    const { data } = await defaultApiClient.post<Order>(`/tables/${id}/orders`);
+  async createOrder(tableId: number): Promise<Order> {
+    const { data } = await defaultApiClient.post<Order>('/orders', { tableId, type: 'DINE_IN' });
     return orderAdapter(data);
   }
 
   async getOrderActive(id: number): Promise<Order> {
-    const { data } = await defaultApiClient.get<Order>(`/tables/${id}/orders/active`);
+    const { data } = await defaultApiClient.get<Order>(`/orders/active/tables/${id}`);
     return orderAdapter(data);
   }
 
-  async addItemToOrder(tableId: number, productId: number, quantity: number = 1, notes?: string): Promise<OrderItem> {
-    const { data } = await defaultApiClient.post<OrderItem>(`/tables/${tableId}/orders/items`, { productId, quantity, notes });
+  async addItemToOrder(orderId: number, productId: number, quantity: number = 1, notes?: string): Promise<OrderItem> {
+    const { data } = await defaultApiClient.post<OrderItem>(`/orders/${orderId}/items`, { productId, quantity, notes });
     return orderItemAdapter(data);
   }
 
-  async updateOrderItem(tableId: number, itemId: number, quantity: number, notes?: string): Promise<OrderItem> {
-    const { data } = await defaultApiClient.put<OrderItem>(`/tables/${tableId}/orders/items/${itemId}`, { quantity, notes });
+  async updateOrderItem(orderId: number, itemId: number, quantity: number, notes?: string): Promise<OrderItem> {
+    const { data } = await defaultApiClient.put<OrderItem>(`/orders/${orderId}/items/${itemId}`, { quantity, notes });
     return orderItemAdapter(data);
   }
 
-  async removeOrderItem(tableId: number, itemId: number): Promise<void> {
-    await defaultApiClient.delete<void>(`/tables/${tableId}/orders/items/${itemId}`);
+  async removeOrderItem(orderId: number, itemId: number): Promise<void> {
+    await defaultApiClient.delete<void>(`/orders/${orderId}/items/${itemId}`);
   }
 
   async payOrder(orderId: number, paymentMethod: string): Promise<Order> {

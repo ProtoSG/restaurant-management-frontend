@@ -54,7 +54,7 @@ export function StatCard({ title, value, icon, trend, trendData, bgColor = "bg-w
       <div className="flex items-start justify-between mb-4">
         <div className="flex-1">
           <p className="text-sm text-gray-600 mb-1">{title ?? ''}</p>
-          <p className="text-3xl font-bold text-gray-900">{value ?? 'S/ 0.00'}</p>
+          <p className="text-3xl font-bold text-foreground-dark text-nowrap">{value ?? 'S/ 0.00'}</p>
           {trend !== undefined && (
             <div className="flex items-center gap-1 mt-2">
               <span className={`text-sm font-semibold ${isPositive ? 'text-green' : 'text-red'}`}>

@@ -9,10 +9,10 @@ interface Props {
 export function Tag({children, variant=Variant.DEFAULT}: Props) {
 
   const variants = {
-    [Variant.GREEN]: 'bg-green/15 text-background',
-    [Variant.ORANGE]: 'bg-orange/25 text-background',
-    [Variant.RED]: 'bg-red/20 text-background',
-    [Variant.DEFAULT]: 'bg-background text-foreground'
+    [Variant.GREEN]: 'bg-green/15 text-foreground-dark',
+    [Variant.ORANGE]: 'bg-orange/25 text-foreground-dark',
+    [Variant.RED]: 'bg-red/20 text-foreground-dark',
+    [Variant.DEFAULT]: 'bg-background text-foreground-dark'
   }
 
   return (

@@ -7,9 +7,10 @@ interface Props {
   isLoading: boolean;
   onEdit: (product: Product) => void;
   onToggleActive: (id: number, currentActive: boolean) => Promise<void>;
+  isAdmin?: boolean;
 }
 
-export function ListProducts({ products, isLoading, onEdit, onToggleActive }: Props) {
+export function ListProducts({ products, isLoading, onEdit, onToggleActive, isAdmin = false }: Props) {
   const formatPrice = (price: number): string => {
     return `S/ ${price.toFixed(2)}`;
   };
@@ -19,7 +20,7 @@ export function ListProducts({ products, isLoading, onEdit, onToggleActive }: Pr
     active: product.active ?? true,
   }));
 
-  const columns = [
+  const baseColumns = [
     {
       name: "ID",
       selector: (row: Product) => row.id,
@@ -32,8 +33,8 @@ export function ListProducts({ products, isLoading, onEdit, onToggleActive }: Pr
     },
     {
       name: "Categoría",
-      selector: (row: Product) => row.categoryId,
-      width: "120px",
+      selector: (row: Product) => row.categoryName ?? row.categoryId,
+      width: "150px",
       hide: Media.MD
     },
     {
@@ -44,6 +45,9 @@ export function ListProducts({ products, isLoading, onEdit, onToggleActive }: Pr
       width: "120px",
       center: true
     },
+  ];
+
+  const adminColumns = [
     {
       name: "Activo",
       hide: Media.MD,
@@ -56,8 +60,8 @@ export function ListProducts({ products, isLoading, onEdit, onToggleActive }: Pr
             className="opacity-0 w-0 h-0 peer"
             aria-label={`${row.active ? 'Desactivar' : 'Activar'} ${row.name}`}
           />
-          <span className="absolute top-0 left-0 right-0 bottom-0 bg-gray-300 rounded-full transition-all duration-400 
-                         before:content-[''] before:absolute before:h-[18px] before:w-[18px] before:left-[3px] before:bottom-[3px] 
+          <span className="absolute top-0 left-0 right-0 bottom-0 bg-gray-300 rounded-full transition-all duration-400
+                         before:content-[''] before:absolute before:h-[18px] before:w-[18px] before:left-[3px] before:bottom-[3px]
                          before:bg-white before:rounded-full before:transition-all before:duration-400
                          peer-checked:bg-green-500 peer-checked:before:translate-x-[26px]">
           </span>
@@ -69,7 +73,7 @@ export function ListProducts({ products, isLoading, onEdit, onToggleActive }: Pr
       name: "Editar",
       cell: (data: Product) => (
         <button
-          className="bg-transparent border-none cursor-pointer text-gray-600 p-1 flex items-center justify-center 
+          className="bg-transparent border-none cursor-pointer text-gray-600 p-1 flex items-center justify-center
                      transition-colors duration-200 hover:text-blue-500"
           onClick={() => onEdit(data)}
           title="Editar producto"
@@ -80,6 +84,8 @@ export function ListProducts({ products, isLoading, onEdit, onToggleActive }: Pr
       width: "80px",
     },
   ];
+
+  const columns = isAdmin ? [...baseColumns, ...adminColumns] : baseColumns;
 
   return (
     <div className="overflow-x-auto w-full bg-white rounded-2xl shadow-md">

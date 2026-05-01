@@ -73,7 +73,7 @@ export function AsideNav() {
   });
 
   return (
-    <aside className={`flex flex-col justify-between bg-background text-foreground px-3 py-6 transition-[width] duration-200 ease-in-out overflow-hidden shrink-0 ${isExpanded ? 'w-52' : 'w-16'}`}>
+    <aside className={`flex flex-col justify-between rounded-xl bg-card-background text-foreground p-3 transition-[width] duration-200 ease-in-out overflow-hidden shrink-0 ${isExpanded ? 'w-52' : 'w-16'}`}>
       <section className="flex flex-col gap-5">
         <button
           onClick={toggleExpanded}

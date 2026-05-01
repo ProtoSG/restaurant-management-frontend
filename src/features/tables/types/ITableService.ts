@@ -12,9 +12,9 @@ export interface ITableService {
   createOrder(tableId: number): Promise<Order>;
   getOrderActive(tableId: number): Promise<Order>;
   
-  addItemToOrder(tableId: number, productId: number, quantity?: number): Promise<OrderItem>;
-  updateOrderItem(tableId: number, itemId: number, quantity: number): Promise<OrderItem>;
-  removeOrderItem(tableId: number, itemId: number): Promise<void>;
+  addItemToOrder(orderId: number, productId: number, quantity?: number): Promise<OrderItem>;
+  updateOrderItem(orderId: number, itemId: number, quantity: number): Promise<OrderItem>;
+  removeOrderItem(orderId: number, itemId: number): Promise<void>;
   
   payOrder(orderId: number, paymentMethod: string): Promise<Order>;
   payPartialOrder(orderId: number, amount: number, paymentMethod: string): Promise<Order>;

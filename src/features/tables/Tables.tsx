@@ -27,7 +27,7 @@ export function Tables() {
         buttonLabel="Nueva mesa"
         buttonFunction={tableModal.openCreate}
       />
-      <ListTables 
+      <ListTables
         tableModal={tableModal}
         orderItemsModal={orderItemsModal}
         productListModal={productListModal}

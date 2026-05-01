@@ -71,7 +71,7 @@ export function CardTable( { table, tableModal, orderItemsModal, productListModa
   }
 
   return (
-    <div className={`flex flex-col gap-4 rounded-lg p-3 shadow-[12px_12px_5px_1px] ${shadowColor}`}>
+    <div className={`flex flex-col gap-4 rounded-lg p-3 bg-white shadow-[12px_12px_5px_1px] ${shadowColor}`}>
       <div>
         <div className="flex items-center justify-between font-semibold text-xl">
           <p>Mesa {table.number}</p>
