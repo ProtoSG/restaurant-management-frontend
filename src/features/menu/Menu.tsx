@@ -1,12 +1,15 @@
 import { useCategories, useProducts, useProductModal, useProductFilters } from "@/features/menu";
 import { ModalProductForm, ListProducts } from "@/features/menu";
 import { HeaderSection } from "@/shared/components";
+import { useAuth } from "@/features/auth";
 
 export function Menu() {
   const products = useProducts();
   const modal = useProductModal();
   const filters = useProductFilters(products.products);
   const { categories } = useCategories();
+  const { user } = useAuth();
+  const isAdmin = user?.role === 'ADMIN';
 
   return (
     <>
@@ -16,6 +19,7 @@ export function Menu() {
           subTitle="Administra todos los productos del menú organizados por categoría"
           buttonLabel="Agregar Producto"
           buttonFunction={modal.openCreate}
+          buttonHide={!isAdmin}
         />
 
         <div className="flex flex-wrap gap-3">
@@ -56,6 +60,7 @@ export function Menu() {
           isLoading={products.isLoading}
           onEdit={modal.openEdit}
           onToggleActive={products.toggleProductActive}
+          isAdmin={isAdmin}
         />
       </main>
 

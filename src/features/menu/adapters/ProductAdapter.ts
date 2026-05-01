@@ -4,7 +4,8 @@ export function ProductAdapter(product: ProductResponse): Product {
   return {
     id: product.id,
     name: product.name,
-    categoryId: product.categoryId,
+    categoryId: product.category?.id ?? 0,
+    categoryName: product.category?.name,
     price: product.price,
     active: product.active ?? true
   }
