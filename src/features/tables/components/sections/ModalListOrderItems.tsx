@@ -5,7 +5,7 @@ import { useOrderById, useUpdateOrderItem as useUpdateOrderItemOrder, useRemoveO
 import { Variant } from "@/shared/enums/VariantEnum";
 import { PaymentMethodLabels } from "@/shared/enums/PaymentMethod";
 import { OrderStatus, OrderStatusLabels } from "@/shared/enums/OrderStatus";
-import { FaMinus, FaPlus, FaTrash } from "react-icons/fa";
+import { FaMinus, FaPlus, FaTrash, FaShoppingBag } from "react-icons/fa";
 import { useState, useEffect } from "react";
 import { ModalPaymentConfirmation } from "./ModalPaymentConfirmation";
 import { useAuth } from "@/features/auth";
@@ -213,10 +213,20 @@ export function ModalListOrderItems({ orderItemsModal, productListModal, selecte
             {order.items && order.items.length > 0 ? (
               <ul className="flex flex-col gap-2 overflow-y-auto max-h-40 lg:max-h-52 pr-1">
                 {order.items.map((item) => (
-                  <li key={item.id} className="flex items-center gap-3 px-3 py-2.5 rounded-xl bg-gray-50 border border-gray-100">
+                  <li key={item.id} className={`flex items-center gap-3 px-3 py-2.5 rounded-xl border ${item.isTakeaway ? "bg-orange/5 border-orange/20" : "bg-gray-50 border-gray-100"}`}>
                     <div className="flex-1 min-w-0">
-                      <p className="font-semibold text-sm text-gray-900 truncate">{item.product.name}</p>
-                      <p className="text-xs text-gray-400">S/ {item.product.price.toFixed(2)} c/u</p>
+                      <div className="flex items-center gap-1.5">
+                        <p className="font-semibold text-sm text-gray-900 truncate">{item.product.name}</p>
+                        {item.isTakeaway && (
+                          <FaShoppingBag className="text-orange text-[10px] shrink-0" title="Para llevar" />
+                        )}
+                      </div>
+                      <p className="text-xs text-gray-400">
+                        S/ {item.product.price.toFixed(2)} c/u
+                        {item.isTakeaway && item.takeawaySurcharge ? (
+                          <span className="text-orange ml-1">+S/ {item.takeawaySurcharge.toFixed(2)} llevar</span>
+                        ) : null}
+                      </p>
                     </div>
                     <div className="flex items-center gap-1 flex-shrink-0">
                       <button

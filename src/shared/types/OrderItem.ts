@@ -6,6 +6,8 @@ export interface OrderItem {
   subTotal: number;
   product: OrderProduct;
   notes?: string;
+  isTakeaway?: boolean;
+  takeawaySurcharge?: number;
 }
 
 export interface OrderItemResponse {
@@ -14,4 +16,6 @@ export interface OrderItemResponse {
   subTotal: number;
   product: OrderProductResponse;
   notes?: string;
+  isTakeaway?: boolean;
+  takeawaySurcharge?: number;
 }

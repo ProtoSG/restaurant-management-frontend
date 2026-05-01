@@ -1,5 +1,5 @@
 import { useEffect, useState, type ReactNode } from "react";
-import { MdDashboard, MdTableBar } from "react-icons/md";
+import { MdDashboard, MdTableBar, MdOutlineKitchen, MdSettings } from "react-icons/md";
 import { ItemLink } from "./ItemLink";
 import { IoLogOutOutline } from "react-icons/io5";
 import { useAuth } from "@/features/auth";
@@ -7,7 +7,6 @@ import { useNavigate } from "react-router-dom";
 import { PiBowlFoodFill } from "react-icons/pi";
 import { HiOutlineChevronRight } from "react-icons/hi";
 import { BiSolidDish } from "react-icons/bi"
-import { MdOutlineKitchen } from "react-icons/md"
 import type { RoleName } from "@/features/auth/types/Login";
 
 export interface Section {
@@ -46,6 +45,12 @@ const SECTIONS: Section[] = [
     name: "Carta",
     link: "/menu",
     icon: <PiBowlFoodFill />,
+    roles: ['ADMIN']
+  },
+  {
+    name: "Ajustes",
+    link: "/settings",
+    icon: <MdSettings />,
     roles: ['ADMIN']
   }
 ]

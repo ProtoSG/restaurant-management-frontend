@@ -87,8 +87,8 @@ export function useAddItemToOrder() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: ({ orderId, productId, quantity, notes }: { orderId: number; tableId: number; productId: number; quantity?: number; notes?: string }) =>
-      tableService.addItemToOrder(orderId, productId, quantity, notes),
+    mutationFn: ({ orderId, productId, quantity, notes, isTakeaway }: { orderId: number; tableId: number; productId: number; quantity?: number; notes?: string; isTakeaway?: boolean }) =>
+      tableService.addItemToOrder(orderId, productId, quantity, notes, isTakeaway),
     onSuccess: (_, { tableId }) => {
       queryClient.invalidateQueries({ queryKey: [`order-${tableId}`] });
       queryClient.invalidateQueries({ queryKey: ['tables'] });

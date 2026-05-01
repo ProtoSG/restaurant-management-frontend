@@ -1,6 +1,6 @@
 import { useState } from "react"
 import { Link, useLocation } from "react-router-dom"
-import { MdDashboard, MdTableBar, MdOutlineKitchen } from "react-icons/md"
+import { MdDashboard, MdTableBar, MdOutlineKitchen, MdSettings } from "react-icons/md"
 import { BiSolidDish } from "react-icons/bi"
 import { PiBowlFoodFill } from "react-icons/pi"
 import { IoLogOutOutline } from "react-icons/io5"
@@ -20,7 +20,8 @@ const NAV_ITEMS: NavItem[] = [
   { name: "Pedidos",   link: "/orders", icon: <BiSolidDish />,        roles: ["ADMIN", "CASHIER", "WAITER"] },
   { name: "Cocina",    link: "/chef",   icon: <MdOutlineKitchen />,   roles: ["ADMIN", "CHEF"] },
   { name: "Mesas",     link: "/tables", icon: <MdTableBar />,         roles: ["ADMIN", "CASHIER", "WAITER"] },
-  { name: "Carta",     link: "/menu",   icon: <PiBowlFoodFill />,     roles: ["ADMIN"] },
+  { name: "Carta",     link: "/menu",      icon: <PiBowlFoodFill />,  roles: ["ADMIN"] },
+  { name: "Ajustes",  link: "/settings",  icon: <MdSettings />,      roles: ["ADMIN"] },
 ]
 
 const ROLE_LABELS: Record<RoleName, string> = {

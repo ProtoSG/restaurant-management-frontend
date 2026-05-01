@@ -43,8 +43,8 @@ export function useAddItemToOrder() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: ({ orderId, productId, quantity, notes }: { orderId: number; productId: number; quantity?: number; notes?: string }) =>
-      orderService.addItemToOrder(orderId, productId, quantity, notes),
+    mutationFn: ({ orderId, productId, quantity, notes, isTakeaway }: { orderId: number; productId: number; quantity?: number; notes?: string; isTakeaway?: boolean }) =>
+      orderService.addItemToOrder(orderId, productId, quantity, notes, isTakeaway),
     onSuccess: (_, { orderId }) => {
       queryClient.invalidateQueries({ queryKey: ['order', orderId] });
       queryClient.invalidateQueries({ queryKey: ['active-orders'] });
