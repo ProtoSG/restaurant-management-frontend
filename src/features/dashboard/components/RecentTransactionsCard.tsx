@@ -24,29 +24,6 @@ const PAYMENT_LABELS: Record<string, string> = {
   CREDITCARD: 'Tarjeta',
 };
 
-async function exportOrderPdf(t: Transaction, paymentLabel: string | null) {
-  const { default: html2pdf } = await import('html2pdf.js');
-  const html = `
-    <div style="font-family:sans-serif;padding:24px;color:#111;font-size:14px;max-width:300px;">
-      <h2 style="font-size:16px;font-weight:bold;margin:0 0 4px;">${t.from}</h2>
-      <div style="color:#666;font-size:12px;margin-bottom:16px;">${t.time}</div>
-      <hr style="border:none;border-top:1px solid #eee;margin:12px 0;"/>
-      <div style="display:flex;justify-content:space-between;margin-bottom:6px;">
-        <span style="color:#555;">Método de pago</span>
-        <span>${paymentLabel ?? '—'}</span>
-      </div>
-      <hr style="border:none;border-top:1px solid #eee;margin:12px 0;"/>
-      <div style="display:flex;justify-content:space-between;">
-        <span style="color:#555;">Total pagado</span>
-        <span style="font-size:18px;font-weight:bold;color:#16a34a;">+S/ ${Math.abs(Number(t.amount)).toFixed(2)}</span>
-      </div>
-    </div>
-  `;
-  const el = document.createElement('div');
-  el.innerHTML = html;
-  html2pdf().set({ filename: `orden-${t.from.replace(/\s+/g, '-')}.pdf`, margin: 0 }).from(el).save();
-}
-
 export function RecentTransactionsCard({ transactions }: Props) {
   const safeTransactions = transactions ?? [];
   const [printing, setPrinting] = useState<number | null>(null);
@@ -107,13 +84,6 @@ export function RecentTransactionsCard({ transactions }: Props) {
                   +S/ {Math.abs(Number(transaction.amount ?? 0)).toFixed(2)}
                 </p>
                 <div className="flex items-center gap-0.5 opacity-0 group-hover:opacity-100 transition-opacity">
-                  <button
-                    onClick={() => exportOrderPdf(transaction, paymentLabel)}
-                    title="Exportar PDF"
-                    className="p-1 rounded text-gray-400 hover:text-red-500 hover:bg-red-50 transition-colors"
-                  >
-                    <BsFiletypePdf size={15} />
-                  </button>
                   <button
                     onClick={() => handlePrintThermal(transaction)}
                     disabled={isPrinting || transaction.orderId == null}

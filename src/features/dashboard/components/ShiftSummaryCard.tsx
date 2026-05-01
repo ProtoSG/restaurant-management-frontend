@@ -23,12 +23,12 @@ export function ShiftSummaryCard({ userName, role, dailySales, occupiedTables, t
   return (
     <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 flex flex-col gap-6">
       <div className="flex items-center gap-4">
-        <div className="w-14 h-14 rounded-full bg-background flex items-center justify-center shrink-0">
+        <div className="w-14 h-14 rounded-full bg-card-background flex items-center justify-center shrink-0">
           <span className="text-2xl font-bold text-foreground">{initial}</span>
         </div>
         <div className="min-w-0">
           <p className="font-bold text-gray-900 text-lg leading-tight truncate">{userName}</p>
-          <span className="inline-block mt-1 text-xs font-semibold px-2.5 py-0.5 rounded-full bg-green/15 text-background">
+          <span className="inline-block mt-1 text-xs font-semibold px-2.5 py-0.5 rounded-full bg-green/45 text-foreground-dark">
             {roleLabel}
           </span>
         </div>

@@ -159,7 +159,7 @@ export function useAllDashboardData() {
   const dailyBalance = useDailyBalance();
   const earningsSummary = useEarningsSummary('daily', today);
   const topProducts = useTopProducts(5);
-  const tableTransfers = useTableTransfers(today, 10);
+  // const tableTransfers = useTableTransfers(today, 10);
   const dailySalesByPayment = useDailySalesByPayment(today);
   const weeklySales = useWeeklySales();
   const recentPaidOrders = useRecentPaidOrders(today, 10);
@@ -169,7 +169,7 @@ export function useAllDashboardData() {
     dailyBalance.error ||
     earningsSummary.error ||
     topProducts.error ||
-    tableTransfers.error ||
+    // tableTransfers.error ||
     dailySalesByPayment.error ||
     weeklySales.error;
 
@@ -178,7 +178,7 @@ export function useAllDashboardData() {
     dailyBalance.data ||
     earningsSummary.data ||
     topProducts.data ||
-    tableTransfers.data ||
+    // tableTransfers.data ||
     dailySalesByPayment.data ||
     weeklySales.data;
 
@@ -187,7 +187,7 @@ export function useAllDashboardData() {
     dailyBalance.isLoading ||
     earningsSummary.isLoading ||
     topProducts.isLoading ||
-    tableTransfers.isLoading ||
+    // tableTransfers.isLoading ||
     dailySalesByPayment.isLoading ||
     weeklySales.isLoading;
 
@@ -196,7 +196,7 @@ export function useAllDashboardData() {
     dailyBalance,
     earningsSummary,
     topProducts,
-    tableTransfers,
+    // tableTransfers,
     dailySalesByPayment,
     weeklySales,
     recentPaidOrders,

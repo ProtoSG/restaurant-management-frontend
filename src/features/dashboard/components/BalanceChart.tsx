@@ -30,8 +30,8 @@ export function BalanceChart({ data, rate, balance }: Props) {
     <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
       <div className="flex items-center justify-between mb-6">
         <div className="flex items-center gap-2">
-          <h3 className="text-lg font-bold text-gray-900">Ventas por día</h3>
-          <span className="bg-green/15 text-background text-xs font-semibold px-2 py-1 rounded-full">
+          <h3 className="text-lg font-bold text-foreground-dark">Ventas por día</h3>
+          <span className="bg-green/40 text-foreground-dark text-xs font-semibold px-2 py-1 rounded-full">
             Últimos 30 días
           </span>
         </div>
