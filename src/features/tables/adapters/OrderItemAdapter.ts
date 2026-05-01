@@ -6,6 +6,8 @@ export function orderItemAdapter(orderItem: OrderItemResponse): OrderItem {
     quantity: orderItem.quantity,
     subTotal: orderItem.subTotal,
     product: orderItem.product,
-    notes: orderItem.notes
+    notes: orderItem.notes,
+    isTakeaway: orderItem.isTakeaway ?? false,
+    takeawaySurcharge: orderItem.takeawaySurcharge ?? 0,
   }
 }

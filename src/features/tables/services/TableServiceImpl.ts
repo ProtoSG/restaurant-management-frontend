@@ -39,8 +39,8 @@ export class TableServiceImpl implements ITableService {
     return orderAdapter(data);
   }
 
-  async addItemToOrder(orderId: number, productId: number, quantity: number = 1, notes?: string): Promise<OrderItem> {
-    const { data } = await defaultApiClient.post<OrderItem>(`/orders/${orderId}/items`, { productId, quantity, notes });
+  async addItemToOrder(orderId: number, productId: number, quantity: number = 1, notes?: string, isTakeaway?: boolean): Promise<OrderItem> {
+    const { data } = await defaultApiClient.post<OrderItem>(`/orders/${orderId}/items`, { productId, quantity, notes, isTakeaway: isTakeaway ?? false });
     return orderItemAdapter(data);
   }
 

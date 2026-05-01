@@ -29,17 +29,19 @@ export class OrderServiceImpl {
     return orderAdapter(response);
   }
 
-  async addItemToOrder(orderId: number, productId: number, quantity = 1, notes?: string): Promise<void> {
+  async addItemToOrder(orderId: number, productId: number, quantity = 1, notes?: string, isTakeaway?: boolean): Promise<void> {
     await defaultApiClient.post(`/orders/${orderId}/items`, {
       productId,
       quantity,
-      notes
+      notes,
+      isTakeaway: isTakeaway ?? false,
     });
   }
 
-  async updateOrderItem(orderId: number, itemId: number, quantity: number): Promise<void> {
+  async updateOrderItem(orderId: number, itemId: number, quantity: number, isTakeaway?: boolean): Promise<void> {
     await defaultApiClient.put(`/orders/${orderId}/items/${itemId}`, {
-      quantity
+      quantity,
+      isTakeaway,
     });
   }
 

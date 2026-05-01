@@ -1,7 +1,8 @@
 import { useProductsByCategoryId, useProducts, useSelectedCategory, type Product } from "@/features/menu"
 import { useSelectedTable, useAddItemToOrder as useAddItemToOrderTable, useOrderActive, useCreateOrder } from "@/features/tables"
 import { useAddItemToOrder as useAddItemToOrderOrders } from "@/features/orders"
-import { FaSearch, FaPlus, FaMinus } from "react-icons/fa";
+import { useTakeawaySurcharge } from "@/shared/hooks/useTakeawaySurcharge"
+import { FaSearch, FaPlus, FaMinus, FaShoppingBag } from "react-icons/fa";
 import { useRef, useState } from "react";
 
 interface Props {
@@ -16,11 +17,13 @@ interface PendingItem {
   product: Product;
   notes: string;
   quantity: number;
+  isTakeaway: boolean;
 }
 
 export function ListProducts({ searchTerm, setSearchTerm, selectedTable, selectedCategory, orderId }: Props) {
   const inputRef = useRef<HTMLInputElement>(null);
   const [pendingItem, setPendingItem] = useState<PendingItem | null>(null);
+  const surcharge = useTakeawaySurcharge();
 
   const isSearching = searchTerm.trim().length > 0;
   const { products: categoryProducts, isLoading: isLoadingCategory, error: errorCategory } = useProductsByCategoryId(selectedCategory.selectedCategory?.id || 0);
@@ -35,15 +38,16 @@ export function ListProducts({ searchTerm, setSearchTerm, selectedTable, selecte
   const error = isSearching ? errorAll : errorCategory;
 
   const handleAddItem = async (product: Product) => {
-    setPendingItem({ product, notes: "", quantity: 1 });
+    setPendingItem({ product, notes: "", quantity: 1, isTakeaway: false });
   };
 
   const handleConfirm = async () => {
     if (!pendingItem) return;
     try {
       const notes = pendingItem.notes.trim() || undefined;
+      const isTakeaway = pendingItem.isTakeaway;
       if (orderId) {
-        await addItemOrdersMutation.mutateAsync({ orderId, productId: pendingItem.product.id, quantity: pendingItem.quantity, notes });
+        await addItemOrdersMutation.mutateAsync({ orderId, productId: pendingItem.product.id, quantity: pendingItem.quantity, notes, isTakeaway });
       } else {
         if (!selectedTable.selectedTable) return;
         let currentOrderId = activeOrder?.id;
@@ -57,6 +61,7 @@ export function ListProducts({ searchTerm, setSearchTerm, selectedTable, selecte
           productId: pendingItem.product.id,
           quantity: pendingItem.quantity,
           notes,
+          isTakeaway,
         });
       }
     } catch (error) {
@@ -155,7 +160,12 @@ export function ListProducts({ searchTerm, setSearchTerm, selectedTable, selecte
             <div className="flex items-start justify-between gap-3">
               <div>
                 <p className="font-semibold text-gray-900">{pendingItem.product.name}</p>
-                <p className="text-sm text-gray-400">S/ {pendingItem.product.price.toFixed(2)}</p>
+                <p className="text-sm text-gray-400">
+                  S/ {(pendingItem.product.price + (pendingItem.isTakeaway ? surcharge : 0)).toFixed(2)} c/u
+                  {pendingItem.isTakeaway && (
+                    <span className="ml-1 text-orange font-medium">(+S/ {surcharge.toFixed(2)} llevar)</span>
+                  )}
+                </p>
               </div>
               <div className="flex items-center gap-2 shrink-0">
                 <button
@@ -177,6 +187,22 @@ export function ListProducts({ searchTerm, setSearchTerm, selectedTable, selecte
                 </button>
               </div>
             </div>
+
+            {/* Toggle para llevar */}
+            <button
+              onClick={() => setPendingItem({ ...pendingItem, isTakeaway: !pendingItem.isTakeaway })}
+              className={`flex items-center gap-2.5 w-full px-3.5 py-2.5 rounded-xl border-2 transition-colors cursor-pointer text-sm font-medium ${
+                pendingItem.isTakeaway
+                  ? "border-orange bg-orange/10 text-orange"
+                  : "border-gray-200 text-gray-500"
+              }`}
+            >
+              <FaShoppingBag className="text-sm shrink-0" />
+              <span className="flex-1 text-left">Para llevar</span>
+              <div className={`w-10 h-5 rounded-full transition-colors relative shrink-0 ${pendingItem.isTakeaway ? "bg-orange" : "bg-gray-200"}`}>
+                <div className={`absolute top-0.5 w-4 h-4 rounded-full bg-white shadow transition-all ${pendingItem.isTakeaway ? "left-5" : "left-0.5"}`} />
+              </div>
+            </button>
             <div className="flex flex-col gap-1.5">
               <label className="text-sm font-medium text-gray-700">Nota (opcional)</label>
               <input
@@ -202,7 +228,10 @@ export function ListProducts({ searchTerm, setSearchTerm, selectedTable, selecte
                 disabled={isAdding}
                 className="flex-1 py-3 rounded-xl bg-green text-white text-sm font-semibold disabled:opacity-40 cursor-pointer"
               >
-                {isAdding ? "Agregando..." : "Agregar"}
+                {isAdding
+                  ? "Agregando..."
+                  : `Agregar — S/ ${((pendingItem.product.price + (pendingItem.isTakeaway ? surcharge : 0)) * pendingItem.quantity).toFixed(2)}`
+                }
               </button>
             </div>
           </div>

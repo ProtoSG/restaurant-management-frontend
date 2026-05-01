@@ -2,6 +2,7 @@ import { Navigate, Route, Routes } from "react-router-dom"
 import { Tables } from "./features/tables"
 import { Menu } from "./features/menu"
 import { Dashboard } from "./features/dashboard"
+import { Settings } from "./features/settings"
 import { Layout } from "./shared/layouts/Layout"
 import { ProtectedRoute } from "./ProtectedRoute"
 import { Login } from "./features/auth"
@@ -64,6 +65,11 @@ function App() {
           <Route path="/menu" element={
             <RoleGuard allowed={['ADMIN']}>
               <Menu />
+            </RoleGuard>
+          } />
+          <Route path="/settings" element={
+            <RoleGuard allowed={['ADMIN']}>
+              <Settings />
             </RoleGuard>
           } />
           <Route path="*" element={<Navigate to="/" replace />} />
