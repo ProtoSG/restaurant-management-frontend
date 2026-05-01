@@ -1,7 +1,7 @@
 import { useProductsByCategoryId, useProducts, useSelectedCategory, type Product } from "@/features/menu"
-import { useSelectedTable, useAddItemToOrder as useAddItemToOrderTable } from "@/features/tables"
+import { useSelectedTable, useAddItemToOrder as useAddItemToOrderTable, useOrderActive, useCreateOrder } from "@/features/tables"
 import { useAddItemToOrder as useAddItemToOrderOrders } from "@/features/orders"
-import { FaSearch, FaPlus } from "react-icons/fa";
+import { FaSearch, FaPlus, FaMinus } from "react-icons/fa";
 import { useRef, useState } from "react";
 
 interface Props {
@@ -15,6 +15,7 @@ interface Props {
 interface PendingItem {
   product: Product;
   notes: string;
+  quantity: number;
 }
 
 export function ListProducts({ searchTerm, setSearchTerm, selectedTable, selectedCategory, orderId }: Props) {
@@ -24,6 +25,8 @@ export function ListProducts({ searchTerm, setSearchTerm, selectedTable, selecte
   const isSearching = searchTerm.trim().length > 0;
   const { products: categoryProducts, isLoading: isLoadingCategory, error: errorCategory } = useProductsByCategoryId(selectedCategory.selectedCategory?.id || 0);
   const { products: allProducts, isLoading: isLoadingAll, error: errorAll } = useProducts();
+  const { order: activeOrder } = useOrderActive(selectedTable.selectedTable?.id || 0, !orderId && !!selectedTable.selectedTable);
+  const createOrderMutation = useCreateOrder();
   const addItemTableMutation = useAddItemToOrderTable();
   const addItemOrdersMutation = useAddItemToOrderOrders();
 
@@ -32,7 +35,7 @@ export function ListProducts({ searchTerm, setSearchTerm, selectedTable, selecte
   const error = isSearching ? errorAll : errorCategory;
 
   const handleAddItem = async (product: Product) => {
-    setPendingItem({ product, notes: "" });
+    setPendingItem({ product, notes: "", quantity: 1 });
   };
 
   const handleConfirm = async () => {
@@ -40,13 +43,19 @@ export function ListProducts({ searchTerm, setSearchTerm, selectedTable, selecte
     try {
       const notes = pendingItem.notes.trim() || undefined;
       if (orderId) {
-        await addItemOrdersMutation.mutateAsync({ orderId, productId: pendingItem.product.id, quantity: 1, notes });
+        await addItemOrdersMutation.mutateAsync({ orderId, productId: pendingItem.product.id, quantity: pendingItem.quantity, notes });
       } else {
         if (!selectedTable.selectedTable) return;
+        let currentOrderId = activeOrder?.id;
+        if (!currentOrderId) {
+          const newOrder = await createOrderMutation.mutateAsync(selectedTable.selectedTable.id);
+          currentOrderId = newOrder.id;
+        }
         await addItemTableMutation.mutateAsync({
+          orderId: currentOrderId,
           tableId: selectedTable.selectedTable.id,
           productId: pendingItem.product.id,
-          quantity: 1,
+          quantity: pendingItem.quantity,
           notes,
         });
       }
@@ -57,7 +66,7 @@ export function ListProducts({ searchTerm, setSearchTerm, selectedTable, selecte
     }
   };
 
-  const isAdding = addItemTableMutation.isPending || addItemOrdersMutation.isPending;
+  const isAdding = createOrderMutation.isPending || addItemTableMutation.isPending || addItemOrdersMutation.isPending;
 
   const filteredProducts = products.filter((product: Product) =>
     product.name.toLowerCase().includes(searchTerm.toLowerCase())
@@ -143,9 +152,30 @@ export function ListProducts({ searchTerm, setSearchTerm, selectedTable, selecte
             className="bg-white w-full max-w-md rounded-t-2xl sm:rounded-2xl p-5 flex flex-col gap-4"
             onClick={(e) => e.stopPropagation()}
           >
-            <div>
-              <p className="font-semibold text-gray-900">{pendingItem.product.name}</p>
-              <p className="text-sm text-gray-400">S/ {pendingItem.product.price.toFixed(2)}</p>
+            <div className="flex items-start justify-between gap-3">
+              <div>
+                <p className="font-semibold text-gray-900">{pendingItem.product.name}</p>
+                <p className="text-sm text-gray-400">S/ {pendingItem.product.price.toFixed(2)}</p>
+              </div>
+              <div className="flex items-center gap-2 shrink-0">
+                <button
+                  onClick={() => setPendingItem({ ...pendingItem, quantity: Math.max(1, pendingItem.quantity - 1) })}
+                  className="w-9 h-9 flex items-center justify-center rounded-xl border-2 border-gray-200 text-gray-600 active:bg-gray-50 transition-colors cursor-pointer"
+                  aria-label="Disminuir cantidad"
+                >
+                  <FaMinus className="text-xs" />
+                </button>
+                <span className="w-6 text-center text-base font-semibold text-gray-900 tabular-nums">
+                  {pendingItem.quantity}
+                </span>
+                <button
+                  onClick={() => setPendingItem({ ...pendingItem, quantity: pendingItem.quantity + 1 })}
+                  className="w-9 h-9 flex items-center justify-center rounded-xl bg-green text-white active:opacity-75 transition-opacity cursor-pointer"
+                  aria-label="Aumentar cantidad"
+                >
+                  <FaPlus className="text-xs" />
+                </button>
+              </div>
             </div>
             <div className="flex flex-col gap-1.5">
               <label className="text-sm font-medium text-gray-700">Nota (opcional)</label>

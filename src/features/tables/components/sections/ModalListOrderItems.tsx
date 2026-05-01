@@ -82,7 +82,7 @@ export function ModalListOrderItems({ orderItemsModal, productListModal, selecte
         if (isOrderMode) {
           await removeOrderItemOrder.mutateAsync({ orderId, itemId });
         } else {
-          await removeOrderItemTable.mutateAsync({ tableId: selectedTable.selectedTable!.id, itemId });
+          await removeOrderItemTable.mutateAsync({ orderId: order!.id, tableId: selectedTable.selectedTable!.id, itemId });
         }
       } catch (error) {
         console.error('Error al eliminar item:', error);
@@ -97,6 +97,7 @@ export function ModalListOrderItems({ orderItemsModal, productListModal, selecte
           });
         } else {
           await updateOrderItemTable.mutateAsync({
+            orderId: order!.id,
             tableId: selectedTable.selectedTable!.id,
             itemId,
             quantity: newQuantity
@@ -186,17 +187,17 @@ export function ModalListOrderItems({ orderItemsModal, productListModal, selecte
               </div>
               {canPay && (
                 <div className="flex items-center gap-2">
-                  {order && (
-                    <button
-                      onClick={() => markAsPendingMutation.mutate({ orderId: order.id, tableId: selectedTable.selectedTable?.id })}
-                      disabled={markAsPendingMutation.isPending}
-                      title="Marcar como Pendiente"
-                      className="flex items-center gap-1.5 text-sm font-medium text-yellow-600 border border-yellow-400 rounded-lg px-3 py-1.5 hover:bg-yellow-400 hover:text-white transition-colors cursor-pointer disabled:opacity-50"
-                    >
-                      <FaClock className="text-xs" />
-                      Pendiente
-                    </button>
-                  )}
+                  {/* {order && ( */}
+                  {/*   <button */}
+                  {/*     onClick={() => markAsPendingMutation.mutate({ orderId: order.id, tableId: selectedTable.selectedTable?.id })} */}
+                  {/*     disabled={markAsPendingMutation.isPending} */}
+                  {/*     title="Marcar como Pendiente" */}
+                  {/*     className="flex items-center gap-1.5 text-sm font-medium text-yellow-600 border border-yellow-400 rounded-lg px-3 py-1.5 hover:bg-yellow-400 hover:text-white transition-colors cursor-pointer disabled:opacity-50" */}
+                  {/*   > */}
+                  {/*     <FaClock className="text-xs" /> */}
+                  {/*     Pendiente */}
+                  {/*   </button> */}
+                  {/* )} */}
                   <button
                     onClick={handleAddItem}
                     disabled={createOrderMutation.isPending}
