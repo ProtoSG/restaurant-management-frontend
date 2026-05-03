@@ -1,6 +1,6 @@
 import type { OrderStatus } from "../enums/OrderStatus";
 import type { OrderType } from "../enums/OrderType";
-import type { OrderItem } from "./OrderItem";
+import type { OrderItem, OrderItemResponse } from "./OrderItem";
 import type { Transaction } from "./Transaction";
 
 export interface Order {
@@ -28,7 +28,7 @@ export interface OrderResponse {
   type: OrderType;
   customerName?: string;
   total: number;
-  items: OrderItem[];
+  items: OrderItemResponse[];
   paidAmount?: number;
   remainingAmount?: number;
   transactions?: Transaction[];

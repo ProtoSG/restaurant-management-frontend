@@ -1,5 +1,4 @@
 import { orderAdapter } from "../adapters/OrderAdapter";
-import { orderItemAdapter } from "../adapters/OrderItemAdapter";
 import { tableAdapater } from "../adapters/TableAdapter";
 import defaultApiClient from "@/shared/utils/apiClient";
 import type { ITableService } from "../types/ITableService";
@@ -41,12 +40,11 @@ export class TableServiceImpl implements ITableService {
 
   async addItemToOrder(orderId: number, productId: number, quantity: number = 1, notes?: string, isTakeaway?: boolean): Promise<OrderItem> {
     const { data } = await defaultApiClient.post<OrderItem>(`/orders/${orderId}/items`, { productId, quantity, notes, isTakeaway: isTakeaway ?? false });
-    return orderItemAdapter(data);
+    return data;
   }
 
-  async updateOrderItem(orderId: number, itemId: number, quantity: number, notes?: string): Promise<OrderItem> {
-    const { data } = await defaultApiClient.put<OrderItem>(`/orders/${orderId}/items/${itemId}`, { quantity, notes });
-    return orderItemAdapter(data);
+  async updateOrderItem(orderId: number, itemId: number, quantity: number, notes?: string): Promise<void> {
+    await defaultApiClient.put(`/orders/${orderId}/items/${itemId}`, { quantity, notes });
   }
 
   async removeOrderItem(orderId: number, itemId: number): Promise<void> {
