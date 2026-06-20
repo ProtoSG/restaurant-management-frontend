@@ -1,9 +1,11 @@
-import { useCallback, useState } from "react";
+import { useCallback, useRef, useState } from "react";
 
 export function useOrderModal() {
   const [isOpen, setIsOpen] = useState(false);
+  const sourceRef = useRef<HTMLElement | null>(null);
 
-  const openCreate = useCallback(() => {
+  const openCreate = useCallback((source?: HTMLElement) => {
+    sourceRef.current = source ?? null;
     setIsOpen(true);
   }, []);
 
@@ -11,9 +13,5 @@ export function useOrderModal() {
     setIsOpen(false);
   }, []);
 
-  return {
-    isOpen,
-    openCreate,
-    close,
-  };
+  return { isOpen, openCreate, close, sourceRef };
 }

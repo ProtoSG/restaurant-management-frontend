@@ -1,5 +1,5 @@
 import { useState, useCallback } from "react";
-import { HeaderSection, Tag } from "@/shared/components";
+import { HeaderSection, Tag, SkeletonCard, ErrorState, EmptyState } from "@/shared/components";
 import { useActiveOrders } from "./hooks/useOrders";
 import { useOrderModal } from "./hooks/useOrderModal";
 import { ModalCreateOrder } from "./components/sections/ModalCreateOrder";
@@ -7,20 +7,9 @@ import { useOrderItemsModal, useProductListModal, usePaymentConfirmationModal, u
 import { useSelectedCategory } from "@/features/menu";
 import type { Order } from "@/shared/types/Order";
 import { OrderStatus, OrderStatusLabels } from "@/shared/enums/OrderStatus";
-import { OrderType, OrderTypeLabels } from "@/shared/enums/OrderType";
+import { OrderTypeLabels } from "@/shared/enums/OrderType";
 import { Variant } from "@/shared/enums/VariantEnum";
-import { FaConciergeBell, FaShoppingBag, FaTruck } from "react-icons/fa";
-
-function getTypeIcon(type: OrderType) {
-  switch (type) {
-    case OrderType.DINE_IN:
-      return <FaConciergeBell className="text-lg" />;
-    case OrderType.TAKEAWAY:
-      return <FaShoppingBag className="text-lg" />;
-    case OrderType.DELIVERY:
-      return <FaTruck className="text-lg" />;
-  }
-}
+import { getTypeIcon } from "@/shared/utils/getTypeIcon";
 
 function getStatusVariant(status: OrderStatus): Variant {
   switch (status) {
@@ -49,7 +38,7 @@ export function Orders() {
 
   const handleOrderCreated = useCallback((order: Order) => {
     setSelectedOrderId(order.id);
-    if (!order.items || order.items.length === 0) {
+    if ((!order.items || order.items.length === 0) && window.innerWidth < 1024) {
       productListModal.open();
     } else {
       orderItemsModal.open();
@@ -57,65 +46,39 @@ export function Orders() {
   }, [productListModal, orderItemsModal]);
 
   return (
-    <main className="flex flex-col w-full gap-4">
+    <main className="flex flex-col w-full gap-4 p-6">
       <HeaderSection
         title="Gestión de Pedidos"
         subTitle="Administra todos los pedidos activos"
         buttonLabel="Nuevo Pedido"
-        buttonFunction={orderModal.openCreate}
+        buttonFunction={(src) => orderModal.openCreate(src)}
       />
 
-      {isLoading && (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-          {Array.from({ length: 8 }).map((_, i) => (
-            <div key={i} className="rounded-xl border border-gray-100 p-4 flex flex-col gap-3 animate-pulse">
-              <div className="flex justify-between items-start">
-                <div className="flex items-center gap-2">
-                  <div className="w-9 h-9 rounded-lg bg-gray-200" />
-                  <div className="flex flex-col gap-1.5">
-                    <div className="h-4 w-20 bg-gray-200 rounded" />
-                    <div className="h-3 w-14 bg-gray-200 rounded" />
-                  </div>
-                </div>
-                <div className="h-5 w-16 bg-gray-200 rounded-full" />
-              </div>
-              <div className="flex flex-col gap-2">
-                <div className="h-3 w-full bg-gray-100 rounded" />
-                <div className="h-3 w-4/5 bg-gray-100 rounded" />
-                <div className="h-3 w-3/5 bg-gray-100 rounded" />
-              </div>
-              <div className="pt-3 border-t border-gray-100 flex justify-between items-center">
-                <div className="h-3 w-12 bg-gray-200 rounded" />
-                <div className="h-5 w-16 bg-gray-200 rounded" />
-              </div>
-            </div>
-          ))}
-        </div>
-      )}
+      {isLoading && <SkeletonCard count={8} />}
 
       {error !== undefined && error !== null && (
-        <div className="flex justify-center py-8">
-          <p className="text-red">Error al cargar pedidos</p>
-        </div>
+        <ErrorState message="Error al cargar pedidos" />
       )}
 
       {!isLoading && !error && orders.length === 0 && (
-        <div className="flex justify-center py-8">
-          <p className="text-gray-500">No hay pedidos activos</p>
-        </div>
+        <EmptyState message="No hay pedidos activos" />
       )}
 
       {!isLoading && !error && orders.length > 0 && (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-4 gap-4">
           {orders.map((order) => (
             <div
               key={order.id}
-              onClick={() => {
+              onClick={(e) => {
                 setSelectedOrderId(order.id);
-                if (!order.items || order.items.length === 0) productListModal.open();
-                else orderItemsModal.open();
+                const source = e.currentTarget as HTMLElement;
+                if ((!order.items || order.items.length === 0) && window.innerWidth < 1024) {
+                  productListModal.open(source);
+                } else {
+                  orderItemsModal.open(source);
+                }
               }}
-              className="bg-white rounded-2xl border shadow-md border-gray-100 hover:shadow-md transition-shadow p-4 flex flex-col cursor-pointer"
+              className="bg-white rounded-2xl p-6 shadow-[12px_12px_5px_1px] shadow-card-background border border-gray-100 flex flex-col cursor-pointer"
             >
               <div className="flex justify-between items-start mb-3 gap-2">
                 <div className="flex items-center gap-3">
@@ -143,21 +106,32 @@ export function Orders() {
 
               <div className="flex-1">
                 {order.items && order.items.length > 0 ? (
-                  <ul className="space-y-2">
-                    {order.items.slice(0, 4).map((item) => (
-                      <li key={item.id} className="flex justify-between text-sm">
-                        <span className="text-gray-700">
-                          {item.quantity}x {item.product.name}
-                        </span>
-                        <span className="text-gray-500 text-nowrap">S/ {item.subTotal.toFixed(2)}</span>
-                      </li>
+                  <div className="space-y-3">
+                    {Object.entries(
+                      order.items.reduce<Record<string, typeof order.items>>((acc, item) => {
+                        const cat = item.product.category?.name ?? "Otros";
+                        if (!acc[cat]) acc[cat] = [];
+                        acc[cat].push(item);
+                        return acc;
+                      }, {})
+                    ).map(([category, items]) => (
+                      <div key={category}>
+                        <p className="text-[10px] font-semibold uppercase tracking-widest text-gray-400 mb-1">
+                          {category}
+                        </p>
+                        <ul className="space-y-1">
+                          {items.map((item) => (
+                            <li key={item.id} className="flex justify-between text-sm">
+                              <span className="text-gray-700">
+                                {item.quantity}x {item.product.name}
+                              </span>
+                              <span className="text-gray-500 text-nowrap">S/ {item.subTotal.toFixed(2)}</span>
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
                     ))}
-                    {order.items.length > 4 && (
-                      <li className="text-xs text-gray-400 italic">
-                        + {order.items.length - 4} más...
-                      </li>
-                    )}
-                  </ul>
+                  </div>
                 ) : (
                   <p className="text-sm text-gray-400 italic">Sin items</p>
                 )}
@@ -181,6 +155,7 @@ export function Orders() {
         productListModal={productListModal}
         selectedTable={selectedTable}
         paymentModal={paymentModal}
+        selectedCategory={selectedCategory}
         orderId={selectedOrderId || undefined}
       />
       <ModalProductList

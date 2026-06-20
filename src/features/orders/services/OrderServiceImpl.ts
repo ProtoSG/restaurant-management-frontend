@@ -1,5 +1,6 @@
 import { orderAdapter } from "../adapters/OrderAdapter";
 import defaultApiClient from "@/shared/utils/apiClient";
+import { THERMAL_PRINTER_URL } from "@/shared/Config";
 import type { Order, OrderResponse } from "@/shared/types/Order";
 import type { CreateOrderRequest } from "../schemas/Order.schema";
 
@@ -59,11 +60,6 @@ export class OrderServiceImpl {
     return orderAdapter(data);
   }
 
-  async markAsPending(orderId: number): Promise<Order> {
-    const { data } = await defaultApiClient.post<OrderResponse>(`/orders/${orderId}/pending`);
-    return orderAdapter(data);
-  }
-
   async payOrder(orderId: number, paymentMethod: string): Promise<Order> {
     const { data } = await defaultApiClient.post<OrderResponse>(`/orders/${orderId}/pay/${paymentMethod}`);
     return orderAdapter(data);
@@ -78,7 +74,7 @@ export class OrderServiceImpl {
   }
 
   async printThermal(order: import("@/shared/types/Order").Order): Promise<void> {
-    const res = await fetch("http://127.0.0.1:3001/print", {
+    const res = await fetch(THERMAL_PRINTER_URL, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(order),

@@ -29,7 +29,7 @@ interface Props {
 }
 
 export function ModalCreateOrder({ modal, onOrderCreated }: Props) {
-  const dialogRef = useModal(modal.isOpen);
+  const dialogRef = useModal(modal.isOpen, modal.sourceRef);
   const { tables = [] } = useTables();
   const createOrderMutation = useCreateOrder();
   const [selectedType, setSelectedType] = useState<OrderType | undefined>(undefined);

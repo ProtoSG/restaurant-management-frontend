@@ -43,15 +43,44 @@ export function useAddItemToOrder() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: ({ orderId, productId, quantity, notes, isTakeaway }: { orderId: number; productId: number; quantity?: number; notes?: string; isTakeaway?: boolean }) =>
-      orderService.addItemToOrder(orderId, productId, quantity, notes, isTakeaway),
-    onSuccess: (_, { orderId }) => {
+    mutationFn: ({ orderId, productId, quantity, notes, isTakeaway }: {
+      orderId: number;
+      productId: number;
+      quantity?: number;
+      notes?: string;
+      isTakeaway?: boolean;
+      product?: import("@/shared/types/OrderProduct").OrderProduct;
+    }) => orderService.addItemToOrder(orderId, productId, quantity, notes, isTakeaway),
+
+    onMutate: async ({ orderId, quantity = 1, product }) => {
+      if (!product) return undefined;
+      await queryClient.cancelQueries({ queryKey: ['order', orderId] });
+      const previous = queryClient.getQueryData<import("@/shared/types/Order").Order>(['order', orderId]);
+      if (previous) {
+        const optimisticItem: import("@/shared/types/OrderItem").OrderItem = {
+          id: -Date.now(),
+          quantity,
+          subTotal: product.price * quantity,
+          product,
+        };
+        queryClient.setQueryData<import("@/shared/types/Order").Order>(['order', orderId], {
+          ...previous,
+          items: [...previous.items, optimisticItem],
+          total: previous.total + optimisticItem.subTotal,
+        });
+      }
+      return { previous };
+    },
+
+    onError: (error, { orderId }, ctx) => {
+      if (ctx?.previous) queryClient.setQueryData(['order', orderId], ctx.previous);
+      console.error('Error al agregar item:', error);
+    },
+
+    onSettled: (_, __, { orderId }) => {
       queryClient.invalidateQueries({ queryKey: ['order', orderId] });
       queryClient.invalidateQueries({ queryKey: ['active-orders'] });
     },
-    onError: (error) => {
-      console.error('Error al agregar item:', error);
-    }
   });
 }
 
@@ -118,22 +147,6 @@ export function useMarkOrderAsReady() {
     },
     onError: (error) => {
       console.error('Error al marcar orden como lista:', error);
-    }
-  });
-}
-
-export function useMarkOrderAsPending() {
-  const queryClient = useQueryClient();
-
-  return useMutation({
-    mutationFn: ({ orderId }: { orderId: number; tableId?: number }) => orderService.markAsPending(orderId),
-    onSuccess: (_, { orderId, tableId }) => {
-      queryClient.invalidateQueries({ queryKey: ['order', orderId] });
-      queryClient.invalidateQueries({ queryKey: ['active-orders'] });
-      if (tableId) queryClient.invalidateQueries({ queryKey: [`order-${tableId}`] });
-    },
-    onError: (error) => {
-      console.error('Error al marcar orden como pendiente:', error);
     }
   });
 }
