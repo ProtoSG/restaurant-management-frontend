@@ -11,7 +11,7 @@ export interface OrderItem {
 }
 
 export interface OrderItemResponse {
-  orderId: number;
+  id: number;
   quantity: number;
   subTotal: number;
   product: OrderProductResponse;
