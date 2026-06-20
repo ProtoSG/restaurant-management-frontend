@@ -12,5 +12,5 @@ export interface ProductResponse {
   name: string;
   price: number;
   category?: { id: number; name: string };
-  active?: boolean;
+  isAvailable?: boolean;
 }

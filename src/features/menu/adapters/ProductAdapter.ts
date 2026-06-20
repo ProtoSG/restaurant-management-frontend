@@ -7,6 +7,6 @@ export function ProductAdapter(product: ProductResponse): Product {
     categoryId: product.category?.id ?? 0,
     categoryName: product.category?.name,
     price: product.price,
-    active: product.active ?? true
+    active: product.isAvailable ?? true
   }
 }
