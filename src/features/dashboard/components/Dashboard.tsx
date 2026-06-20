@@ -185,13 +185,13 @@ export function Dashboard() {
       : 'Ventas estables respecto al período anterior');
 
   return (
-    <div className="flex-1 overflow-y-auto">
-      <div className="mb-5 lg:mb-8">
+    <div className="flex-1 flex flex-col h-full p-6 gap-5 lg:gap-6">
+      <div className="shrink-0">
         <h1 className="text-2xl lg:text-4xl font-bold text-gray-900 mb-1">Hola, {displayName}!</h1>
         <p className="text-sm lg:text-base text-gray-600">Explora la información y actividad de tu restaurante</p>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 shrink-0">
         <StatCard
           title="Ventas del día"
           value={formatCurrency(dailySalesValue)}
@@ -226,7 +226,7 @@ export function Dashboard() {
         />
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 shrink-0">
         <div className="lg:col-span-2">
           <BalanceChart
             data={balanceData}
@@ -244,16 +244,16 @@ export function Dashboard() {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="lg:col-span-1">
+      <div className="grid grid-cols-1 lg:grid-cols-3 lg:grid-rows-1 gap-6 flex-1 min-h-0">
+        <div className="lg:col-span-1 h-full">
           <TopProductsCard products={topProductsList} />
         </div>
 
-        <div className="lg:col-span-1">
+        <div className="lg:col-span-1 h-full">
           <RecentTransactionsCard transactions={recentTransactions} />
         </div>
 
-        <div className="lg:col-span-1">
+        <div className="lg:col-span-1 h-full">
           <ShiftSummaryCard
             userName={displayName}
             role={user?.role}

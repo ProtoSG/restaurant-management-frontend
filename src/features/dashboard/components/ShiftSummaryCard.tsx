@@ -1,11 +1,6 @@
 import type { RoleName } from "@/features/auth/types/Login";
-
-const ROLE_LABELS: Record<RoleName, string> = {
-  ADMIN: "Administrador",
-  CASHIER: "Cajero",
-  WAITER: "Mesero",
-  CHEF: "Cocinero",
-};
+import BoxContainer from "@/shared/components/BoxContainer";
+import { ROLE_LABELS } from "@/shared/enums/RoleLabels";
 
 interface Props {
   userName: string;
@@ -21,7 +16,7 @@ export function ShiftSummaryCard({ userName, role, dailySales, occupiedTables, t
   const occupancyPct = totalTables > 0 ? Math.round((occupiedTables / totalTables) * 100) : 0;
 
   return (
-    <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 flex flex-col gap-6">
+    <BoxContainer className="h-full flex flex-col gap-6">
       <div className="flex items-center gap-4">
         <div className="w-14 h-14 rounded-full bg-card-background flex items-center justify-center shrink-0">
           <span className="text-2xl font-bold text-foreground">{initial}</span>
@@ -55,6 +50,6 @@ export function ShiftSummaryCard({ userName, role, dailySales, occupiedTables, t
           </div>
         </div>
       </div>
-    </div>
+    </BoxContainer>
   );
 }

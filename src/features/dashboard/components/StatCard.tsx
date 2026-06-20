@@ -50,10 +50,10 @@ export function StatCard({ title, value, icon, trend, trendData, bgColor = "bg-w
   const safeTrendData = trendData && trendData.length > 0 ? trendData : [];
 
   return (
-    <div className={`${bgColor} rounded-2xl p-6 shadow-sm border border-gray-100 ${className}`}>
+    <div className={`${bgColor} rounded-2xl p-6 shadow-[12px_12px_5px_1px] shadow-teal ${className}`}>
       <div className="flex items-start justify-between mb-4">
         <div className="flex-1">
-          <p className="text-sm text-gray-600 mb-1">{title ?? ''}</p>
+          <p className="text-sm text-gray-600 font-semibold mb-1">{title ?? ''}</p>
           <p className="text-3xl font-bold text-foreground-dark text-nowrap">{value ?? 'S/ 0.00'}</p>
           {trend !== undefined && (
             <div className="flex items-center gap-1 mt-2">
@@ -63,7 +63,7 @@ export function StatCard({ title, value, icon, trend, trendData, bgColor = "bg-w
             </div>
           )}
         </div>
-        <div className="text-gray-500 bg-gray-50 p-3 rounded-xl">
+        <div className="text-gray-800 bg-gray-50/30 p-3 rounded-xl">
           {icon}
         </div>
       </div>

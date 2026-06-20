@@ -2,6 +2,7 @@ import { useState } from "react";
 import { FiPrinter } from "react-icons/fi";
 import defaultApiClient from "@/shared/utils/apiClient";
 import type { Order } from "@/shared/types/Order";
+import BoxContainer from "@/shared/components/BoxContainer";
 
 export interface Transaction {
   id: number;
@@ -47,13 +48,13 @@ export function RecentTransactionsCard({ transactions }: Props) {
   }
 
   return (
-    <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
-      <h3 className="text-lg font-bold text-gray-900 mb-4">Últimas órdenes pagadas</h3>
+    <BoxContainer className="h-full flex flex-col">
+      <h3 className="text-lg font-bold text-gray-900 mb-4 shrink-0">Últimas órdenes pagadas</h3>
 
       {safeTransactions.length === 0 ? (
         <p className="text-gray-500 text-center py-4">No hay órdenes pagadas hoy</p>
       ) : (
-        <div className="space-y-1">
+        <div className="space-y-1 overflow-y-auto flex-1 min-h-0">
           {safeTransactions.map((transaction, index) => {
             const paymentLabel = transaction.paymentMethod
               ? (PAYMENT_LABELS[transaction.paymentMethod] ?? transaction.paymentMethod)
@@ -97,6 +98,6 @@ export function RecentTransactionsCard({ transactions }: Props) {
           })}
         </div>
       )}
-    </div>
+    </BoxContainer>
   );
 }

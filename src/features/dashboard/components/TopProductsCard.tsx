@@ -1,3 +1,5 @@
+import BoxContainer from "@/shared/components/BoxContainer";
+
 export interface TopProduct {
   id: number;
   name: string;
@@ -14,13 +16,13 @@ export function TopProductsCard({ products }: Props) {
   const safeProducts = products ?? [];
   
   return (
-    <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
-      <h3 className="text-lg font-bold text-gray-900 mb-4">Productos más vendidos</h3>
-      
+    <BoxContainer className="h-full flex flex-col">
+      <h3 className="text-lg font-bold text-gray-900 mb-4 shrink-0">Productos más vendidos</h3>
+
       {safeProducts.length === 0 ? (
         <p className="text-gray-500 text-center py-4">No hay productos disponibles</p>
       ) : (
-        <div className="space-y-4">
+        <div className="space-y-4 overflow-y-auto flex-1 min-h-0">
           {safeProducts.map((product, index) => (
             <div key={product.id ?? index} className="flex items-center gap-4">
               <div className="flex items-center justify-center w-8 h-8 rounded-full bg-gray-100 text-gray-600 font-semibold text-sm">
@@ -38,6 +40,6 @@ export function TopProductsCard({ products }: Props) {
           ))}
         </div>
       )}
-    </div>
+    </BoxContainer>
   );
 }
