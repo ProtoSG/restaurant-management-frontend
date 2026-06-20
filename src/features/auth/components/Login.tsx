@@ -1,18 +1,14 @@
-import { useState } from "react";
 import { useForm } from "react-hook-form";
-import { Button, Input } from "@/shared/components";
+import { Button, Input, PasswordInput } from "@/shared/components";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { loginRequestSchema } from "../schemas/Login.schema";
 import type { LoginRequest } from "../schemas/Login.schema";
 import { Variant } from "@/shared/enums/VariantEnum";
-import { FaRegEye, FaRegEyeSlash } from "react-icons/fa";
 import { useLogin } from "../hooks/useLogin";
 import { Toaster } from "sonner"
 
 export function Login() {
-  const [showPassword, setShowPassword] = useState<boolean>(false);
-
-  const { handleLogin } = useLogin();
+  const { handleLogin, loading } = useLogin();
 
   const {
     register,
@@ -36,30 +32,24 @@ export function Login() {
         <form className="flex flex-col gap-4" onSubmit={handleSubmit(onSubmit)}>
           <Input
             type="text"
-            placeholder="DiegoSG"
-            label="Nombre de Usuario"
+            placeholder="diegosg"
+            label="Nombre de usuario"
             error={errors.username?.message}
+            disabled={loading}
+            autoFocus
+            autoComplete="username"
             { ...register("username")}
           />
-          <div className="relative">
-            <Input
-              type={showPassword ? "text" : "password"}
-              placeholder="******"
-              label="Contraseña"
-              error={errors.password?.message}
-              { ...register("password")}
-            />
-            <button
-              type="button"
-              onClick={() => setShowPassword(!showPassword)}
-              className="absolute right-3 top-[42px] text-gray-600 transition-colors cursor-pointer hover:text-green"
-              aria-label={showPassword ? "Ocultar contraseña" : "Mostrar contraseña"}
-            >
-              {showPassword ? <FaRegEyeSlash size={20} /> : <FaRegEye size={20} />}
-            </button>
-          </div>
-          <Button variant={Variant.GREEN}>
-            Iniciar Sesión
+          <PasswordInput
+            placeholder="******"
+            label="Contraseña"
+            error={errors.password?.message}
+            disabled={loading}
+            autoComplete="current-password"
+            { ...register("password")}
+          />
+          <Button variant={Variant.GREEN} disabled={loading} >
+            {loading ? 'Iniciando Sesión...' : 'Iniciar Sesión'}
           </Button>
         </form>
       </div>

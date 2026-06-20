@@ -11,9 +11,9 @@ const ROLE_HOME: Record<RoleName, string> = {
   CHEF:    '/orders',
 };
 
-export function useLogin() {
+export function useRegister() {
   const navigate = useNavigate();
-  const { signin, isAuthenticated, loading, errors, logout, user } = useAuthStore();
+  const { register, isAuthenticated, loading, errors, user } = useAuthStore();
 
   useEffect(() => {
     if (isAuthenticated && user) {
@@ -24,20 +24,19 @@ export function useLogin() {
 
   useEffect(() => {
     if (errors.length > 0) {
-      errors.forEach((error) => toast.error(error));
-      useAuthStore.setState({ errors: [] });
+      errors.forEach((error) => {
+        toast.error(error);
+      });
     }
   }, [errors]);
 
-  const handleLogin = async (data: { username: string; password: string }) => {
-    await signin(data);
+  const handleRegister = async (data: { name: string; username: string; password: string; role: RoleName }) => {
+    await register(data);
   };
 
   return {
-    handleLogin,
+    handleRegister,
     isAuthenticated,
     loading,
-    logout,
-    user
   };
 }

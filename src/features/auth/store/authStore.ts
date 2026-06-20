@@ -1,18 +1,23 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import { AuthServiceImpl } from '../services/AuthServiceImpl';
-import type { LoginResponse } from '../types/Login';
+import type { MeResponse } from '../types/Login';
 import type { LoginRequest } from '../schemas/Login.schema';
+import type { RegisterRequest } from '../types/Login';
+import { getApiErrorMessage } from '@/shared/utils/apiError';
 
 interface AuthState {
-  user            : LoginResponse | null;
+  user            : MeResponse | null;
   isAuthenticated : boolean;
   errors          : string[];
   loading         : boolean;
   signin          : (user: LoginRequest) => Promise<void>;
+  register        : (user: RegisterRequest) => Promise<void>;
   logout          : () => Promise<void>;
   verifyAuth      : () => Promise<void>;
 }
+
+const authService = new AuthServiceImpl();
 
 export const useAuthStore = create<AuthState>()(
   persist(
@@ -20,44 +25,66 @@ export const useAuthStore = create<AuthState>()(
       user: null,
       isAuthenticated: false,
       errors: [],
-      loading: true,
+      loading: false,
 
       verifyAuth: async () => {
         try {
           set({ loading: true });
-          const userData = await new AuthServiceImpl().verifyAuth();
+          const userData = await authService.getMe();
           if (userData) {
             set({ user: userData, isAuthenticated: true, loading: false });
           } else {
             set({ user: null, isAuthenticated: false, loading: false });
           }
         } catch {
-          set({ loading: false });
+          // Token expired or revoked — clear stale auth state
+          set({ user: null, isAuthenticated: false, loading: false });
         }
       },
 
       signin: async (credentials) => {
         set({ loading: true, errors: [] });
         try {
-          const { status, data } = await new AuthServiceImpl().login(credentials);
+          const { status } = await authService.login(credentials);
 
-          if (status >= 200 && status < 300 && data && !('message' in data)) {
-            const loginData = data as LoginResponse;
-            set({ user: loginData, isAuthenticated: true, loading: false });
-          } else if (data && 'message' in data) {
-            set({ errors: [(data as { message: string }).message], loading: false });
+          if (status >= 200 && status < 300) {
+            const meData = await authService.getMe();
+            if (!meData) {
+              set({ errors: ['Error al obtener perfil. Intenta de nuevo.'], loading: false });
+              return;
+            }
+            set({ user: meData, isAuthenticated: true, loading: false });
           } else {
-            set({ errors: ['Ocurrió un error desconocido al iniciar sesión.'], loading: false });
+            set({ errors: ['Credenciales incorrectas'], loading: false });
           }
         } catch (err: unknown) {
-          const message = err instanceof Error ? err.message : 'Error inesperado al conectar con el servidor';
-          set({ errors: [message], loading: false });
+          set({ errors: [getApiErrorMessage(err)], loading: false });
+        }
+      },
+
+      register: async (registerData) => {
+        set({ loading: true, errors: [] });
+        try {
+          const { status } = await authService.register(registerData);
+
+          if (status >= 200 && status < 300) {
+            const meData = await authService.getMe();
+            if (!meData) {
+              set({ errors: ['Error al obtener perfil. Intenta de nuevo.'], loading: false });
+              return;
+            }
+            set({ user: meData, isAuthenticated: true, loading: false });
+          } else {
+            set({ errors: ['Error al registrar usuario'], loading: false });
+          }
+        } catch (err: unknown) {
+          set({ errors: [getApiErrorMessage(err)], loading: false });
         }
       },
 
       logout: async () => {
         try {
-          await new AuthServiceImpl().logout();
+          await authService.logout();
         } catch (error) {
           console.error('Error al cerrar sesión:', error);
         } finally {

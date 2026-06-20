@@ -1,11 +1,15 @@
 import type { LoginRequest } from '../schemas/Login.schema';
-import type { LoginResponse } from './Login';
+import type { LoginResponse, MeResponse, RegisterRequest } from './Login';
 
 export interface IAuthService {
   login(user: LoginRequest): Promise<{
     status: number;
     data: LoginResponse | { message: string };
   }>;
+  register(user: RegisterRequest): Promise<{
+    status: number;
+    data: LoginResponse | { message: string };
+  }>;
   logout(): Promise<void>;
-  verifyAuth(): Promise<LoginResponse | null>;
+  getMe(): Promise<MeResponse | null>;
 }
