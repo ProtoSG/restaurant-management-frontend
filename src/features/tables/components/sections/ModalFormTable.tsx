@@ -18,7 +18,7 @@ interface Props {
  * Recibe el hook modal como prop para mantener la vista sin lógica de estado global.
  */
 export function ModalFormTable({ modal }: Props) {
-  const dialogRef = useModal(modal.isOpen);
+  const dialogRef = useModal(modal.isOpen, modal.sourceRef);
   const updateTable = useUpdateTable();
   const createTable = useCreateTable();
   const deleteTable = useDeleteTable();

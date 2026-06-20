@@ -87,16 +87,46 @@ export function useAddItemToOrder() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: ({ orderId, productId, quantity, notes, isTakeaway }: { orderId: number; tableId: number; productId: number; quantity?: number; notes?: string; isTakeaway?: boolean }) =>
-      tableService.addItemToOrder(orderId, productId, quantity, notes, isTakeaway),
-    onSuccess: (_, { tableId }) => {
+    mutationFn: ({ orderId, productId, quantity, notes, isTakeaway }: {
+      orderId: number;
+      tableId: number;
+      productId: number;
+      quantity?: number;
+      notes?: string;
+      isTakeaway?: boolean;
+      product?: import("@/shared/types/OrderProduct").OrderProduct;
+    }) => tableService.addItemToOrder(orderId, productId, quantity, notes, isTakeaway),
+
+    onMutate: async ({ tableId, quantity = 1, product }) => {
+      if (!product) return undefined;
+      await queryClient.cancelQueries({ queryKey: [`order-${tableId}`] });
+      const previous = queryClient.getQueryData<import("@/shared/types/Order").Order>([`order-${tableId}`]);
+      if (previous) {
+        const optimisticItem: import("@/shared/types/OrderItem").OrderItem = {
+          id: -Date.now(),
+          quantity,
+          subTotal: product.price * quantity,
+          product,
+        };
+        queryClient.setQueryData<import("@/shared/types/Order").Order>([`order-${tableId}`], {
+          ...previous,
+          items: [...previous.items, optimisticItem],
+          total: previous.total + optimisticItem.subTotal,
+        });
+      }
+      return { previous };
+    },
+
+    onError: (error, { tableId }, ctx) => {
+      if (ctx?.previous) queryClient.setQueryData([`order-${tableId}`], ctx.previous);
+      console.error('Error al agregar item al pedido:', error);
+    },
+
+    onSettled: (_, __, { tableId }) => {
       queryClient.invalidateQueries({ queryKey: [`order-${tableId}`] });
       queryClient.invalidateQueries({ queryKey: ['tables'] });
       queryClient.invalidateQueries({ queryKey: ['analytics'] });
     },
-    onError: (error) => {
-      console.error('Error al agregar item al pedido:', error);
-    }
   });
 }
 

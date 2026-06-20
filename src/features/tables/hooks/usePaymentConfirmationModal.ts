@@ -1,9 +1,11 @@
-import { useCallback, useState } from "react";
+import { useCallback, useRef, useState } from "react";
 
 export function usePaymentConfirmationModal() {
   const [isOpen, setIsOpen] = useState(false);
+  const sourceRef = useRef<HTMLElement | null>(null);
 
-  const open = useCallback(() => {
+  const open = useCallback((source?: HTMLElement) => {
+    sourceRef.current = source ?? null;
     setIsOpen(true);
   }, []);
 
@@ -11,9 +13,5 @@ export function usePaymentConfirmationModal() {
     setIsOpen(false);
   }, []);
 
-  return {
-    isOpen,
-    open,
-    close,
-  };
+  return { isOpen, open, close, sourceRef };
 }

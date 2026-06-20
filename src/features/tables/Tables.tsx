@@ -20,12 +20,12 @@ export function Tables() {
   const selectedCategory = useSelectedCategory();
 
   return (
-    <main className="flex flex-col gap-8 w-full">
+    <main className="flex flex-col gap-8 w-full p-6">
       <HeaderSection
         title="Gestión de Mesas"
         subTitle="Administra todas las mesas"
         buttonLabel="Nueva mesa"
-        buttonFunction={tableModal.openCreate}
+        buttonFunction={(src) => tableModal.openCreate(src)}
       />
       <ListTables
         tableModal={tableModal}
@@ -35,11 +35,12 @@ export function Tables() {
         selectedTable={selectedTable}
       />
       <ModalFormTable modal={tableModal} />
-      <ModalListOrderItems 
+      <ModalListOrderItems
         orderItemsModal={orderItemsModal}
         productListModal={productListModal}
         selectedTable={selectedTable}
         paymentModal={paymentModal}
+        selectedCategory={selectedCategory}
       />
       <ModalProductList 
         productListModal={productListModal}

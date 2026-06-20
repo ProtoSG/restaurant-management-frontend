@@ -1,9 +1,11 @@
-import { useCallback, useState } from "react";
+import { useCallback, useRef, useState } from "react";
 
 export function useProductListModal() {
   const [isOpen, setIsOpen] = useState(false);
+  const sourceRef = useRef<HTMLElement | null>(null);
 
-  const open = useCallback(() => {
+  const open = useCallback((source?: HTMLElement) => {
+    sourceRef.current = source ?? null;
     setIsOpen(true);
   }, []);
 
@@ -15,5 +17,6 @@ export function useProductListModal() {
     isOpen,
     open,
     close,
+    sourceRef,
   };
 }

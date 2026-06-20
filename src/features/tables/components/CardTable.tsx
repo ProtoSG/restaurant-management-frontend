@@ -4,6 +4,7 @@ import { Button, Tag } from "@/shared/components"
 import { TableStatus } from "@/features/tables"
 import { Variant } from "@/shared/enums/VariantEnum"
 import { useEffect, useState } from "react"
+import type { MouseEvent } from "react"
 import { FaRegShareFromSquare } from "react-icons/fa6"
 import { useTableModal, useOrderItemsModal, useProductListModal, useChangeTableModal, useSelectedTable } from "@/features/tables"
 
@@ -55,19 +56,20 @@ export function CardTable( { table, tableModal, orderItemsModal, productListModa
     }
   }, [table])
   
-  const handleOpenFormModal = () => {
-    tableModal.openEdit(table);
+  const handleOpenFormModal = (e: MouseEvent<HTMLButtonElement>) => {
+    tableModal.openEdit(table, e.currentTarget);
   }
 
-  const handleOpenOrderItemsModal = async () => {
+  const handleOpenOrderItemsModal = async (e: MouseEvent<HTMLButtonElement>) => {
     selectedTable.selectTable(table);
-    if (table.status === TableStatus.FREE) productListModal.open();
-    else orderItemsModal.open();
+    const src = e.currentTarget as HTMLElement;
+    if (table.status === TableStatus.FREE) productListModal.open(src);
+    else orderItemsModal.open(src);
   };
 
-  const handleChangeOrderOtherTable = async() => {
+  const handleChangeOrderOtherTable = (e: MouseEvent<HTMLButtonElement>) => {
     selectedTable.selectTable(table);
-    changeTableModal.open();
+    changeTableModal.open(e.currentTarget);
   }
 
   return (
