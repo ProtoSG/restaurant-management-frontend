@@ -3,31 +3,44 @@ import { useQueryClient } from "@tanstack/react-query";
 import { ProductServiceImpl } from "../services/ProductServiceImpl";
 import type { Product } from "../types/Product";
 import type { CreateProductRequest } from "../schemas/Product.schema";
+import type { PaginatedResponse } from "@/shared/types/PaginatedResponse";
 
-export function useProducts() {
+const DEFAULT_SIZE = 20;
+
+export function useProducts(categoryId: number | null = null) {
   const queryClient = useQueryClient();
   const service = useMemo(() => new ProductServiceImpl(), []);
-  
+
   const [products, setProducts] = useState<Product[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<Error | null>(null);
+  const [page, setPage] = useState(0);
+  const [pagination, setPagination] = useState({ totalElements: 0, totalPages: 0 });
 
-  const loadProducts = useCallback(async () => {
+  const loadProducts = useCallback(async (currentPage = 0) => {
     try {
       setIsLoading(true);
       setError(null);
-      const data = await service.getAllProducts();
-      setProducts(data);
+      const data: PaginatedResponse<Product> = categoryId !== null
+        ? await service.getProductsByCategoryId(categoryId, currentPage, DEFAULT_SIZE)
+        : await service.getAllProducts(currentPage, DEFAULT_SIZE);
+      setProducts(data.content);
+      setPagination({ totalElements: data.totalElements, totalPages: data.totalPages });
+      setPage(data.page);
     } catch (err) {
       setError(err as Error);
       console.error('Error loading products:', err);
     } finally {
       setIsLoading(false);
     }
-  }, [service]);
+  }, [service, categoryId]);
 
   useEffect(() => {
-    loadProducts();
+    loadProducts(0);
+  }, [loadProducts]);
+
+  const goToPage = useCallback((newPage: number) => {
+    loadProducts(newPage);
   }, [loadProducts]);
 
   const createProduct = useCallback(async (data: CreateProductRequest): Promise<void> => {
@@ -44,7 +57,7 @@ export function useProducts() {
 
       await service.createProduct(productData);
       await queryClient.invalidateQueries({ queryKey: ['products'] });
-      await loadProducts();
+      await loadProducts(page);
     } catch (err) {
       setError(err as Error);
       console.error('Error creating product:', err);
@@ -52,7 +65,7 @@ export function useProducts() {
     } finally {
       setIsLoading(false);
     }
-  }, [service, queryClient, loadProducts]);
+  }, [service, queryClient, loadProducts, page]);
 
   const updateProduct = useCallback(async (id: number, data: CreateProductRequest): Promise<void> => {
     try {
@@ -67,7 +80,7 @@ export function useProducts() {
 
       await service.updateProduct(id, productData);
       await queryClient.invalidateQueries({ queryKey: ['products'] });
-      await loadProducts();
+      await loadProducts(page);
     } catch (err) {
       setError(err as Error);
       console.error('Error updating product:', err);
@@ -75,7 +88,7 @@ export function useProducts() {
     } finally {
       setIsLoading(false);
     }
-  }, [service, queryClient, loadProducts]);
+  }, [service, queryClient, loadProducts, page]);
 
   const deleteProduct = useCallback(async (id: number): Promise<void> => {
     try {
@@ -84,7 +97,7 @@ export function useProducts() {
 
       await service.deleteProduct(id);
       await queryClient.invalidateQueries({ queryKey: ['products'] });
-      await loadProducts();
+      await loadProducts(page);
     } catch (err) {
       setError(err as Error);
       console.error('Error deleting product:', err);
@@ -92,21 +105,21 @@ export function useProducts() {
     } finally {
       setIsLoading(false);
     }
-  }, [service, queryClient, loadProducts]);
+  }, [service, queryClient, loadProducts, page]);
 
   const getProductById = useCallback((id: number): Product | undefined => {
     return products.find(p => p.id === id);
   }, [products]);
 
-  const toggleProductActive = useCallback(async (id: number, currentActive: boolean): Promise<void> => {
+  const toggleProductActive = useCallback(async (id: number): Promise<void> => {
     try {
-      await service.updateProduct(id, { active: !currentActive });
-      await loadProducts();
+      await service.toggleProductAvailability(id);
+      await loadProducts(page);
     } catch (err) {
       console.error('Error toggling product active state:', err);
       throw err;
     }
-  }, [service, loadProducts]);
+  }, [service, loadProducts, page]);
 
   return {
     products,
@@ -118,20 +131,36 @@ export function useProducts() {
     deleteProduct,
     getProductById,
     toggleProductActive,
+    page,
+    pagination,
+    goToPage,
   };
 }
 
-export function useProductsByCategoryId(categoryId: number) {
-  const { products, isLoading, error } = useProducts();
-  
-  const filteredProducts = useMemo(() => {
-    if (!categoryId) return [];
-    return products.filter(p => p.categoryId === categoryId);
-  }, [products, categoryId]);
+export function useAvailableProducts() {
+  const service = useMemo(() => new ProductServiceImpl(), []);
 
-  return {
-    products: filteredProducts,
-    isLoading,
-    error
-  };
+  const [products, setProducts] = useState<Product[]>([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState<Error | null>(null);
+
+  const loadProducts = useCallback(async () => {
+    try {
+      setIsLoading(true);
+      setError(null);
+      const data = await service.getAllAvailableProducts();
+      setProducts(data);
+    } catch (err) {
+      setError(err as Error);
+    } finally {
+      setIsLoading(false);
+    }
+  }, [service]);
+
+  useEffect(() => {
+    loadProducts();
+  }, [loadProducts]);
+
+  return { products, isLoading, error };
 }
+
