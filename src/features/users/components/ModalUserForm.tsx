@@ -18,8 +18,8 @@ interface Props {
   sourceRef: React.RefObject<HTMLElement | null>;
   mode: "create" | "edit";
   user: User | null;
-  onCreate: (req: CreateUserRequest) => Promise<void>;
-  onUpdate: (args: { id: number; req: UpdateUserRequest }) => Promise<void>;
+  onCreate: (req: CreateUserRequest) => Promise<unknown>;
+  onUpdate: (args: { id: number; req: UpdateUserRequest }) => Promise<unknown>;
   isSubmitting: boolean;
 }
 
