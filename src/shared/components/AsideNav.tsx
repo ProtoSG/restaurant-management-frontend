@@ -5,6 +5,7 @@ import { useAuth } from "@/features/auth";
 import { useNavigate } from "react-router-dom";
 import { HiOutlineChevronRight } from "react-icons/hi";
 import { NAV_ITEMS } from "@/shared/config/navigation";
+import { FullscreenButton } from "./FullscreenButton";
 
 export function AsideNav() {
   const { isAuthenticated, logout, user } = useAuth();
@@ -46,6 +47,8 @@ export function AsideNav() {
           ))}
         </nav>
       </section>
+      <div className="flex flex-col gap-2">
+      <FullscreenButton expanded={isExpanded} />
       <button className={`
         flex gap-2 items-center rounded-md bg-white text-black px-2 h-10 cursor-pointer transition-colors
         hover:bg-red
@@ -61,6 +64,7 @@ export function AsideNav() {
           Salir
         </span>
       </button>
+      </div>
     </aside>
   )
 }
