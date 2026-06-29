@@ -55,6 +55,18 @@ export function useModal(isOpen: boolean, sourceRef?: RefObject<HTMLElement | nu
 
     const isMobileFull = mobileFullscreen && window.innerWidth < 1024;
 
+    // Reduce-motion (ej. tablet con "Eliminar animaciones"): abrir/cerrar al instante,
+    // sin View Transitions ni animaciones por clase (que dependen de animationend).
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+      if (isOpen) {
+        if (!dialog.open) dialog.showModal();
+        if (sourceRef) sourceRef.current = null;
+      } else if (dialog.open) {
+        dialog.close();
+      }
+      return;
+    }
+
     if (isOpen) {
       if (isMobileFull) {
         if (!dialog.open) dialog.showModal();

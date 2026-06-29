@@ -110,15 +110,36 @@ body {
   }
 }
 
-/* Backdrop fade — solo opacity (animar blur causa jank en tablet) */
+/* Backdrop fade — fondo sólido (sin backdrop-filter: blur, que causa jank en GPU de gama baja) */
 @starting-style {
   dialog[open]::backdrop {
     opacity: 0;
   }
 }
 dialog::backdrop {
-  backdrop-filter: blur(2px);
+  background: rgba(0, 0, 0, 0.4);
   transition: opacity 0.18s ease-out;
+}
+
+/* Dispositivos con "reducir movimiento" (ej. tablet con Eliminar animaciones ON):
+   apaga animaciones/transiciones para máxima fluidez. PC sin el ajuste no se afecta. */
+@media (prefers-reduced-motion: reduce) {
+  .modal-slide-enter,
+  .modal-slide-exit,
+  .modal-ct-open,
+  .modal-ct-close,
+  ::view-transition-old(modal-panel),
+  ::view-transition-new(modal-panel) {
+    animation: none !important;
+  }
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }
 
 #root {
