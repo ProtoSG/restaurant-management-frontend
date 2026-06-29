@@ -1,4 +1,4 @@
-import { useProducts, type Product } from "@/features/menu";
+import { useAvailableProducts, type Product } from "@/features/menu";
 import { useQuickAddProducts } from "@/shared/hooks/useQuickAddProducts";
 import { FaBolt, FaPlus } from "react-icons/fa";
 import { useState } from "react";
@@ -11,7 +11,8 @@ interface Props {
 export function QuickAddItems({ onAdd, disabled }: Props) {
   const [addingId, setAddingId] = useState<number | null>(null);
   const quickIds = useQuickAddProducts();
-  const { products: allProducts } = useProducts();
+  // useAvailableProducts trae todos los disponibles (sin paginar) → encuentra los ids configurados.
+  const { products: allProducts } = useAvailableProducts();
 
   const products = quickIds
     .map((id) => allProducts.find((p) => p.id === id))

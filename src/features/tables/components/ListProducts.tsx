@@ -3,6 +3,7 @@ import { useSelectedTable, useAddItemToOrder as useAddItemToOrderTable, useOrder
 import { useAddItemToOrder as useAddItemToOrderOrders } from "@/features/orders"
 import { useTakeawaySurcharge } from "@/shared/hooks/useTakeawaySurcharge"
 import { Toggle } from "@/shared/components"
+import { QuickAddItems } from "./sections/QuickAddItems"
 import { FaSearch, FaPlus, FaMinus, FaShoppingBag } from "react-icons/fa";
 import { useRef, useState } from "react";
 
@@ -74,6 +75,30 @@ export function ListProducts({ searchTerm, setSearchTerm, selectedTable, selecte
 
   const isAdding = createOrderMutation.isPending || addItemTableMutation.isPending || addItemOrdersMutation.isPending;
 
+  // Acceso rápido: agrega 1 unidad directo (sin modal de notas/llevar), creando la orden si no existe.
+  const handleQuickAdd = async (productId: number) => {
+    try {
+      if (orderId) {
+        await addItemOrdersMutation.mutateAsync({ orderId, productId, quantity: 1 });
+      } else {
+        if (!selectedTable.selectedTable) return;
+        let currentOrderId = activeOrder?.id;
+        if (!currentOrderId) {
+          const newOrder = await createOrderMutation.mutateAsync(selectedTable.selectedTable.id);
+          currentOrderId = newOrder.id;
+        }
+        await addItemTableMutation.mutateAsync({
+          orderId: currentOrderId,
+          tableId: selectedTable.selectedTable.id,
+          productId,
+          quantity: 1,
+        });
+      }
+    } catch (error) {
+      console.error('Error en acceso rápido:', error);
+    }
+  };
+
   const filteredProducts = products.filter((product: Product) =>
     product.name.toLowerCase().includes(searchTerm.toLowerCase())
   );
@@ -144,6 +169,11 @@ export function ListProducts({ searchTerm, setSearchTerm, selectedTable, selecte
             ))}
           </ul>
         )}
+      </div>
+
+      {/* Acceso rápido — mini sección al fondo del catálogo */}
+      <div className="shrink-0 pt-3 mt-1 border-t border-gray-100">
+        <QuickAddItems onAdd={handleQuickAdd} disabled={isAdding} />
       </div>
 
       {/* Modal notas */}
