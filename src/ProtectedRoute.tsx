@@ -5,11 +5,11 @@ import { useAuth } from "./features/auth";
 export function ProtectedRoute() {
   const { isAuthenticated, verifyAuth } = useAuth();
 
-  // Refresh stale persisted auth data on mount (e.g. role changed, token revoked)
+  // Refresh stale persisted auth data on mount (e.g. role changed, token revoked).
+  // verifyAuth is a stable zustand action, so this runs once.
   useEffect(() => {
     verifyAuth();
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [verifyAuth]);
 
   if (!isAuthenticated) return <Navigate to="/login" replace />;
 
