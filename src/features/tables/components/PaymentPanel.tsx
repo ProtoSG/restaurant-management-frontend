@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { toast } from "sonner";
-import { TitleModal, Toggle } from "@/shared/components";
+import { TitleModal, Toggle, ConfirmDialog } from "@/shared/components";
 import { usePayOrder, usePayPartialOrder, useSelectedTable } from "@/features/tables";
 import { usePayOrder as usePayOrderOrders, usePayPartialOrder as usePayPartialOrderOrders, usePrintThermal } from "@/features/orders";
 import { PaymentMethod, PaymentMethodLabels } from "@/shared/enums/PaymentMethod";
@@ -31,6 +31,7 @@ export function PaymentPanel({
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>(PaymentMethod.CASH);
   const [isPartialPayment, setIsPartialPayment] = useState(false);
   const [partialAmount, setPartialAmount] = useState<string>("");
+  const [showPayConfirm, setShowPayConfirm] = useState(false);
 
   const payOrderTableMutation = usePayOrder();
   const payPartialTableMutation = usePayPartialOrder();
@@ -49,8 +50,28 @@ export function PaymentPanel({
         setIsPartialPayment(false);
         setPartialAmount("");
       }
+      setShowPayConfirm(false);
     }
   }, [order?.id, order?.paidAmount, order?.remainingAmount, isOpen]);
+
+  // Valida el monto (en pago parcial) antes de pedir la confirmación.
+  const handleRequestPay = () => {
+    if (!isOrderMode && !selectedTable.selectedTable) return;
+    const remainingNow = order.remainingAmount ?? order.total;
+    const isPartialNow = isPartialPayment || order.status === OrderStatus.PARTIALLY_PAID;
+    if (isPartialNow) {
+      const amount = parseFloat(partialAmount);
+      if (!amount || amount <= 0) {
+        toast.error("Por favor ingrese un monto válido");
+        return;
+      }
+      if (amount > remainingNow) {
+        toast.error(`El monto (S/ ${amount.toFixed(2)}) excede el monto restante (S/ ${remainingNow.toFixed(2)})`);
+        return;
+      }
+    }
+    setShowPayConfirm(true);
+  };
 
   const handleConfirmPay = async () => {
     if (!isOrderMode && !selectedTable.selectedTable) return;
@@ -236,7 +257,13 @@ export function PaymentPanel({
             <span>PDF</span>
           </button>
           <button
-            onClick={() => printThermalMutation.mutate({ order })}
+            onClick={() =>
+              toast.promise(printThermalMutation.mutateAsync({ order }), {
+                loading: "Imprimiendo ticket…",
+                success: "Ticket impreso",
+                error: (e) => (e instanceof Error ? e.message : "Error al imprimir ticket"),
+              })
+            }
             disabled={isProcessing || !order.items?.length || printThermalMutation.isPending}
             className="flex flex-1 items-center justify-center gap-1.5 py-2.5 border-2 border-gray-200 rounded-xl text-sm font-medium text-gray-600 hover:border-gray-300 hover:bg-gray-50 active:bg-gray-100 transition-colors cursor-pointer disabled:opacity-40"
             aria-label="Imprimir ticket térmico"
@@ -245,13 +272,26 @@ export function PaymentPanel({
             <span>{printThermalMutation.isPending ? '...' : 'Ticket'}</span>
           </button>
         </div>
-        <button
-          onClick={handleConfirmPay}
-          disabled={isProcessing}
-          className="w-full py-3 bg-green text-white font-semibold rounded-xl hover:opacity-90 active:opacity-75 transition-opacity cursor-pointer disabled:opacity-40 min-h-[44px]"
-        >
-          {isProcessing ? 'Procesando…' : 'Confirmar Pago'}
-        </button>
+        {showPayConfirm ? (
+          <ConfirmDialog
+            title={`¿Cobrar S/ ${displayAmount.toFixed(2)}?`}
+            message={`${isPartial ? 'Pago parcial' : 'Pago total'} · ${PaymentMethodLabels[paymentMethod]} · ${orderInfo}`}
+            confirmLabel="Sí, cobrar"
+            cancelLabel="Volver"
+            variant="green"
+            loading={isProcessing}
+            onCancel={() => setShowPayConfirm(false)}
+            onConfirm={handleConfirmPay}
+          />
+        ) : (
+          <button
+            onClick={handleRequestPay}
+            disabled={isProcessing}
+            className="w-full py-3 bg-green text-white font-semibold rounded-xl hover:opacity-90 active:opacity-75 transition-opacity cursor-pointer disabled:opacity-40 min-h-[44px]"
+          >
+            {isProcessing ? 'Procesando…' : 'Confirmar Pago'}
+          </button>
+        )}
       </div>
     </div>
   );

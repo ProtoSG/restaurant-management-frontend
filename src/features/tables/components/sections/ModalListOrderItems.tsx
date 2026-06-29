@@ -1,13 +1,14 @@
 import { Modal, TitleModal, Button, Tag } from "@/shared/components";
 import { useModal } from "@/shared/hooks/useModal";
 import { useOrderActive, useCreateOrder, useUpdateOrderItem as useUpdateOrderItemTable, useRemoveOrderItem as useRemoveOrderItemTable, useAddItemToOrder as useAddItemToOrderTable, useSelectedTable, useOrderItemsModal, useProductListModal, usePaymentConfirmationModal } from "@/features/tables";
-import { useOrderById, useUpdateOrderItem as useUpdateOrderItemOrder, useRemoveOrderItem as useRemoveOrderItemOrder, useAddItemToOrder as useAddItemToOrderOrders, useCancelOrder, useMarkOrderAsReady } from "@/features/orders";
+import { useOrderById, useUpdateOrderItem as useUpdateOrderItemOrder, useRemoveOrderItem as useRemoveOrderItemOrder, useAddItemToOrder as useAddItemToOrderOrders, useCancelOrder, useMarkOrderAsReady, usePrintKitchen } from "@/features/orders";
 import { useAuth } from "@/features/auth";
 import { useSelectedCategory } from "@/features/menu";
 import { Variant } from "@/shared/enums/VariantEnum";
 import { PaymentMethodLabels } from "@/shared/enums/PaymentMethod";
 import { OrderStatus, OrderStatusLabels } from "@/shared/enums/OrderStatus";
-import { FaMinus, FaPlus, FaTrash, FaShoppingBag } from "react-icons/fa";
+import { FaMinus, FaPlus, FaTrash, FaShoppingBag, FaUtensils } from "react-icons/fa";
+import { toast } from "sonner";
 import { MdArrowBack } from "react-icons/md";
 import { useState, useEffect } from "react";
 import { ModalPaymentConfirmation } from "./ModalPaymentConfirmation";
@@ -33,6 +34,7 @@ export function ModalListOrderItems({ orderItemsModal, productListModal, selecte
   const [desktopPanel, setDesktopPanel] = useState<'catalog' | 'payment'>('catalog');
   const cancelOrderMutation = useCancelOrder();
   const markAsReadyMutation = useMarkOrderAsReady();
+  const printKitchenMutation = usePrintKitchen();
   const [showTransactions, setShowTransactions] = useState(false);
 
   const isOrderMode = orderId !== undefined && orderId > 0;
@@ -169,7 +171,7 @@ export function ModalListOrderItems({ orderItemsModal, productListModal, selecte
 
         {isLoading ? (
           <div className="lg:flex lg:gap-0">
-            <div className="flex flex-col gap-3 animate-pulse lg:w-[340px] lg:shrink-0 lg:pr-6 lg:border-r lg:border-gray-100">
+            <div className="flex flex-col gap-3 animate-pulse lg:w-[400px] lg:shrink-0 lg:pr-6 lg:border-r lg:border-gray-100">
               <div className="flex items-center justify-between">
                 <div className="h-5 w-24 bg-gray-200 rounded-full" />
                 <div className="h-5 w-16 bg-gray-200 rounded-full" />
@@ -202,7 +204,7 @@ export function ModalListOrderItems({ orderItemsModal, productListModal, selecte
           <div className="lg:flex lg:gap-0 min-h-0 max-lg:flex-1">
 
             {/* LEFT COLUMN: order items */}
-            <div className="flex flex-col gap-4 min-h-0 max-lg:flex-1 lg:w-[340px] lg:shrink-0 lg:pr-6 lg:border-r lg:border-gray-100">
+            <div className="flex flex-col gap-4 min-h-0 max-lg:flex-1 lg:w-[400px] lg:shrink-0 lg:pr-6 lg:border-r lg:border-gray-100">
 
               {!order ? (
                 <div className="flex flex-col items-center gap-4 py-10">
@@ -226,18 +228,34 @@ export function ModalListOrderItems({ orderItemsModal, productListModal, selecte
                       </span>
                       <Tag>{OrderStatusLabels[order.status]}</Tag>
                     </div>
-                    {canPay && (
-                      <div className="lg:hidden flex items-center gap-2">
+                    <div className="flex items-center gap-2">
+                      <button
+                        onClick={() =>
+                          toast.promise(printKitchenMutation.mutateAsync({ orderId: order.id }), {
+                            loading: "Enviando comanda a cocina…",
+                            success: (r) =>
+                              r.printed > 0 ? "Comanda enviada a cocina" : "No hay productos nuevos para cocina",
+                            error: (e) => (e instanceof Error ? e.message : "Error al imprimir comanda"),
+                          })
+                        }
+                        disabled={!order.items?.length || printKitchenMutation.isPending}
+                        title="Imprimir comanda de cocina"
+                        aria-label="Imprimir comanda de cocina"
+                        className="min-w-[40px] min-h-[40px] flex items-center justify-center rounded-lg border border-gray-200 text-gray-500 hover:text-orange hover:border-orange hover:bg-orange/5 transition-colors cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
+                      >
+                        <FaUtensils className={`text-sm ${printKitchenMutation.isPending ? 'animate-pulse' : ''}`} />
+                      </button>
+                      {canPay && (
                         <button
                           onClick={(e) => handleAddItem(e.currentTarget as HTMLElement)}
                           disabled={createOrderMutation.isPending}
-                          className="flex items-center gap-1.5 text-sm font-medium text-orange border border-orange rounded-lg px-3 py-1.5 hover:bg-orange hover:text-white transition-colors cursor-pointer disabled:opacity-50"
+                          className="lg:hidden flex items-center gap-1.5 text-sm font-medium text-orange border border-orange rounded-lg px-3 py-1.5 hover:bg-orange hover:text-white transition-colors cursor-pointer disabled:opacity-50"
                         >
                           <FaPlus className="text-xs" />
                           Agregar
                         </button>
-                      </div>
-                    )}
+                      )}
+                    </div>
                   </div>
 
                   {/* Lista de items */}
@@ -247,7 +265,7 @@ export function ModalListOrderItems({ orderItemsModal, productListModal, selecte
                         <li key={item.id} className={`flex items-center gap-3 px-3 py-2.5 rounded-xl border ${item.isTakeaway ? "bg-orange/5 border-orange/20" : "bg-gray-50 border-gray-100"}`}>
                           <div className="flex-1 min-w-0">
                             <div className="flex items-center gap-1.5">
-                              <p className="font-semibold text-sm text-gray-900 truncate">{item.product.name}</p>
+                              <p className="font-semibold text-sm text-gray-900 break-words">{item.product.name}</p>
                               {item.isTakeaway && (
                                 <FaShoppingBag className="text-orange text-[10px] shrink-0" title="Para llevar" />
                               )}
@@ -278,9 +296,6 @@ export function ModalListOrderItems({ orderItemsModal, productListModal, selecte
                               <FaPlus className="text-gray-600 text-[10px]" />
                             </button>
                           </div>
-                          <span className="text-sm font-semibold text-gray-800 w-16 text-right">
-                            S/ {item.subTotal.toFixed(2)}
-                          </span>
                         </li>
                       ))}
                     </ul>
