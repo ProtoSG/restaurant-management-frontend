@@ -1,12 +1,15 @@
+import { useEffect } from "react";
 import { Navigate, Outlet } from "react-router-dom";
 import { useAuth } from "./features/auth";
 
 export function ProtectedRoute() {
-  const { isAuthenticated, loading } = useAuth();
+  const { isAuthenticated, verifyAuth } = useAuth();
 
-  if (loading) return <div className="min-h-screen flex items-center justify-center">
-    <span className="text-lg">Cargando...</span>
-  </div>;
+  // Refresh stale persisted auth data on mount (e.g. role changed, token revoked).
+  // verifyAuth is a stable zustand action, so this runs once.
+  useEffect(() => {
+    verifyAuth();
+  }, [verifyAuth]);
 
   if (!isAuthenticated) return <Navigate to="/login" replace />;
 

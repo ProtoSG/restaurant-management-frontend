@@ -1,8 +1,8 @@
 import { Link, useLocation } from "react-router-dom";
-import type { Section } from "./AsideNav";
+import type { NavItem } from "@/shared/config/navigation";
 
 interface Props {
-  item: Section
+  item: NavItem
   isExpanded: boolean
 }
 

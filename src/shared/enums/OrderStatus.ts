@@ -4,8 +4,7 @@ export enum OrderStatus {
   READY = "READY",
   PARTIALLY_PAID = "PARTIALLY_PAID",
   PAID = "PAID",
-  CANCELLED = "CANCELLED",
-  PENDING = "PENDING"
+  CANCELLED = "CANCELLED"
 }
 
 export const OrderStatusLabels: Record<OrderStatus, string> = {
@@ -14,6 +13,5 @@ export const OrderStatusLabels: Record<OrderStatus, string> = {
   [OrderStatus.READY]: "Listo",
   [OrderStatus.PARTIALLY_PAID]: "Parcialmente Pagado",
   [OrderStatus.PAID]: "Pagado",
-  [OrderStatus.CANCELLED]: "Cancelado",
-  [OrderStatus.PENDING]: "Pendiente"
+  [OrderStatus.CANCELLED]: "Cancelado"
 };

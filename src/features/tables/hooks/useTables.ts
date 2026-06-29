@@ -1,8 +1,14 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
 import { TableServiceImpl } from "../services/TableServiceImpl";
+import { getApiErrorMessage } from "@/shared/utils/apiError";
 import type { CreateTableRequest, UpdateTableRequest } from "../schemas/Table.schema";
 
 const tableService = new TableServiceImpl();
+
+// Unique negative ids for optimistic items (Date.now() alone collides within the same ms).
+let optimisticSeq = 0;
+const nextOptimisticId = () => -(Date.now() * 1000 + (++optimisticSeq % 1000));
 
 export const useTables = () => {
   const { data: tables = [], isLoading, error } = useQuery({
@@ -24,6 +30,7 @@ export function useUpdateTable() {
     },
     onError: (error) => {
       console.error('Error updating table:', error);
+      toast.error(getApiErrorMessage(error));
     }
   });
 }
@@ -38,6 +45,7 @@ export function useCreateTable() {
     },
     onError: (error) => {
       console.error('Error al crear la mesa:', error);
+      toast.error(getApiErrorMessage(error));
     }
   });
 }
@@ -52,6 +60,7 @@ export function useDeleteTable() {
     },
     onError: (error) => {
       console.error('Error al eliminar la mesa:', error);
+      toast.error(getApiErrorMessage(error));
     }
   });
 }
@@ -68,6 +77,7 @@ export function useCreateOrder() {
     },
     onError: (error) => {
       console.error('Error al crear la orden: ', error);
+      toast.error(getApiErrorMessage(error));
     }
   });
 }
@@ -87,16 +97,47 @@ export function useAddItemToOrder() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: ({ orderId, productId, quantity, notes, isTakeaway }: { orderId: number; tableId: number; productId: number; quantity?: number; notes?: string; isTakeaway?: boolean }) =>
-      tableService.addItemToOrder(orderId, productId, quantity, notes, isTakeaway),
-    onSuccess: (_, { tableId }) => {
+    mutationFn: ({ orderId, productId, quantity, notes, isTakeaway }: {
+      orderId: number;
+      tableId: number;
+      productId: number;
+      quantity?: number;
+      notes?: string;
+      isTakeaway?: boolean;
+      product?: import("@/shared/types/OrderProduct").OrderProduct;
+    }) => tableService.addItemToOrder(orderId, productId, quantity, notes, isTakeaway),
+
+    onMutate: async ({ tableId, quantity = 1, product }) => {
+      if (!product) return undefined;
+      await queryClient.cancelQueries({ queryKey: [`order-${tableId}`] });
+      const previous = queryClient.getQueryData<import("@/shared/types/Order").Order>([`order-${tableId}`]);
+      if (previous) {
+        const optimisticItem: import("@/shared/types/OrderItem").OrderItem = {
+          id: nextOptimisticId(),
+          quantity,
+          subTotal: product.price * quantity,
+          product,
+        };
+        queryClient.setQueryData<import("@/shared/types/Order").Order>([`order-${tableId}`], {
+          ...previous,
+          items: [...previous.items, optimisticItem],
+          total: previous.total + optimisticItem.subTotal,
+        });
+      }
+      return { previous };
+    },
+
+    onError: (error, { tableId }, ctx) => {
+      if (ctx?.previous) queryClient.setQueryData([`order-${tableId}`], ctx.previous);
+      console.error('Error al agregar item al pedido:', error);
+      toast.error(getApiErrorMessage(error));
+    },
+
+    onSettled: (_, __, { tableId }) => {
       queryClient.invalidateQueries({ queryKey: [`order-${tableId}`] });
       queryClient.invalidateQueries({ queryKey: ['tables'] });
       queryClient.invalidateQueries({ queryKey: ['analytics'] });
     },
-    onError: (error) => {
-      console.error('Error al agregar item al pedido:', error);
-    }
   });
 }
 
@@ -113,6 +154,7 @@ export function useUpdateOrderItem() {
     },
     onError: (error) => {
       console.error('Error al actualizar item del pedido:', error);
+      toast.error(getApiErrorMessage(error));
     }
   });
 }
@@ -130,6 +172,7 @@ export function useRemoveOrderItem() {
     },
     onError: (error) => {
       console.error('Error al eliminar item del pedido:', error);
+      toast.error(getApiErrorMessage(error));
     }
   });
 }
@@ -146,6 +189,7 @@ export function usePayOrder() {
     },
     onError: (error) => {
       console.error('Error al pagar el pedido:', error);
+      toast.error(getApiErrorMessage(error));
     }
   });
 }
@@ -163,6 +207,7 @@ export function usePayPartialOrder() {
     },
     onError: (error) => {
       console.error('Error al pagar parcialmente el pedido:', error);
+      toast.error(getApiErrorMessage(error));
     }
   });
 }
@@ -179,6 +224,7 @@ export function useChangeOrderTable() {
     },
     onError: (error) => {
       console.error('Error al cambiar la orden de mesa:', error);
+      toast.error(getApiErrorMessage(error));
     }
   });
 }

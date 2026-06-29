@@ -19,8 +19,8 @@ export function EarningsCard({ totalEarnings, profitPercentage, comparisonText }
   const COLORS = ['#8a9e6f' /* --color-green */, '#e5e7eb' /* gray-200 */];
 
   return (
-    <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
-      <h3 className="text-lg font-bold text-gray-900 mb-4">Rentabilidad</h3>
+    <div className="bg-white rounded-2xl p-6 shadow-[12px_12px_5px_1px] shadow-card-background border border-gray-100">
+      <h3 className="text-lg font-bold text-gray-900">Rentabilidad</h3>
 
       <div className="mb-2">
         <p className="text-sm text-gray-500 mb-1">Ventas del período</p>

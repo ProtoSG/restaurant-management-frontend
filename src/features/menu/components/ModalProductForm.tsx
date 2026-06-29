@@ -1,7 +1,7 @@
 import { useForm } from "react-hook-form";
 import { Variant } from "@/shared/enums/VariantEnum";
 import { useModal } from "@/shared/hooks/useModal";
-import { Button, Input, Modal, TitleModal } from "@/shared/components";
+import { Button, Input, Modal, TitleModal, Select } from "@/shared/components";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { createProductRequestSchema } from "../schemas/Product.schema";
 import type { CreateProductRequest } from "../schemas/Product.schema";
@@ -22,7 +22,7 @@ const EMPTY_FORM: CreateProductRequest = {
 };
 
 export function ModalProductForm({ modal, productsHook }: Props) {
-  const dialogRef = useModal(modal.isOpen);
+  const dialogRef = useModal(modal.isOpen, modal.sourceRef, true);
   const { categories = [] } = useCategories();
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -82,7 +82,7 @@ export function ModalProductForm({ modal, productsHook }: Props) {
   const { ref, ...registerProps } = register("name");
 
   return (
-    <Modal dialogRef={dialogRef} setOpen={modal.close}>
+    <Modal dialogRef={dialogRef} setOpen={modal.close} fullScreenMobile>
       <TitleModal>
         {modal.isEdit ? "Editar Producto" : "Crear Producto"}
       </TitleModal>
@@ -109,29 +109,18 @@ export function ModalProductForm({ modal, productsHook }: Props) {
           {...register("price")}
         />
 
-        <div>
-          <label className="flex flex-col gap-2">
-            <p>Categoría</p>
-            <select
-              {...register("categoryId")}
-              className={`border-2 rounded px-2 py-1 focus:outline-2 focus:outline-orange ${
-                errors.categoryId ? "border-red" : "border-background"
-              }`}
-            >
-              <option value="">Selecciona una categoría</option>
-              {categories.map((category) => (
-                <option key={category.id} value={category.id}>
-                  {category.name}
-                </option>
-              ))}
-            </select>
-          </label>
-          {errors.categoryId && (
-            <p className="text-red font-semibold text-sm mt-1">
-              {errors.categoryId.message}
-            </p>
-          )}
-        </div>
+        <Select
+          label="Categoría"
+          options={[
+            { value: "", label: "Selecciona una categoría" },
+            ...categories.map((category) => ({
+              value: category.id,
+              label: category.name,
+            })),
+          ]}
+          error={errors.categoryId?.message}
+          {...register("categoryId")}
+        />
 
         <Button variant={Variant.GREEN} disabled={productsHook.isLoading}>
           {modal.isEdit

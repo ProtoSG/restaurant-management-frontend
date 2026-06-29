@@ -1,7 +1,10 @@
 import { useState } from "react";
 import { FiPrinter } from "react-icons/fi";
+import { toast } from "sonner";
 import defaultApiClient from "@/shared/utils/apiClient";
+import { usePrintThermal } from "@/features/orders";
 import type { Order } from "@/shared/types/Order";
+import BoxContainer from "@/shared/components/BoxContainer";
 
 export interface Transaction {
   id: number;
@@ -26,34 +29,37 @@ const PAYMENT_LABELS: Record<string, string> = {
 export function RecentTransactionsCard({ transactions }: Props) {
   const safeTransactions = transactions ?? [];
   const [printing, setPrinting] = useState<number | null>(null);
+  const printThermalMutation = usePrintThermal();
 
   async function handlePrintThermal(t: Transaction) {
     if (t.orderId == null) return;
     setPrinting(t.id);
+    const task = (async () => {
+      const { data: order } = await defaultApiClient.get<Order>(`/orders/${t.orderId}`);
+      await printThermalMutation.mutateAsync({ order });
+    })();
+    toast.promise(task, {
+      loading: "Imprimiendo ticket…",
+      success: "Ticket impreso",
+      error: (e) => (e instanceof Error ? e.message : "Error al imprimir ticket"),
+    });
     try {
-      const { data } = await defaultApiClient.get<Order>(`/orders/${t.orderId}`);
-      const res = await fetch("http://127.0.0.1:3001/print", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(data),
-      });
-      if (!res.ok) {
-        const err = await res.json().catch(() => ({}));
-        throw new Error(err.error ?? "Error al imprimir");
-      }
+      await task;
+    } catch {
+      /* error ya mostrado por el toast */
     } finally {
       setPrinting(null);
     }
   }
 
   return (
-    <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
-      <h3 className="text-lg font-bold text-gray-900 mb-4">Últimas órdenes pagadas</h3>
+    <BoxContainer className="h-full flex flex-col">
+      <h3 className="text-lg font-bold text-gray-900 mb-4 shrink-0">Últimas órdenes pagadas</h3>
 
       {safeTransactions.length === 0 ? (
         <p className="text-gray-500 text-center py-4">No hay órdenes pagadas hoy</p>
       ) : (
-        <div className="space-y-1">
+        <div className="space-y-1 overflow-y-auto flex-1 min-h-0">
           {safeTransactions.map((transaction, index) => {
             const paymentLabel = transaction.paymentMethod
               ? (PAYMENT_LABELS[transaction.paymentMethod] ?? transaction.paymentMethod)
@@ -97,6 +103,6 @@ export function RecentTransactionsCard({ transactions }: Props) {
           })}
         </div>
       )}
-    </div>
+    </BoxContainer>
   );
 }

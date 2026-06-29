@@ -8,4 +8,18 @@ export class CategoryServiceImpl implements ICategoryService {
     const { data } = await defaultApiClient.get<CategoryResponse[]>("/categories");
     return data.map(CategoryAdapter);
   }
+
+  async createCategory(name: string): Promise<Category> {
+    const { data } = await defaultApiClient.post<CategoryResponse>("/categories", { name });
+    return CategoryAdapter(data);
+  }
+
+  async updateCategory(id: number, name: string): Promise<Category> {
+    const { data } = await defaultApiClient.put<CategoryResponse>(`/categories/${id}`, { name });
+    return CategoryAdapter(data);
+  }
+
+  async deleteCategory(id: number): Promise<void> {
+    await defaultApiClient.delete(`/categories/${id}`);
+  }
 }

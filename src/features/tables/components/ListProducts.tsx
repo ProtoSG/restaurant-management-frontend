@@ -1,7 +1,8 @@
-import { useProductsByCategoryId, useProducts, useSelectedCategory, type Product } from "@/features/menu"
+import { useAvailableProducts, useSelectedCategory, type Product } from "@/features/menu"
 import { useSelectedTable, useAddItemToOrder as useAddItemToOrderTable, useOrderActive, useCreateOrder } from "@/features/tables"
 import { useAddItemToOrder as useAddItemToOrderOrders } from "@/features/orders"
 import { useTakeawaySurcharge } from "@/shared/hooks/useTakeawaySurcharge"
+import { Toggle } from "@/shared/components"
 import { FaSearch, FaPlus, FaMinus, FaShoppingBag } from "react-icons/fa";
 import { useRef, useState } from "react";
 
@@ -26,16 +27,16 @@ export function ListProducts({ searchTerm, setSearchTerm, selectedTable, selecte
   const surcharge = useTakeawaySurcharge();
 
   const isSearching = searchTerm.trim().length > 0;
-  const { products: categoryProducts, isLoading: isLoadingCategory, error: errorCategory } = useProductsByCategoryId(selectedCategory.selectedCategory?.id || 0);
-  const { products: allProducts, isLoading: isLoadingAll, error: errorAll } = useProducts();
+  const { products: allAvailableProducts, isLoading, error } = useAvailableProducts();
   const { order: activeOrder } = useOrderActive(selectedTable.selectedTable?.id || 0, !orderId && !!selectedTable.selectedTable);
   const createOrderMutation = useCreateOrder();
   const addItemTableMutation = useAddItemToOrderTable();
   const addItemOrdersMutation = useAddItemToOrderOrders();
 
-  const products = isSearching ? allProducts : categoryProducts;
-  const isLoading = isSearching ? isLoadingAll : isLoadingCategory;
-  const error = isSearching ? errorAll : errorCategory;
+  const selectedCategoryId = selectedCategory.selectedCategory?.id || 0;
+  const products = isSearching
+    ? allAvailableProducts
+    : allAvailableProducts.filter(p => p.categoryId === selectedCategoryId);
 
   const handleAddItem = async (product: Product) => {
     setPendingItem({ product, notes: "", quantity: 1, isTakeaway: false });
@@ -130,20 +131,15 @@ export function ListProducts({ searchTerm, setSearchTerm, selectedTable, selecte
             {filteredProducts.map((p: Product) => (
               <li
                 key={p.id}
-                className="flex items-center gap-3 px-1 py-3.5 border-b border-gray-100 last:border-0 active:bg-gray-50 transition-colors"
+                onClick={() => !isAdding && handleAddItem(p)}
+                role="button"
+                aria-label={`Agregar ${p.name}`}
+                className="flex items-center gap-3 px-1 py-3.5 border-b border-gray-100 last:border-0 hover:bg-gray-50 active:bg-gray-100 transition-colors cursor-pointer select-none"
               >
                 <p className="flex-1 text-sm font-medium text-gray-900 leading-snug">{p.name}</p>
                 <span className="text-sm font-semibold text-gray-600 tabular-nums shrink-0 min-w-[56px] text-right">
                   S/ {p.price.toFixed(2)}
                 </span>
-                <button
-                  onClick={() => handleAddItem(p)}
-                  disabled={isAdding}
-                  aria-label={`Agregar ${p.name}`}
-                  className="min-w-[44px] min-h-[44px] flex items-center justify-center rounded-xl bg-green text-white active:opacity-75 transition-opacity disabled:opacity-40 cursor-pointer shrink-0"
-                >
-                  <FaPlus className="text-xs" />
-                </button>
               </li>
             ))}
           </ul>
@@ -154,7 +150,7 @@ export function ListProducts({ searchTerm, setSearchTerm, selectedTable, selecte
       {pendingItem && (
         <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/40" onClick={() => setPendingItem(null)}>
           <div
-            className="bg-white w-full max-w-md rounded-t-2xl sm:rounded-2xl p-5 flex flex-col gap-4"
+            className="bg-white w-full max-w-md rounded-t-2xl sm:rounded-2xl p-5 flex flex-col gap-4 animate-[slide-up_0.28s_cubic-bezier(0.4,0,0.2,1)]"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-start justify-between gap-3">
@@ -189,24 +185,21 @@ export function ListProducts({ searchTerm, setSearchTerm, selectedTable, selecte
             </div>
 
             {/* Toggle para llevar */}
-            <button
-              onClick={() => setPendingItem({ ...pendingItem, isTakeaway: !pendingItem.isTakeaway })}
-              className={`flex items-center gap-2.5 w-full px-3.5 py-2.5 rounded-xl border-2 transition-colors cursor-pointer text-sm font-medium ${
-                pendingItem.isTakeaway
-                  ? "border-orange bg-orange/10 text-orange"
-                  : "border-gray-200 text-gray-500"
-              }`}
-            >
+            <div className={`flex items-center gap-2.5 w-full px-3.5 py-2.5 rounded-xl border-2 transition-colors text-sm font-medium ${
+              pendingItem.isTakeaway
+                ? "border-orange bg-orange/10 text-orange"
+                : "border-gray-200 text-gray-500"
+            }`}>
               <FaShoppingBag className="text-sm shrink-0" />
-              <span className="flex-1 text-left">Para llevar</span>
-              <div className={`w-10 h-5 rounded-full transition-colors relative shrink-0 ${pendingItem.isTakeaway ? "bg-orange" : "bg-gray-200"}`}>
-                <div className={`absolute top-0.5 w-4 h-4 rounded-full bg-white shadow transition-all ${pendingItem.isTakeaway ? "left-5" : "left-0.5"}`} />
-              </div>
-            </button>
+              <Toggle
+                checked={pendingItem.isTakeaway}
+                onChange={(checked) => setPendingItem({ ...pendingItem, isTakeaway: checked })}
+                label="Para llevar"
+              />
+            </div>
             <div className="flex flex-col gap-1.5">
               <label className="text-sm font-medium text-gray-700">Nota (opcional)</label>
               <input
-                autoFocus
                 type="text"
                 placeholder="Ej: sin ají, poco sal…"
                 maxLength={255}

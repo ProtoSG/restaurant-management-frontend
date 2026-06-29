@@ -24,9 +24,8 @@ export function useLogin() {
 
   useEffect(() => {
     if (errors.length > 0) {
-      errors.forEach((error) => {
-        toast.error(error);
-      });
+      errors.forEach((error) => toast.error(error));
+      useAuthStore.setState({ errors: [] });
     }
   }, [errors]);
 

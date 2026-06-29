@@ -4,74 +4,26 @@ import { Menu } from "./features/menu"
 import { Dashboard } from "./features/dashboard"
 import { Settings } from "./features/settings"
 import { Layout } from "./shared/layouts/Layout"
-import { ProtectedRoute } from "./ProtectedRoute"
-import { Login } from "./features/auth"
 import { Orders } from "./features/orders/Orders"
 import { ChefOrders } from "./features/chef/ChefOrders"
-import { useAuth } from "./features/auth"
-import type { RoleName } from "./features/auth/types/Login"
-import type { ReactNode } from "react"
-
-const ROLE_HOME: Record<RoleName, string> = {
-  ADMIN:   '/',
-  CASHIER: '/orders',
-  WAITER:  '/tables',
-  CHEF:    '/chef',
-}
-
-interface RoleGuardProps {
-  allowed: RoleName[]
-  children: ReactNode
-}
-
-function RoleGuard({ allowed, children }: RoleGuardProps) {
-  const { user } = useAuth()
-  const role = user?.role
-
-  if (!role || !allowed.includes(role)) {
-    const fallback = role ? ROLE_HOME[role] : '/login'
-    return <Navigate to={fallback} replace />
-  }
-
-  return <>{children}</>
-}
+import { Login, Register } from "./features/auth"
+import { Users } from "./features/users"
+import { ProtectedRoute } from "./ProtectedRoute"
 
 function App() {
   return (
     <Routes>
       <Route path="/login" element={<Login />} />
+      <Route path="/register" element={<Register />} />
       <Route element={<ProtectedRoute />}>
         <Route path="/" element={<Layout />}>
-          <Route index element={
-            <RoleGuard allowed={['ADMIN', 'CASHIER']}>
-              <Dashboard />
-            </RoleGuard>
-          } />
-          <Route path="/orders" element={
-            <RoleGuard allowed={['ADMIN', 'CASHIER', 'WAITER']}>
-              <Orders />
-            </RoleGuard>
-          } />
-          <Route path="/chef" element={
-            <RoleGuard allowed={['ADMIN', 'CHEF']}>
-              <ChefOrders />
-            </RoleGuard>
-          } />
-          <Route path="/tables" element={
-            <RoleGuard allowed={['ADMIN', 'CASHIER', 'WAITER']}>
-              <Tables />
-            </RoleGuard>
-          } />
-          <Route path="/menu" element={
-            <RoleGuard allowed={['ADMIN']}>
-              <Menu />
-            </RoleGuard>
-          } />
-          <Route path="/settings" element={
-            <RoleGuard allowed={['ADMIN']}>
-              <Settings />
-            </RoleGuard>
-          } />
+          <Route index element={<Dashboard />} />
+          <Route path="/orders" element={<Orders />} />
+          <Route path="/chef" element={<ChefOrders />} />
+          <Route path="/tables" element={<Tables />} />
+          <Route path="/menu" element={<Menu />} />
+          <Route path="/users" element={<Users />} />
+          <Route path="/settings" element={<Settings />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Route>
       </Route>

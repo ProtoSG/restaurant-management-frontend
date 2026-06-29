@@ -1,59 +1,11 @@
-import { useEffect, useState, type ReactNode } from "react";
-import { MdDashboard, MdTableBar, MdOutlineKitchen, MdSettings } from "react-icons/md";
+import { useEffect, useState } from "react";
 import { ItemLink } from "./ItemLink";
 import { IoLogOutOutline } from "react-icons/io5";
 import { useAuth } from "@/features/auth";
 import { useNavigate } from "react-router-dom";
-import { PiBowlFoodFill } from "react-icons/pi";
 import { HiOutlineChevronRight } from "react-icons/hi";
-import { BiSolidDish } from "react-icons/bi"
-import type { RoleName } from "@/features/auth/types/Login";
-
-export interface Section {
-  name: string;
-  link: string;
-  icon: ReactNode;
-  roles?: RoleName[];
-}
-
-const SECTIONS: Section[] = [
-  {
-    name: "Dashboard",
-    link: "/",
-    icon: <MdDashboard />,
-    roles: ['ADMIN', 'CASHIER']
-  },
-  {
-    name: "Pedidos",
-    link: "/orders",
-    icon: <BiSolidDish />,
-    roles: ['ADMIN', 'CASHIER', 'WAITER']
-  },
-  {
-    name: "Cocina",
-    link: "/chef",
-    icon: <MdOutlineKitchen />,
-    roles: ['ADMIN', 'CHEF']
-  },
-  {
-    name: "Mesas",
-    link: "/tables",
-    icon: <MdTableBar />,
-    roles: ['ADMIN', 'CASHIER', 'WAITER']
-  },
-  {
-    name: "Carta",
-    link: "/menu",
-    icon: <PiBowlFoodFill />,
-    roles: ['ADMIN']
-  },
-  {
-    name: "Ajustes",
-    link: "/settings",
-    icon: <MdSettings />,
-    roles: ['ADMIN']
-  }
-]
+import { NAV_ITEMS } from "@/shared/config/navigation";
+import { FullscreenButton } from "./FullscreenButton";
 
 export function AsideNav() {
   const { isAuthenticated, logout, user } = useAuth();
@@ -67,11 +19,11 @@ export function AsideNav() {
     }
   }, [isAuthenticated, navigate]);
 
-  const toggleExpanded = () => {
-    setIsExpanded(!isExpanded);
-  };
+  // const toggleExpanded = () => {
+  //   setIsExpanded(!isExpanded);
+  // };
 
-  const visibleSections = SECTIONS.filter(section => {
+  const visibleSections = NAV_ITEMS.filter(section => {
     if (!section.roles) return true;
     if (!user?.role) return true;
     return section.roles.includes(user.role);
@@ -81,20 +33,22 @@ export function AsideNav() {
     <aside className={`flex flex-col justify-between rounded-xl bg-card-background text-foreground p-3 transition-[width] duration-200 ease-in-out overflow-hidden shrink-0 ${isExpanded ? 'w-52' : 'w-16'}`}>
       <section className="flex flex-col gap-5">
         <button
-          onClick={toggleExpanded}
+          onClick={() => setIsExpanded(!isExpanded)}
           className="flex items-center justify-center text-xl py-2 rounded cursor-pointer hover:bg-foreground/50 transition-colors duration-200"
         >
           <HiOutlineChevronRight
             className={`transition-transform duration-300 ${isExpanded ? "rotate-180" : "rotate-0"}`}
           />
         </button>
-        <hr className="" />
+        <hr />
         <nav className="flex flex-col gap-2">
           {visibleSections.map(item => (
             <ItemLink key={item.link} item={item} isExpanded={isExpanded} />
           ))}
         </nav>
       </section>
+      <div className="flex flex-col gap-2">
+      <FullscreenButton expanded={isExpanded} />
       <button className={`
         flex gap-2 items-center rounded-md bg-white text-black px-2 h-10 cursor-pointer transition-colors
         hover:bg-red
@@ -110,6 +64,7 @@ export function AsideNav() {
           Salir
         </span>
       </button>
+      </div>
     </aside>
   )
 }

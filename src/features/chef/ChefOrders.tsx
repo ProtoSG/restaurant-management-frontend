@@ -1,18 +1,10 @@
 import { useActiveOrders, useMarkOrderAsReady } from "@/features/orders";
 import { OrderStatus, OrderStatusLabels } from "@/shared/enums/OrderStatus";
-import { OrderType, OrderTypeLabels } from "@/shared/enums/OrderType";
-import { Tag } from "@/shared/components";
+import { OrderTypeLabels } from "@/shared/enums/OrderType";
+import { Tag, SkeletonCard, ErrorState, EmptyState } from "@/shared/components";
 import { Variant } from "@/shared/enums/VariantEnum";
-import { FaConciergeBell, FaShoppingBag, FaTruck, FaCheck } from "react-icons/fa";
-
-function getTypeIcon(type: string) {
-  switch (type) {
-    case OrderType.DINE_IN:   return <FaConciergeBell />;
-    case OrderType.TAKEAWAY:  return <FaShoppingBag />;
-    case OrderType.DELIVERY:  return <FaTruck />;
-    default:                  return <FaConciergeBell />;
-  }
-}
+import { FaCheck } from "react-icons/fa";
+import { getTypeIcon } from "@/shared/utils/getTypeIcon";
 
 export function ChefOrders() {
   const { orders, isLoading, error } = useActiveOrders();
@@ -21,7 +13,7 @@ export function ChefOrders() {
   const pending = orders.filter(o => o.status === OrderStatus.IN_PROGRESS);
 
   return (
-    <main className="flex flex-col w-full gap-4">
+    <main className="flex flex-col w-full gap-4 p-6">
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Cocina</h1>
@@ -34,34 +26,17 @@ export function ChefOrders() {
         )}
       </div>
 
-      {isLoading && (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {Array.from({ length: 6 }).map((_, i) => (
-            <div key={i} className="rounded-2xl border border-gray-100 p-4 flex flex-col gap-3 animate-pulse">
-              <div className="flex justify-between">
-                <div className="h-5 w-24 bg-gray-200 rounded" />
-                <div className="h-5 w-16 bg-gray-200 rounded-full" />
-              </div>
-              {Array.from({ length: 3 }).map((_, j) => (
-                <div key={j} className="h-4 bg-gray-100 rounded w-4/5" />
-              ))}
-              <div className="h-10 bg-gray-200 rounded-xl mt-2" />
-            </div>
-          ))}
-        </div>
-      )}
+      {isLoading && <SkeletonCard count={6} />}
 
       {!!error && (
-        <div className="flex justify-center py-8">
-          <p className="text-red">Error al cargar pedidos</p>
-        </div>
+        <ErrorState message="Error al cargar pedidos" />
       )}
 
       {!isLoading && !error && pending.length === 0 && (
-        <div className="flex flex-col items-center justify-center py-20 gap-3 text-gray-400">
-          <FaCheck className="text-4xl text-green" />
-          <p className="text-lg font-medium">Sin pedidos pendientes</p>
-        </div>
+        <EmptyState
+          message="Sin pedidos pendientes"
+          icon={<FaCheck className="text-4xl text-green" />}
+        />
       )}
 
       {!isLoading && !error && pending.length > 0 && (
@@ -109,15 +84,18 @@ export function ChefOrders() {
                   <div key={category}>
                     <p className="text-xs font-bold text-gray-400 uppercase tracking-wider mb-1">{category}</p>
                     <ul className="flex flex-col">
-                      {items!.map((item) => (
+                      {items.map((item) => (
                         <li key={item.id} className="flex items-center gap-2 py-1.5 border-b border-gray-100 last:border-0">
                           <span className="min-w-[32px] h-8 flex items-center justify-center rounded-lg bg-orange/10 text-orange font-bold text-xl">
                             {item.quantity}
                           </span>
-                          <div className="flex flex-col">
+                          <div className="flex flex-col flex-1">
                             <span className="text-sm font-medium text-gray-800">{item.product.name}</span>
                             {item.notes && <span className="text-base font-semibold text-red italic">{item.notes}</span>}
                           </div>
+                          <span className="text-sm font-semibold text-gray-500 tabular-nums shrink-0">
+                            S/{Number(item.product.price).toFixed(2)}
+                          </span>
                         </li>
                       ))}
                     </ul>

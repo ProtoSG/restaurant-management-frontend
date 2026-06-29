@@ -1,14 +1,21 @@
 @import "tailwindcss";
 
 @theme {
-  --color-foreground: #e0e0e0;
+  --color-foreground     : #e0e0e0;
   --color-foreground-dark: #2B2D2D;
   --color-card-background: #2B2D2D;
-  --color-background: #F3F2F1;
+  --color-background     : #F3F2F1;
 
-  --color-green: #8a9e6f;
-  --color-red: #f28c85;
+  --color-green : #8a9e6f;
+  --color-red   : #f28c85;
   --color-orange: #f0c27a;
+  --color-blue  : #89a5b7;
+  --color-purple: #a693b5;
+  --color-yellow: #e8d485;
+  --color-pink  : #e8a8a5;
+  --color-teal  : #7fb5a5;
+  --color-brown : #c4a882;
+  --color-mint  : #95bfa5;
 }
 
 @font-face {
@@ -19,6 +26,7 @@
 body {
   background: oklch(98.5% 0 0);
   font-family: 'onest', sans-serif;
+  margin: 0;
 }
 
 @keyframes slide-up {
@@ -26,10 +34,91 @@ body {
   to   { transform: translateY(0); }
 }
 
-@media (max-width: 1023px) {
-  dialog[open] {
-    animation: slide-up 0.25s ease-out;
+@keyframes slide-from-right {
+  from { transform: translateX(100%); }
+  to   { transform: translateX(0); }
+}
+
+@keyframes slide-to-right {
+  from { transform: translateX(0); }
+  to   { transform: translateX(100%); }
+}
+
+.modal-slide-enter {
+  animation: slide-from-right 0.2s ease-out both;
+  will-change: transform;
+}
+
+.modal-slide-exit {
+  animation: slide-to-right 0.16s ease-in both;
+  pointer-events: none;
+  will-change: transform;
+}
+
+@keyframes modal-in {
+  from { opacity: 0; transform: scale(0.96) translateY(10px); }
+  to   { opacity: 1; transform: scale(1)    translateY(0); }
+}
+
+@keyframes modal-out {
+  from { opacity: 1; transform: scale(1)    translateY(0); }
+  to   { opacity: 0; transform: scale(0.96) translateY(10px); }
+}
+
+::view-transition-new(modal-panel) {
+  animation: 0.17s ease-out modal-in;
+}
+::view-transition-old(modal-panel) {
+  animation: 0.13s ease-in modal-out;
+}
+
+/* Container transform: modal viaja desde/hacia la card */
+.modal-ct-open,
+.modal-ct-close {
+  transform-origin: var(--ct-ox, 50%) var(--ct-oy, 50%);
+  will-change: transform, opacity;
+}
+
+.modal-ct-open {
+  animation: ct-expand 0.24s cubic-bezier(0.2, 0, 0, 1) both;
+}
+
+.modal-ct-close {
+  animation: ct-collapse 0.16s cubic-bezier(0.4, 0, 1, 1) both;
+  pointer-events: none;
+}
+
+@keyframes ct-expand {
+  from {
+    transform: scale(var(--ct-scale, 0.2));
+    opacity: 0;
   }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+@keyframes ct-collapse {
+  from {
+    transform: scale(1);
+    opacity: 1;
+  }
+  to {
+    transform: scale(var(--ct-scale, 0.2));
+    opacity: 0;
+  }
+}
+
+/* Backdrop fade — solo opacity (animar blur causa jank en tablet) */
+@starting-style {
+  dialog[open]::backdrop {
+    opacity: 0;
+  }
+}
+dialog::backdrop {
+  backdrop-filter: blur(2px);
+  transition: opacity 0.18s ease-out;
 }
 
 #root {

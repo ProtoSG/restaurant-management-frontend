@@ -1,13 +1,14 @@
 import { MdAdd } from "react-icons/md";
 import { Variant } from "../enums/VariantEnum";
 import { Button } from "./Button";
+import { FabButton } from "./FabButton";
 
 interface Props {
   title: string;
   subTitle: string;
   buttonHide?: boolean;
   buttonLabel: string;
-  buttonFunction: () => void;
+  buttonFunction: (source: HTMLElement) => void;
 }
 
 export function HeaderSection({
@@ -26,14 +27,19 @@ export function HeaderSection({
         </p>
       </div>
       {!buttonHide && (
-        <Button
-          variant={Variant.GREEN}
-          onClick={buttonFunction}
-          className="flex items-center gap-2"
-        >
-          <MdAdd size={20} />
-          {buttonLabel}
-        </Button>
+        <>
+          <div className="hidden lg:flex">
+            <Button
+              variant={Variant.GREEN}
+              onClick={(e) => buttonFunction(e.currentTarget)}
+              className="flex items-center gap-2"
+            >
+              <MdAdd size={20} />
+              {buttonLabel}
+            </Button>
+          </div>
+          <FabButton onClick={(src) => buttonFunction(src)} label={buttonLabel} />
+        </>
       )}
     </div>
   )
