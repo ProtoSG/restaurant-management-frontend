@@ -1,7 +1,7 @@
 import { Modal, TitleModal, Button, Tag } from "@/shared/components";
 import { useModal } from "@/shared/hooks/useModal";
-import { useOrderActive, useCreateOrder, useUpdateOrderItem as useUpdateOrderItemTable, useRemoveOrderItem as useRemoveOrderItemTable, useAddItemToOrder as useAddItemToOrderTable, useSelectedTable, useOrderItemsModal, useProductListModal, usePaymentConfirmationModal } from "@/features/tables";
-import { useOrderById, useUpdateOrderItem as useUpdateOrderItemOrder, useRemoveOrderItem as useRemoveOrderItemOrder, useAddItemToOrder as useAddItemToOrderOrders, useCancelOrder, useMarkOrderAsReady, usePrintKitchen } from "@/features/orders";
+import { useOrderActive, useCreateOrder, useUpdateOrderItem as useUpdateOrderItemTable, useRemoveOrderItem as useRemoveOrderItemTable, useSelectedTable, useOrderItemsModal, useProductListModal, usePaymentConfirmationModal } from "@/features/tables";
+import { useOrderById, useUpdateOrderItem as useUpdateOrderItemOrder, useRemoveOrderItem as useRemoveOrderItemOrder, useCancelOrder, useMarkOrderAsReady, usePrintKitchen } from "@/features/orders";
 import { useAuth } from "@/features/auth";
 import { useSelectedCategory } from "@/features/menu";
 import { Variant } from "@/shared/enums/VariantEnum";
@@ -12,7 +12,6 @@ import { toast } from "sonner";
 import { MdArrowBack } from "react-icons/md";
 import { useState, useEffect } from "react";
 import { ModalPaymentConfirmation } from "./ModalPaymentConfirmation";
-import { QuickAddItems } from "./QuickAddItems";
 import { ProductCatalogPanel } from "../ProductCatalogPanel";
 import { PaymentPanel } from "../PaymentPanel";
 
@@ -47,8 +46,6 @@ export function ModalListOrderItems({ orderItemsModal, productListModal, selecte
   const error = isOrderMode ? errorById : errorByTable;
 
   const createOrderMutation = useCreateOrder();
-  const addItemTableMutation = useAddItemToOrderTable();
-  const addItemOrdersMutation = useAddItemToOrderOrders();
   const updateOrderItemTable = useUpdateOrderItemTable();
   const removeOrderItemTable = useRemoveOrderItemTable();
   const updateOrderItemOrder = useUpdateOrderItemOrder();
@@ -119,21 +116,6 @@ export function ModalListOrderItems({ orderItemsModal, productListModal, selecte
       } catch (error) {
         console.error('Error al actualizar cantidad:', error);
       }
-    }
-  };
-
-  const handleQuickAdd = async (productId: number) => {
-    if (!order) return;
-    if (isOrderMode) {
-      await addItemOrdersMutation.mutateAsync({ orderId: orderId!, productId, quantity: 1 });
-    } else {
-      if (!selectedTable.selectedTable) return;
-      await addItemTableMutation.mutateAsync({
-        orderId: order.id,
-        tableId: selectedTable.selectedTable.id,
-        productId,
-        quantity: 1,
-      });
     }
   };
 
@@ -304,12 +286,6 @@ export function ModalListOrderItems({ orderItemsModal, productListModal, selecte
                       <p className="text-gray-400 text-sm">Sin productos aún</p>
                     </div>
                   )}
-
-                  {/* Acceso rápido */}
-                  <QuickAddItems
-                    onAdd={handleQuickAdd}
-                    disabled={addItemTableMutation.isPending || addItemOrdersMutation.isPending}
-                  />
 
                   {/* Resumen de pagos parciales */}
                   {hasPreviousPayments && (
