@@ -49,7 +49,7 @@ jobs:
       # Construir local (load) → escanear → pushear solo si el scan pasa.
       # Así una imagen con CVEs CRITICAL/HIGH nunca llega a GHCR.
       - name: Build image (local)
-        uses: docker/build-push-action@v6
+        uses: docker/build-push-action@v7
         with:
           context: .
           load: true
