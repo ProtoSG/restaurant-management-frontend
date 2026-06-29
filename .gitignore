@@ -23,4 +23,7 @@ dist-ssr
 *.sln
 *.sw?
 .env*
+# .env.production solo lleva config pública de cliente (URL API, IP impresora,
+# branding) — se versiona para que el build de CI/Docker la hornee.
+!.env.production
 .impeccable.md
