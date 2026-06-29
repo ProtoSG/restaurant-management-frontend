@@ -1,8 +1,15 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { toast } from "sonner";
 import { OrderServiceImpl } from "../services/OrderServiceImpl";
+import { printKitchenTicket } from "@/shared/printing/printer";
+import { getApiErrorMessage } from "@/shared/utils/apiError";
 import type { CreateOrderRequest } from "../schemas/Order.schema";
 
 const orderService = new OrderServiceImpl();
+
+// Unique negative ids for optimistic items (Date.now() alone collides within the same ms).
+let optimisticSeq = 0;
+const nextOptimisticId = () => -(Date.now() * 1000 + (++optimisticSeq % 1000));
 
 export function useActiveOrders() {
   const { data: orders = [], isLoading, error, refetch } = useQuery({
@@ -35,6 +42,7 @@ export function useCreateOrder() {
     },
     onError: (error) => {
       console.error('Error al crear la orden:', error);
+      toast.error(getApiErrorMessage(error));
     }
   });
 }
@@ -58,7 +66,7 @@ export function useAddItemToOrder() {
       const previous = queryClient.getQueryData<import("@/shared/types/Order").Order>(['order', orderId]);
       if (previous) {
         const optimisticItem: import("@/shared/types/OrderItem").OrderItem = {
-          id: -Date.now(),
+          id: nextOptimisticId(),
           quantity,
           subTotal: product.price * quantity,
           product,
@@ -75,6 +83,7 @@ export function useAddItemToOrder() {
     onError: (error, { orderId }, ctx) => {
       if (ctx?.previous) queryClient.setQueryData(['order', orderId], ctx.previous);
       console.error('Error al agregar item:', error);
+      toast.error(getApiErrorMessage(error));
     },
 
     onSettled: (_, __, { orderId }) => {
@@ -96,6 +105,7 @@ export function useUpdateOrderItem() {
     },
     onError: (error) => {
       console.error('Error al actualizar item:', error);
+      toast.error(getApiErrorMessage(error));
     }
   });
 }
@@ -112,6 +122,7 @@ export function useRemoveOrderItem() {
     },
     onError: (error) => {
       console.error('Error al eliminar item:', error);
+      toast.error(getApiErrorMessage(error));
     }
   });
 }
@@ -131,6 +142,7 @@ export function useCancelOrder() {
     },
     onError: (error) => {
       console.error('Error al cancelar la orden:', error);
+      toast.error(getApiErrorMessage(error));
     }
   });
 }
@@ -147,6 +159,7 @@ export function useMarkOrderAsReady() {
     },
     onError: (error) => {
       console.error('Error al marcar orden como lista:', error);
+      toast.error(getApiErrorMessage(error));
     }
   });
 }
@@ -162,6 +175,7 @@ export function usePayOrder() {
     },
     onError: (error) => {
       console.error('Error al pagar la orden:', error);
+      toast.error(getApiErrorMessage(error));
     }
   });
 }
@@ -178,6 +192,7 @@ export function usePayPartialOrder() {
     },
     onError: (error) => {
       console.error('Error al pagar parcialmente la orden:', error);
+      toast.error(getApiErrorMessage(error));
     }
   });
 }
@@ -187,6 +202,25 @@ export function usePrintThermal() {
     mutationFn: ({ order }: { order: import("@/shared/types/Order").Order }) => orderService.printThermal(order),
     onError: (error) => {
       console.error('Error al imprimir en impresora térmica:', error);
+    }
+  });
+}
+
+export function usePrintKitchen() {
+  return useMutation({
+    // Imprime PRIMERO el delta, y solo si la impresión sale bien lo marca como enviado.
+    mutationFn: async ({ orderId }: { orderId: number }): Promise<{ printed: number }> => {
+      const delta = await orderService.getKitchenPending(orderId);
+      if (!delta.items?.length) return { printed: 0 };
+      await printKitchenTicket(delta);
+      await orderService.confirmKitchen(
+        orderId,
+        delta.items.map((i) => ({ itemId: i.id, quantity: i.quantity }))
+      );
+      return { printed: delta.items.length };
+    },
+    onError: (error) => {
+      console.error('Error al imprimir comanda de cocina:', error);
     }
   });
 }

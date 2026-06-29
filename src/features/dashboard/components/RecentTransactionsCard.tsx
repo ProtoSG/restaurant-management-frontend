@@ -1,6 +1,8 @@
 import { useState } from "react";
 import { FiPrinter } from "react-icons/fi";
+import { toast } from "sonner";
 import defaultApiClient from "@/shared/utils/apiClient";
+import { usePrintThermal } from "@/features/orders";
 import type { Order } from "@/shared/types/Order";
 import BoxContainer from "@/shared/components/BoxContainer";
 
@@ -27,21 +29,24 @@ const PAYMENT_LABELS: Record<string, string> = {
 export function RecentTransactionsCard({ transactions }: Props) {
   const safeTransactions = transactions ?? [];
   const [printing, setPrinting] = useState<number | null>(null);
+  const printThermalMutation = usePrintThermal();
 
   async function handlePrintThermal(t: Transaction) {
     if (t.orderId == null) return;
     setPrinting(t.id);
+    const task = (async () => {
+      const { data: order } = await defaultApiClient.get<Order>(`/orders/${t.orderId}`);
+      await printThermalMutation.mutateAsync({ order });
+    })();
+    toast.promise(task, {
+      loading: "Imprimiendo ticket…",
+      success: "Ticket impreso",
+      error: (e) => (e instanceof Error ? e.message : "Error al imprimir ticket"),
+    });
     try {
-      const { data } = await defaultApiClient.get<Order>(`/orders/${t.orderId}`);
-      const res = await fetch("http://127.0.0.1:3001/print", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(data),
-      });
-      if (!res.ok) {
-        const err = await res.json().catch(() => ({}));
-        throw new Error(err.error ?? "Error al imprimir");
-      }
+      await task;
+    } catch {
+      /* error ya mostrado por el toast */
     } finally {
       setPrinting(null);
     }

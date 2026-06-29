@@ -1,6 +1,6 @@
 import { orderAdapter } from "../adapters/OrderAdapter";
 import defaultApiClient from "@/shared/utils/apiClient";
-import { THERMAL_PRINTER_URL } from "@/shared/Config";
+import { printOrderTicket } from "@/shared/printing/printer";
 import type { Order, OrderResponse } from "@/shared/types/Order";
 import type { CreateOrderRequest } from "../schemas/Order.schema";
 
@@ -73,15 +73,18 @@ export class OrderServiceImpl {
     return orderAdapter(data);
   }
 
-  async printThermal(order: import("@/shared/types/Order").Order): Promise<void> {
-    const res = await fetch(THERMAL_PRINTER_URL, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(order),
-    });
-    if (!res.ok) {
-      const err = await res.json().catch(() => ({}));
-      throw new Error(err.error ?? "Error al imprimir");
-    }
+  async printThermal(order: Order): Promise<void> {
+    await printOrderTicket(order);
+  }
+
+  /** Delta a imprimir en cocina (productos nuevos + aumentos). No muta el pedido. */
+  async getKitchenPending(orderId: number): Promise<Order> {
+    const { data } = await defaultApiClient.get<OrderResponse>(`/orders/${orderId}/kitchen/pending`);
+    return orderAdapter(data);
+  }
+
+  /** Marca como enviado a cocina lo que efectivamente se imprimió. */
+  async confirmKitchen(orderId: number, lines: { itemId: number; quantity: number }[]): Promise<void> {
+    await defaultApiClient.post(`/orders/${orderId}/kitchen/confirm`, { items: lines });
   }
 }
