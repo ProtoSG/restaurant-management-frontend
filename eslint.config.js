@@ -6,7 +6,8 @@ import tseslint from 'typescript-eslint'
 import { defineConfig, globalIgnores } from 'eslint/config'
 
 export default defineConfig([
-  globalIgnores(['dist']),
+  // public/ trae el SDK Epson minificado (vendoreado); dev-dist/dist son build output.
+  globalIgnores(['dist', 'dev-dist', 'public']),
   {
     files: ['**/*.{ts,tsx}'],
     extends: [

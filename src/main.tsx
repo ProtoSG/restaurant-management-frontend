@@ -31,6 +31,8 @@ const queryClient = new QueryClient({
   },
 })
 
+// Entry file (no aplica fast-refresh de componentes).
+// eslint-disable-next-line react-refresh/only-export-components
 function WebSocketProvider({ children }: { children: React.ReactNode }) {
   useOrderWebSocket()
   return <>{children}</>
