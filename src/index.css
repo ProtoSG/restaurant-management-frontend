@@ -45,12 +45,14 @@ body {
 }
 
 .modal-slide-enter {
-  animation: slide-from-right 0.28s ease-out both;
+  animation: slide-from-right 0.2s ease-out both;
+  will-change: transform;
 }
 
 .modal-slide-exit {
-  animation: slide-to-right 0.22s ease-in both;
+  animation: slide-to-right 0.16s ease-in both;
   pointer-events: none;
+  will-change: transform;
 }
 
 @keyframes modal-in {
@@ -64,24 +66,25 @@ body {
 }
 
 ::view-transition-new(modal-panel) {
-  animation: 0.25s ease-out modal-in;
+  animation: 0.17s ease-out modal-in;
 }
 ::view-transition-old(modal-panel) {
-  animation: 0.2s ease-in modal-out;
+  animation: 0.13s ease-in modal-out;
 }
 
 /* Container transform: modal viaja desde/hacia la card */
 .modal-ct-open,
 .modal-ct-close {
   transform-origin: var(--ct-ox, 50%) var(--ct-oy, 50%);
+  will-change: transform, opacity;
 }
 
 .modal-ct-open {
-  animation: ct-expand 0.4s cubic-bezier(0.4, 0, 0.2, 1) both;
+  animation: ct-expand 0.24s cubic-bezier(0.2, 0, 0, 1) both;
 }
 
 .modal-ct-close {
-  animation: ct-collapse 0.28s cubic-bezier(0.4, 0, 1, 1) both;
+  animation: ct-collapse 0.16s cubic-bezier(0.4, 0, 1, 1) both;
   pointer-events: none;
 }
 
@@ -107,15 +110,15 @@ body {
   }
 }
 
-/* Backdrop fade */
+/* Backdrop fade — solo opacity (animar blur causa jank en tablet) */
 @starting-style {
   dialog[open]::backdrop {
     opacity: 0;
-    backdrop-filter: blur(0px);
   }
 }
 dialog::backdrop {
-  transition: opacity 0.38s ease-out, backdrop-filter 0.38s ease-out;
+  backdrop-filter: blur(2px);
+  transition: opacity 0.18s ease-out;
 }
 
 #root {
