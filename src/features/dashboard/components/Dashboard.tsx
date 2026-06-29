@@ -93,22 +93,14 @@ export function Dashboard() {
   }, [dailyBalanceData]);
 
   const topProductsList = useMemo((): TopProduct[] => {
-    if (topProductsData?.products && topProductsData.products.length > 0) {
-      return topProductsData.products.map((p: { productId: number; productName: string; categoryName: string; quantity: number; total: number }) => ({
-        id: p.productId,
-        name: p.productName,
-        category: p.categoryName ?? 'General',
-        sales: p.quantity ?? 0,
-        revenue: p.total ?? 0
-      }));
-    }
-    return [
-      { id: 1, name: "Lomo Saltado", category: "Plato Principal", sales: 45, revenue: 675.00 },
-      { id: 2, name: "Ceviche Mixto", category: "Entrada", sales: 38, revenue: 570.00 },
-      { id: 3, name: "Ají de Gallina", category: "Plato Principal", sales: 32, revenue: 448.00 },
-      { id: 4, name: "Chicharrón", category: "Entrada", sales: 28, revenue: 336.00 },
-      { id: 5, name: "Pisco Sour", category: "Bebida", sales: 52, revenue: 364.00 },
-    ];
+    if (!topProductsData?.products) return [];
+    return topProductsData.products.map((p: { productId: number; productName: string; categoryName: string; quantity: number; total: number }) => ({
+      id: p.productId,
+      name: p.productName,
+      category: p.categoryName ?? 'General',
+      sales: p.quantity ?? 0,
+      revenue: p.total ?? 0
+    }));
   }, [topProductsData]);
 
   const recentTransactions = useMemo((): Transaction[] => {
