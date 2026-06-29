@@ -1,5 +1,6 @@
 import { useState } from "react"
 import { Outlet } from "react-router-dom"
+import { Toaster } from "sonner"
 import { AsideNav } from "../components"
 import { BottomNav } from "../components/BottomNav"
 import { TopBar } from "../components/TopBar"
@@ -11,6 +12,7 @@ export function Layout() {
 
   return (
     <div className="flex min-h-dvh max-h-dvh w-full p-0 bg-background">
+      <Toaster richColors position="bottom-center" />
       <WsStatusBanner />
 
       {/* Sidebar desktop */}

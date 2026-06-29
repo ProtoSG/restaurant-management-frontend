@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { Modal, TitleModal, Input, Button, Select } from "@/shared/components";
 import { Variant } from "@/shared/enums/VariantEnum";
 import { useModal } from "@/shared/hooks/useModal";
+import { getApiErrorMessage } from "@/shared/utils/apiError";
 import type { User, CreateUserRequest, UpdateUserRequest } from "../types/User";
 import type { RoleName } from "@/features/auth/types/Login";
 
@@ -65,8 +66,8 @@ export function ModalUserForm({ isOpen, onClose, sourceRef, mode, user, onCreate
         await onUpdate({ id: user.id, req: { name: trimmed, role } });
       }
       onClose();
-    } catch {
-      setError(mode === "create" ? "Error al crear el usuario" : "Error al actualizar el usuario");
+    } catch (e) {
+      setError(getApiErrorMessage(e));
     }
   };
 

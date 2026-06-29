@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from "react";
 import { Modal, TitleModal, Input, Button } from "@/shared/components";
 import { Variant } from "@/shared/enums/VariantEnum";
 import { useModal } from "@/shared/hooks/useModal";
+import { getApiErrorMessage } from "@/shared/utils/apiError";
 import type { Category } from "../types/Category";
 
 interface Props {
@@ -51,8 +52,8 @@ export function ModalCategoryForm({
         await onCreate(trimmed);
       }
       onClose();
-    } catch {
-      setError("Error al guardar la categoría");
+    } catch (e) {
+      setError(getApiErrorMessage(e));
     }
   };
 
@@ -62,8 +63,8 @@ export function ModalCategoryForm({
     try {
       await onDelete(selected.id);
       onClose();
-    } catch {
-      setError("Error al eliminar la categoría");
+    } catch (e) {
+      setError(getApiErrorMessage(e));
     }
   };
 

@@ -1,4 +1,5 @@
 import type { ReactNode, RefObject } from "react"
+import { Toaster } from "sonner";
 import { cn } from "../utils/utils";
 import { MdArrowBack } from "react-icons/md";
 
@@ -45,6 +46,8 @@ export function Modal({children, dialogRef, setOpen, className, fullScreenMobile
         </button>
         {children}
       </div>
+      {/* Toaster dentro del top-layer del <dialog> para que los toasts no queden detrás del modal */}
+      <Toaster richColors position="bottom-center" />
     </dialog>
   )
 }
