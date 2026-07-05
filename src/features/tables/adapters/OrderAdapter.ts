@@ -13,6 +13,7 @@ export function orderAdapter(order: OrderResponse): Order {
     type: order.type,
     customerName: order.customerName,
     tableId: order.tableId,
+    tableNumber: order.tableNumber,
     total: order.total,
     items: items,
     paidAmount: order.paidAmount,
