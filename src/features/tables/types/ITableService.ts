@@ -10,7 +10,7 @@ export interface ITableService {
   delete(id: number): Promise<void>;
   
   createOrder(tableId: number): Promise<Order>;
-  getOrderActive(tableId: number): Promise<Order>;
+  getOrderActive(tableId: number): Promise<Order | null>;
   
   addItemToOrder(orderId: number, productId: number, quantity?: number): Promise<OrderItem>;
   updateOrderItem(orderId: number, itemId: number, quantity: number): Promise<void>;

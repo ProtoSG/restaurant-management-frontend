@@ -1,12 +1,12 @@
 import { Modal, TitleModal, Button, Tag } from "@/shared/components";
 import { useModal } from "@/shared/hooks/useModal";
-import { useOrderActive, useCreateOrder, useUpdateOrderItem as useUpdateOrderItemTable, useRemoveOrderItem as useRemoveOrderItemTable, useSelectedTable, useOrderItemsModal, useProductListModal, usePaymentConfirmationModal } from "@/features/tables";
-import { useOrderById, useUpdateOrderItem as useUpdateOrderItemOrder, useRemoveOrderItem as useRemoveOrderItemOrder, useCancelOrder, useMarkOrderAsReady, usePrintKitchen } from "@/features/orders";
+import { useOrderActive, useUpdateOrderItem as useUpdateOrderItemTable, useRemoveOrderItem as useRemoveOrderItemTable, useSelectedTable, useOrderItemsModal, useProductListModal, usePaymentConfirmationModal } from "@/features/tables";
+import { useOrderById, useUpdateOrderItem as useUpdateOrderItemOrder, useRemoveOrderItem as useRemoveOrderItemOrder, useCancelOrder, usePrintKitchen } from "@/features/orders";
 import { useAuth } from "@/features/auth";
 import { useSelectedCategory } from "@/features/menu";
 import { Variant } from "@/shared/enums/VariantEnum";
 import { PaymentMethodLabels } from "@/shared/enums/PaymentMethod";
-import { OrderStatus, OrderStatusLabels } from "@/shared/enums/OrderStatus";
+import { OrderStatusLabels } from "@/shared/enums/OrderStatus";
 import { FaMinus, FaPlus, FaTrash, FaShoppingBag, FaUtensils } from "react-icons/fa";
 import { toast } from "sonner";
 import { MdArrowBack } from "react-icons/md";
@@ -28,11 +28,9 @@ export function ModalListOrderItems({ orderItemsModal, productListModal, selecte
   const dialogRef = useModal(orderItemsModal.isOpen, orderItemsModal.sourceRef, true);
   const { user } = useAuth();
   const canPay = user?.role === 'ADMIN' || user?.role === 'CASHIER';
-  const isAdmin = user?.role === 'ADMIN';
   const [showCancelConfirm, setShowCancelConfirm] = useState(false);
   const [desktopPanel, setDesktopPanel] = useState<'catalog' | 'payment'>('catalog');
   const cancelOrderMutation = useCancelOrder();
-  const markAsReadyMutation = useMarkOrderAsReady();
   const printKitchenMutation = usePrintKitchen();
   const [showTransactions, setShowTransactions] = useState(false);
 
@@ -45,7 +43,6 @@ export function ModalListOrderItems({ orderItemsModal, productListModal, selecte
   const isLoading = isOrderMode ? isLoadingById : isLoadingByTable;
   const error = isOrderMode ? errorById : errorByTable;
 
-  const createOrderMutation = useCreateOrder();
   const updateOrderItemTable = useUpdateOrderItemTable();
   const removeOrderItemTable = useRemoveOrderItemTable();
   const updateOrderItemOrder = useUpdateOrderItemOrder();
@@ -60,26 +57,10 @@ export function ModalListOrderItems({ orderItemsModal, productListModal, selecte
     }
   }, [orderItemsModal.isOpen]);
 
-  const handleAddItem = async (source?: HTMLElement) => {
+  const handleAddItem = (source?: HTMLElement) => {
     if (!isOrderMode && !selectedTable.selectedTable) return;
-
-    const isDesktop = window.innerWidth >= 1024;
-
-    if (isOrderMode) {
-      if (!isDesktop) productListModal.open(source);
-      return;
-    }
-
-    if (!order) {
-      try {
-        await createOrderMutation.mutateAsync(selectedTable.selectedTable!.id);
-        if (!isDesktop) productListModal.open();
-      } catch (error) {
-        console.error('Error al crear la orden:', error);
-      }
-    } else {
-      if (!isDesktop) productListModal.open(source);
-    }
+    // La orden se crea de forma diferida al agregar el primer item (ver ListProducts).
+    productListModal.open(source);
   };
 
   const handleUpdateQuantity = async (itemId: number, currentQuantity: number, increment: boolean) => {
@@ -189,17 +170,60 @@ export function ModalListOrderItems({ orderItemsModal, productListModal, selecte
             <div className="flex flex-col gap-4 min-h-0 max-lg:flex-1 lg:w-[400px] lg:shrink-0 lg:pr-6 lg:border-r lg:border-gray-100">
 
               {!order ? (
-                <div className="flex flex-col items-center gap-4 py-10">
-                  <p className="text-gray-500">No hay pedido activo para esta mesa</p>
-                  <Button
-                    variant={Variant.GREEN}
-                    onClick={(e) => handleAddItem(e.currentTarget as HTMLElement)}
-                    disabled={createOrderMutation.isPending}
-                    className="w-full"
-                  >
-                    {createOrderMutation.isPending ? 'Creando pedido...' : 'Crear Pedido y Agregar Items'}
-                  </Button>
-                </div>
+                <>
+                  {/* Template de pedido vacío — se completa al agregar el primer item */}
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs font-mono text-gray-400 bg-gray-100 px-2 py-0.5 rounded">
+                        NUEVO
+                      </span>
+                      <Tag>Sin iniciar</Tag>
+                    </div>
+                    {canPay && (
+                      <button
+                        onClick={(e) => handleAddItem(e.currentTarget as HTMLElement)}
+                        className="lg:hidden flex items-center gap-1.5 text-sm font-medium text-orange border border-orange rounded-lg px-3 py-1.5 hover:bg-orange hover:text-white transition-colors cursor-pointer"
+                      >
+                        <FaPlus className="text-xs" />
+                        Agregar
+                      </button>
+                    )}
+                  </div>
+
+                  {/* Lista de items vacía */}
+                  <div className="flex flex-col items-center gap-2 py-6 border-2 border-dashed border-gray-200 rounded-xl max-lg:flex-1 max-lg:justify-center">
+                    <p className="text-gray-400 text-sm">Sin productos aún</p>
+                    <p className="text-gray-300 text-xs text-center px-4">
+                      Agrega productos desde la carta para iniciar el pedido
+                    </p>
+                  </div>
+
+                  {/* Total del pedido */}
+                  <div className="rounded-xl bg-gray-50 border border-gray-200 p-4 flex justify-between items-center">
+                    <span className="text-sm text-gray-500">Total del pedido</span>
+                    <span className="text-xl font-bold text-gray-900">S/ 0.00</span>
+                  </div>
+
+                  {/* Acción principal */}
+                  {canPay ? (
+                    <div className="flex flex-col gap-2 pt-1">
+                      <Button variant={Variant.GREEN} className="flex-1" disabled>
+                        Pagar
+                      </Button>
+                    </div>
+                  ) : (
+                    <div className="pt-1">
+                      <Button
+                        variant={Variant.GREEN}
+                        className="flex-1 lg:hidden"
+                        onClick={(e) => handleAddItem(e.currentTarget as HTMLElement)}
+                      >
+                        <FaPlus className="text-xs mr-2" />
+                        Agregar Producto
+                      </Button>
+                    </div>
+                  )}
+                </>
               ) : (
                 <>
                   {/* Header: código + estado + botón agregar (mobile only) */}
@@ -230,7 +254,6 @@ export function ModalListOrderItems({ orderItemsModal, productListModal, selecte
                       {canPay && (
                         <button
                           onClick={(e) => handleAddItem(e.currentTarget as HTMLElement)}
-                          disabled={createOrderMutation.isPending}
                           className="lg:hidden flex items-center gap-1.5 text-sm font-medium text-orange border border-orange rounded-lg px-3 py-1.5 hover:bg-orange hover:text-white transition-colors cursor-pointer disabled:opacity-50"
                         >
                           <FaPlus className="text-xs" />
@@ -373,16 +396,6 @@ export function ModalListOrderItems({ orderItemsModal, productListModal, selecte
                       </div>
                     ) : (
                       <div className="flex flex-col gap-2 pt-1">
-                        {isAdmin && order.status === OrderStatus.IN_PROGRESS && (
-                          <Button
-                            variant={Variant.ORANGE}
-                            className="w-full"
-                            onClick={() => markAsReadyMutation.mutate({ orderId: order.id, tableId: selectedTable.selectedTable?.id })}
-                            disabled={markAsReadyMutation.isPending || !order.items?.length}
-                          >
-                            {markAsReadyMutation.isPending ? 'Marcando...' : 'Marcar como Listo'}
-                          </Button>
-                        )}
                         <div className="flex gap-2">
                           <Button
                             className="flex-1"
@@ -396,7 +409,7 @@ export function ModalListOrderItems({ orderItemsModal, productListModal, selecte
                             variant={Variant.GREEN}
                             className="flex-1"
                             onClick={(e) => handlePay(e.currentTarget as HTMLElement)}
-                            disabled={!order.items?.length || order.status === OrderStatus.IN_PROGRESS}
+                            disabled={!order.items?.length}
                           >
                             Pagar
                           </Button>
@@ -409,10 +422,9 @@ export function ModalListOrderItems({ orderItemsModal, productListModal, selecte
                         variant={Variant.GREEN}
                         className="flex-1 lg:hidden"
                         onClick={(e) => handleAddItem(e.currentTarget as HTMLElement)}
-                        disabled={createOrderMutation.isPending}
                       >
                         <FaPlus className="text-xs mr-2" />
-                        {createOrderMutation.isPending ? 'Abriendo...' : 'Agregar Producto'}
+                        Agregar Producto
                       </Button>
                     </div>
                   )}
@@ -460,7 +472,7 @@ export function ModalListOrderItems({ orderItemsModal, productListModal, selecte
         )}
       </Modal>
       <ModalPaymentConfirmation
-        order={order}
+        order={order ?? undefined}
         paymentModal={paymentModal}
         selectedTable={selectedTable}
         orderItemsModal={orderItemsModal}

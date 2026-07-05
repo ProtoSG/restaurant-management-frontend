@@ -26,9 +26,11 @@ const EMPTY_FORM: FormData = {
 interface Props {
   modal: ReturnType<typeof useOrderModal>;
   onOrderCreated?: (order: Order) => void;
+  /** Fija el tipo de pedido y oculta el selector (ej: solo "Para llevar"). */
+  lockedType?: OrderType;
 }
 
-export function ModalCreateOrder({ modal, onOrderCreated }: Props) {
+export function ModalCreateOrder({ modal, onOrderCreated, lockedType }: Props) {
   const dialogRef = useModal(modal.isOpen, modal.sourceRef);
   const { tables = [] } = useTables();
   const createOrderMutation = useCreateOrder();
@@ -54,8 +56,10 @@ export function ModalCreateOrder({ modal, onOrderCreated }: Props) {
       setSelectedType(undefined);
       setSelectedTable(null);
       setFormErrors({});
+    } else if (lockedType) {
+      setValue("type", lockedType);
     }
-  }, [modal.isOpen, reset]);
+  }, [modal.isOpen, reset, lockedType, setValue]);
 
   useEffect(() => {
     if (typeValue) {
@@ -108,37 +112,43 @@ export function ModalCreateOrder({ modal, onOrderCreated }: Props) {
 
   return (
     <Modal dialogRef={dialogRef} setOpen={modal.close} className={selectedType === OrderType.DINE_IN ? "max-w-2xl" : ""}>
-      <TitleModal>Crear Nuevo Pedido</TitleModal>
+      <TitleModal>
+        {lockedType === OrderType.TAKEAWAY
+          ? "Nuevo Pedido para Llevar"
+          : "Crear Nuevo Pedido"}
+      </TitleModal>
 
       <form onSubmit={handleSubmit(onSubmit)} className="flex flex-col gap-4">
-        <div>
-          <p className="mb-2">Tipo de Pedido</p>
-          <input type="hidden" {...register("type")} />
-          <div className={`grid grid-cols-3 gap-2 p-1 rounded-xl border-2 ${formErrors.type ? "border-red" : "border-transparent"}`}>
-            {Object.values(OrderType).map((type) => (
-              <button
-                key={type}
-                type="button"
-                onClick={() => { setValue("type", type); }}
-                className={`flex flex-col items-center gap-1.5 py-3 px-2 rounded-xl border-2 text-sm font-medium transition-all cursor-pointer ${
-                  typeValue === type
-                    ? "border-orange bg-orange text-white shadow-md"
-                    : `border-gray-200 bg-white text-gray-600 hover:border-orange/40 hover:bg-orange/5 ${formErrors.type ? "border-red/40" : ""}`
-                }`}
-              >
-                {type === OrderType.DINE_IN && <FaConciergeBell className="text-xl" />}
-                {type === OrderType.TAKEAWAY && <FaShoppingBag className="text-xl" />}
-                {type === OrderType.DELIVERY && <FaTruck className="text-xl" />}
-                <span>{OrderTypeLabels[type]}</span>
-              </button>
-            ))}
+        <input type="hidden" {...register("type")} />
+        {!lockedType && (
+          <div>
+            <p className="mb-2">Tipo de Pedido</p>
+            <div className={`grid grid-cols-3 gap-2 p-1 rounded-xl border-2 ${formErrors.type ? "border-red" : "border-transparent"}`}>
+              {Object.values(OrderType).map((type) => (
+                <button
+                  key={type}
+                  type="button"
+                  onClick={() => { setValue("type", type); }}
+                  className={`flex flex-col items-center gap-1.5 py-3 px-2 rounded-xl border-2 text-sm font-medium transition-all cursor-pointer ${
+                    typeValue === type
+                      ? "border-orange bg-orange text-white shadow-md"
+                      : `border-gray-200 bg-white text-gray-600 hover:border-orange/40 hover:bg-orange/5 ${formErrors.type ? "border-red/40" : ""}`
+                  }`}
+                >
+                  {type === OrderType.DINE_IN && <FaConciergeBell className="text-xl" />}
+                  {type === OrderType.TAKEAWAY && <FaShoppingBag className="text-xl" />}
+                  {type === OrderType.DELIVERY && <FaTruck className="text-xl" />}
+                  <span>{OrderTypeLabels[type]}</span>
+                </button>
+              ))}
+            </div>
+            {formErrors.type && (
+              <p className="text-red font-semibold text-sm mt-1">
+                {formErrors.type}
+              </p>
+            )}
           </div>
-          {formErrors.type && (
-            <p className="text-red font-semibold text-sm mt-1">
-              {formErrors.type}
-            </p>
-          )}
-        </div>
+        )}
 
         {selectedType === OrderType.DINE_IN && (
           <div className="space-y-2">

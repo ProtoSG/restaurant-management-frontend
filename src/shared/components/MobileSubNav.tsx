@@ -2,7 +2,7 @@ import { useLocation, useNavigate } from "react-router-dom"
 import { NAV_ITEMS } from "@/shared/config/navigation"
 import { useAuth } from "@/features/auth"
 
-const OPERATIONS_PATHS = ["/", "/orders", "/chef", "/tables"]
+const OPERATIONS_PATHS = ["/", "/orders", "/tables"]
 
 const GROUPS = [
   { key: 'operations' as const, label: 'Operaciones' },

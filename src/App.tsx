@@ -5,10 +5,14 @@ import { Dashboard } from "./features/dashboard"
 import { Settings } from "./features/settings"
 import { Layout } from "./shared/layouts/Layout"
 import { Orders } from "./features/orders/Orders"
-import { ChefOrders } from "./features/chef/ChefOrders"
-import { Login, Register } from "./features/auth"
+import { Login, Register, useAuth, roleHome } from "./features/auth"
 import { Users } from "./features/users"
 import { ProtectedRoute } from "./ProtectedRoute"
+
+function RoleHomeRedirect() {
+  const { user } = useAuth();
+  return <Navigate to={roleHome(user?.role)} replace />;
+}
 
 function App() {
   return (
@@ -17,14 +21,23 @@ function App() {
       <Route path="/register" element={<Register />} />
       <Route element={<ProtectedRoute />}>
         <Route path="/" element={<Layout />}>
-          <Route index element={<Dashboard />} />
+          {/* Open to any authenticated staff */}
           <Route path="/orders" element={<Orders />} />
-          <Route path="/chef" element={<ChefOrders />} />
           <Route path="/tables" element={<Tables />} />
-          <Route path="/menu" element={<Menu />} />
-          <Route path="/users" element={<Users />} />
-          <Route path="/settings" element={<Settings />} />
-          <Route path="*" element={<Navigate to="/" replace />} />
+
+          {/* ADMIN or CASHIER */}
+          <Route element={<ProtectedRoute allowedRoles={['ADMIN', 'CASHIER']} />}>
+            <Route index element={<Dashboard />} />
+          </Route>
+
+          {/* ADMIN only */}
+          <Route element={<ProtectedRoute allowedRoles={['ADMIN']} />}>
+            <Route path="/menu" element={<Menu />} />
+            <Route path="/users" element={<Users />} />
+            <Route path="/settings" element={<Settings />} />
+          </Route>
+
+          <Route path="*" element={<RoleHomeRedirect />} />
         </Route>
       </Route>
     </Routes>

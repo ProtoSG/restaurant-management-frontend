@@ -7,6 +7,7 @@ interface Props {
   productListModal: ReturnType<typeof useProductListModal>;
   changeTableModal: ReturnType<typeof useChangeTableModal>;
   selectedTable: ReturnType<typeof useSelectedTable>;
+  clearOrderSelection?: () => void;
 }
 
 /**
@@ -30,7 +31,7 @@ function CardTableSkeleton() {
   );
 }
 
-export function ListTables({ tableModal, orderItemsModal, productListModal, changeTableModal, selectedTable }: Props) {
+export function ListTables({ tableModal, orderItemsModal, productListModal, changeTableModal, selectedTable, clearOrderSelection }: Props) {
   const { tables, isLoading, error} = useTables();
 
   if (error) return <p className="text-red">Error: {(error as Error).message}</p>;
@@ -56,6 +57,7 @@ export function ListTables({ tableModal, orderItemsModal, productListModal, chan
           productListModal={productListModal}
           changeTableModal={changeTableModal}
           selectedTable={selectedTable}
+          clearOrderSelection={clearOrderSelection}
         />
       ))}
     </ul>

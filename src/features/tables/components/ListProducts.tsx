@@ -2,6 +2,7 @@ import { useAvailableProducts, useSelectedCategory, type Product } from "@/featu
 import { useSelectedTable, useAddItemToOrder as useAddItemToOrderTable, useOrderActive, useCreateOrder } from "@/features/tables"
 import { useAddItemToOrder as useAddItemToOrderOrders } from "@/features/orders"
 import { useTakeawaySurcharge } from "@/shared/hooks/useTakeawaySurcharge"
+import { useQuickNotes } from "@/shared/hooks/useQuickNotes"
 import { Toggle } from "@/shared/components"
 import { QuickAddItems } from "./sections/QuickAddItems"
 import { FaSearch, FaPlus, FaMinus, FaShoppingBag } from "react-icons/fa";
@@ -26,6 +27,20 @@ export function ListProducts({ searchTerm, setSearchTerm, selectedTable, selecte
   const inputRef = useRef<HTMLInputElement>(null);
   const [pendingItem, setPendingItem] = useState<PendingItem | null>(null);
   const surcharge = useTakeawaySurcharge();
+  const noteSuggestions = useQuickNotes();
+
+  const noteTokens = (notes: string) => notes.split(",").map((t) => t.trim()).filter(Boolean);
+
+  const toggleNoteSuggestion = (suggestion: string) => {
+    setPendingItem((prev) => {
+      if (!prev) return prev;
+      const tokens = noteTokens(prev.notes);
+      const next = tokens.includes(suggestion)
+        ? tokens.filter((t) => t !== suggestion)
+        : [...tokens, suggestion];
+      return { ...prev, notes: next.join(", ") };
+    });
+  };
 
   const isSearching = searchTerm.trim().length > 0;
   const { products: allAvailableProducts, isLoading, error } = useAvailableProducts();
@@ -229,6 +244,27 @@ export function ListProducts({ searchTerm, setSearchTerm, selectedTable, selecte
             </div>
             <div className="flex flex-col gap-1.5">
               <label className="text-sm font-medium text-gray-700">Nota (opcional)</label>
+              {noteSuggestions.length > 0 && (
+                <div className="flex flex-wrap gap-1.5 pb-0.5">
+                  {noteSuggestions.map((suggestion) => {
+                    const active = noteTokens(pendingItem.notes).includes(suggestion);
+                    return (
+                      <button
+                        key={suggestion}
+                        type="button"
+                        onClick={() => toggleNoteSuggestion(suggestion)}
+                        className={`px-3 py-1.5 rounded-full border-2 text-xs font-medium whitespace-nowrap transition-all cursor-pointer select-none ${
+                          active
+                            ? "border-orange bg-orange/10 text-orange"
+                            : "border-gray-200 text-gray-600 hover:border-orange hover:bg-orange/5 hover:text-orange"
+                        }`}
+                      >
+                        {suggestion}
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
               <input
                 type="text"
                 placeholder="Ej: sin ají, poco sal…"

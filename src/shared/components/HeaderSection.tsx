@@ -1,7 +1,15 @@
 import { MdAdd } from "react-icons/md";
+import type { ReactNode } from "react";
 import { Variant } from "../enums/VariantEnum";
 import { Button } from "./Button";
 import { FabButton } from "./FabButton";
+
+interface SecondaryAction {
+  label: string;
+  function: (source: HTMLElement) => void;
+  icon?: ReactNode;
+  variant?: Variant;
+}
 
 interface Props {
   title: string;
@@ -9,6 +17,7 @@ interface Props {
   buttonHide?: boolean;
   buttonLabel: string;
   buttonFunction: (source: HTMLElement) => void;
+  secondaryAction?: SecondaryAction;
 }
 
 export function HeaderSection({
@@ -16,7 +25,8 @@ export function HeaderSection({
   subTitle,
   buttonHide = false,
   buttonLabel,
-  buttonFunction
+  buttonFunction,
+  secondaryAction
 }: Props) {
   return (
     <div className="flex items-center justify-between gap-3">
@@ -26,21 +36,52 @@ export function HeaderSection({
           {subTitle}
         </p>
       </div>
-      {!buttonHide && (
-        <>
-          <div className="hidden lg:flex">
-            <Button
-              variant={Variant.GREEN}
-              onClick={(e) => buttonFunction(e.currentTarget)}
-              className="flex items-center gap-2"
+
+      <div className="flex items-center gap-2">
+        {secondaryAction && (
+          <>
+            <div className="hidden lg:flex">
+              <Button
+                variant={secondaryAction.variant ?? Variant.ORANGE}
+                onClick={(e) => secondaryAction.function(e.currentTarget)}
+                className="flex items-center gap-2"
+              >
+                {secondaryAction.icon ?? <MdAdd size={20} />}
+                {secondaryAction.label}
+              </Button>
+            </div>
+            <button
+              onClick={(e) => secondaryAction.function(e.currentTarget)}
+              aria-label={secondaryAction.label}
+              className="
+                fixed bottom-44 right-4 z-40 lg:hidden
+                w-14 h-14 rounded-full bg-orange outline-2 outline-orange text-foreground
+                flex items-center justify-center
+                shadow-[4px_4px_12px_0px] shadow-card-background/60
+                cursor-pointer transition-all active:scale-95 hover:brightness-110
+              "
             >
-              <MdAdd size={20} />
-              {buttonLabel}
-            </Button>
-          </div>
-          <FabButton onClick={(src) => buttonFunction(src)} label={buttonLabel} />
-        </>
-      )}
+              {secondaryAction.icon ?? <MdAdd size={28} />}
+            </button>
+          </>
+        )}
+
+        {!buttonHide && (
+          <>
+            <div className="hidden lg:flex">
+              <Button
+                variant={Variant.GREEN}
+                onClick={(e) => buttonFunction(e.currentTarget)}
+                className="flex items-center gap-2"
+              >
+                <MdAdd size={20} />
+                {buttonLabel}
+              </Button>
+            </div>
+            <FabButton onClick={(src) => buttonFunction(src)} label={buttonLabel} />
+          </>
+        )}
+      </div>
     </div>
   )
 }
