@@ -17,13 +17,6 @@ function formatCurrency(value: number | undefined): string {
   return `S/ ${(value ?? 0).toFixed(2)}`;
 }
 
-function formatSparkline(data: number[] | undefined): Array<{ value: number }> {
-  if (!data || !Array.isArray(data)) {
-    return [];
-  }
-  return data.map(val => ({ value: val }));
-}
-
 export function Dashboard() {
   const { user } = useAuth();
   const {
@@ -42,45 +35,6 @@ export function Dashboard() {
   const topProductsData = topProducts?.data;
   const paidOrdersData = recentPaidOrders?.data;
   const weeklyData = weeklySales?.data;
-
-  const defaultSparkline = [
-    { value: 400 }, { value: 500 }, { value: 450 }, { value: 600 },
-    { value: 550 }, { value: 700 }, { value: 680 }
-  ];
-
-  const statCardTrendData = useMemo(() => {
-    if (dashboardData?.dailySales?.sparkline && dashboardData.dailySales.sparkline.length > 0) {
-      return formatSparkline(dashboardData.dailySales.sparkline);
-    }
-    return defaultSparkline;
-  }, [dashboardData]);
-
-  const occupiedTablesSparkline = useMemo(() => {
-    if (dashboardData?.occupiedTables?.sparkline && dashboardData.occupiedTables.sparkline.length > 0) {
-      return formatSparkline(dashboardData.occupiedTables.sparkline);
-    }
-    return [
-      { value: 5 }, { value: 7 }, { value: 6 }, { value: 9 },
-      { value: 8 }, { value: 10 }, { value: 8 }
-    ];
-  }, [dashboardData]);
-
-  const profitsSparkline = useMemo(() => {
-    if (dashboardData?.profits?.sparkline && dashboardData.profits.sparkline.length > 0) {
-      return formatSparkline(dashboardData.profits.sparkline);
-    }
-    return defaultSparkline;
-  }, [dashboardData]);
-
-  const averageTicketSparkline = useMemo(() => {
-    if (dashboardData?.averageTicket?.sparkline && dashboardData.averageTicket.sparkline.length > 0) {
-      return formatSparkline(dashboardData.averageTicket.sparkline);
-    }
-    return [
-      { value: 300 }, { value: 380 }, { value: 420 }, { value: 460 },
-      { value: 490 }, { value: 520 }, { value: 540 }
-    ];
-  }, [dashboardData]);
 
   const balanceData = useMemo(() => {
     if (dailyBalanceData?.items && dailyBalanceData.items.length > 0) {
@@ -152,18 +106,14 @@ export function Dashboard() {
   }
 
   const dailySalesValue = dashboardData?.dailySales?.value ?? 0;
-  const dailySalesChange = dashboardData?.dailySales?.changePercentage ?? 0;
-  
+
   const occupiedTablesValue = dashboardData?.occupiedTables?.value ?? 0;
   const totalTables = dashboardData?.occupiedTables?.totalTables ?? 0;
-  const occupiedTablesChange = dashboardData?.occupiedTables?.changePercentage ?? 0;
-  
+
   const profitsValue = dashboardData?.profits?.value ?? 0;
-  const profitsChange = dashboardData?.profits?.changePercentage ?? 0;
-  
+
   const averageTicketValue = dashboardData?.averageTicket?.value ?? 0;
-  const averageTicketChange = dashboardData?.averageTicket?.changePercentage ?? 0;
-  
+
   const balance = dailyBalanceData?.totalBalance ?? 0;
   const rate = dailyBalanceData?.changePercentage ?? 0;
   
@@ -177,7 +127,7 @@ export function Dashboard() {
       : 'Ventas estables respecto al período anterior');
 
   return (
-    <div className="flex-1 flex flex-col h-full p-6 gap-5 lg:gap-6">
+    <div className="flex flex-col min-h-full p-6 gap-5 lg:gap-6">
       <div className="shrink-0">
         <h1 className="text-2xl lg:text-4xl font-bold text-gray-900 mb-1">Hola, {displayName}!</h1>
         <p className="text-sm lg:text-base text-gray-600">Explora la información y actividad de tu restaurante</p>
@@ -188,33 +138,25 @@ export function Dashboard() {
           title="Ventas del día"
           value={formatCurrency(dailySalesValue)}
           icon={<FiDollarSign size={24} />}
-          trend={dailySalesChange}
-          trendData={statCardTrendData}
         />
         
         <StatCard
           title="Mesas ocupadas"
           value={`${occupiedTablesValue}/${totalTables}`}
           icon={<FiShoppingBag size={24} />}
-          trend={occupiedTablesChange}
-          trendData={occupiedTablesSparkline}
         />
         
         <StatCard
           title="Ganancias"
           value={formatCurrency(profitsValue)}
           icon={<FiTrendingUp size={24} />}
-          trend={profitsChange}
-          trendData={profitsSparkline}
         />
         
         <StatCard
           title="Ticket Promedio"
           value={formatCurrency(averageTicketValue)}
           icon={<FiActivity size={24} />}
-          trend={averageTicketChange}
           className="lg:col-span-1"
-          trendData={averageTicketSparkline}
         />
       </div>
 
@@ -236,16 +178,16 @@ export function Dashboard() {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 lg:grid-rows-1 gap-6 flex-1 min-h-0">
-        <div className="lg:col-span-1 h-full">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 auto-rows-fr">
+        <div className="lg:col-span-1 min-h-[20rem]">
           <TopProductsCard products={topProductsList} />
         </div>
 
-        <div className="lg:col-span-1 h-full">
+        <div className="lg:col-span-1 min-h-[20rem]">
           <RecentTransactionsCard transactions={recentTransactions} />
         </div>
 
-        <div className="lg:col-span-1 h-full">
+        <div className="lg:col-span-1 min-h-[20rem]">
           <ShiftSummaryCard
             userName={displayName}
             role={user?.role}
