@@ -2,14 +2,7 @@ import { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuthStore } from '../store/authStore';
 import { toast } from 'sonner';
-import type { RoleName } from '../types/Login';
-
-const ROLE_HOME: Record<RoleName, string> = {
-  ADMIN:   '/',
-  CASHIER: '/orders',
-  WAITER:  '/tables',
-  CHEF:    '/orders',
-};
+import { roleHome } from '../roleHome';
 
 export function useLogin() {
   const navigate = useNavigate();
@@ -17,8 +10,7 @@ export function useLogin() {
 
   useEffect(() => {
     if (isAuthenticated && user) {
-      const destination = user.role ? ROLE_HOME[user.role] : '/';
-      navigate(destination, { replace: true });
+      navigate(roleHome(user.role), { replace: true });
     }
   }, [isAuthenticated, user, navigate]);
 

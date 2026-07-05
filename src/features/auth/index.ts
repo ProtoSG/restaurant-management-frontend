@@ -2,6 +2,7 @@ export { Login } from './components/Login';
 export { Register } from './components/Register';
 export { useLogin, useAuth, useRegister } from './hooks';
 export { useAuthStore } from './store/authStore';
+export { ROLE_HOME, roleHome } from './roleHome';
 export { loginRequestSchema } from './schemas/Login.schema';
 export { registerRequestSchema } from './schemas/Register.schema';
 export type { LoginRequest } from './schemas/Login.schema';
