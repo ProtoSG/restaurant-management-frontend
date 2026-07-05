@@ -7,6 +7,7 @@ import { useEffect, useState } from "react"
 import type { MouseEvent } from "react"
 import { FaRegShareFromSquare } from "react-icons/fa6"
 import { useTableModal, useOrderItemsModal, useProductListModal, useChangeTableModal, useSelectedTable } from "@/features/tables"
+import { useAuth } from "@/features/auth"
 
 interface Props {
   table: Table;
@@ -15,13 +16,16 @@ interface Props {
   productListModal: ReturnType<typeof useProductListModal>;
   changeTableModal: ReturnType<typeof useChangeTableModal>;
   selectedTable: ReturnType<typeof useSelectedTable>;
+  clearOrderSelection?: () => void;
 }
 
-export function CardTable( { table, tableModal, orderItemsModal, productListModal, changeTableModal, selectedTable }: Props) {
+export function CardTable( { table, tableModal, orderItemsModal, productListModal, changeTableModal, selectedTable, clearOrderSelection }: Props) {
   const [ variant, setVariant ] = useState<Variant>(Variant.DEFAULT); 
   const [ shadowColor, setShadowColor ] = useState<string>("shadow-background");
   const [ tagLabel, setTagLabel ] = useState<string>('');
   const [ buttonLabel, setButtonLabel ] = useState<string>('');
+  const { user } = useAuth();
+  const isAdmin = user?.role === 'ADMIN';
 
   useEffect(() => {
     switch(table.status) {
@@ -61,10 +65,17 @@ export function CardTable( { table, tableModal, orderItemsModal, productListModa
   }
 
   const handleOpenOrderItemsModal = async (e: MouseEvent<HTMLButtonElement>) => {
+    clearOrderSelection?.();
     selectedTable.selectTable(table);
     const src = e.currentTarget as HTMLElement;
-    if (table.status === TableStatus.FREE) productListModal.open(src);
-    else orderItemsModal.open(src);
+    // En desktop siempre abrimos el modal de detalle (items + carta al lado),
+    // igual que en la vista de Pedidos. En móvil, una mesa libre va directo a
+    // la carta porque no hay layout de dos columnas.
+    if (table.status === TableStatus.FREE && window.innerWidth < 1024) {
+      productListModal.open(src);
+    } else {
+      orderItemsModal.open(src);
+    }
   };
 
   const handleChangeOrderOtherTable = (e: MouseEvent<HTMLButtonElement>) => {
@@ -88,14 +99,16 @@ export function CardTable( { table, tableModal, orderItemsModal, productListModa
                 "
               ><FaRegShareFromSquare /></button>
             )}
-            <button
-              onClick={handleOpenFormModal}
-              aria-label="Editar mesa"
-              className="
-                flex items-center justify-center min-w-[44px] min-h-[44px] rounded-lg
-                transition-colors cursor-pointer hover:bg-green hover:text-foreground
-              "
-            ><FaRegEdit /></button>
+            {isAdmin && (
+              <button
+                onClick={handleOpenFormModal}
+                aria-label="Editar mesa"
+                className="
+                  flex items-center justify-center min-w-[44px] min-h-[44px] rounded-lg
+                  transition-colors cursor-pointer hover:bg-green hover:text-foreground
+                "
+              ><FaRegEdit /></button>
+            )}
           </div>
         </div>
 

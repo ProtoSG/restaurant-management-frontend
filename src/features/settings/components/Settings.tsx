@@ -1,8 +1,9 @@
 import { useState, useEffect } from "react";
-import { FaShoppingBag, FaBolt, FaChevronDown } from "react-icons/fa";
+import { FaShoppingBag, FaBolt, FaChevronDown, FaStickyNote, FaPlus, FaTimes } from "react-icons/fa";
 import { MdCheck } from "react-icons/md";
 import { useTakeawaySurcharge, useUpdateTakeawaySurcharge } from "@/shared/hooks/useTakeawaySurcharge";
 import { useQuickAddProducts, useUpdateQuickAddProducts } from "@/shared/hooks/useQuickAddProducts";
+import { useQuickNotes, useUpdateQuickNotes } from "@/shared/hooks/useQuickNotes";
 import { useAvailableProducts, useCategories } from "@/features/menu";
 
 interface SettingsSectionProps {
@@ -161,6 +162,38 @@ export function Settings() {
 
   const isQuickDirty = JSON.stringify(selectedIds) !== JSON.stringify(savedQuickIds);
 
+  // Notas rápidas
+  const savedNotes = useQuickNotes();
+  const updateNotesMutation = useUpdateQuickNotes();
+  const [notes, setNotes] = useState<string[]>([]);
+  const [noteInput, setNoteInput] = useState("");
+  const [notesSaved, setNotesSaved] = useState(false);
+
+  useEffect(() => {
+    setNotes(savedNotes);
+  }, [savedNotes]);
+
+  const addNote = () => {
+    const value = noteInput.trim();
+    if (!value || notes.includes(value)) return;
+    setNotes((prev) => [...prev, value]);
+    setNoteInput("");
+    setNotesSaved(false);
+  };
+
+  const removeNote = (note: string) => {
+    setNotes((prev) => prev.filter((n) => n !== note));
+    setNotesSaved(false);
+  };
+
+  const handleSaveNotes = async () => {
+    await updateNotesMutation.mutateAsync(notes);
+    setNotesSaved(true);
+    setTimeout(() => setNotesSaved(false), 2000);
+  };
+
+  const isNotesDirty = JSON.stringify(notes) !== JSON.stringify(savedNotes);
+
   const productsByCategory = categories
     .map((cat) => ({
       cat,
@@ -237,6 +270,70 @@ export function Settings() {
             selectedIds={selectedIds}
             onToggle={toggleProduct}
           />
+        </div>
+      </SettingsSection>
+
+      <SettingsSection
+        title="Notas Rápidas"
+        description="Notas frecuentes que aparecen como atajos al agregar un producto a un pedido"
+      >
+        <div className="flex flex-col gap-4">
+          <div className="flex items-center gap-2">
+            <div className="flex-1 flex items-center gap-2 border-2 border-gray-200 rounded-xl px-3 py-2.5 focus-within:border-orange transition-colors">
+              <FaStickyNote className="text-gray-400 shrink-0 text-xs" />
+              <input
+                type="text"
+                placeholder="Ej: sin ají, poco sal…"
+                maxLength={255}
+                value={noteInput}
+                onChange={(e) => setNoteInput(e.target.value)}
+                onKeyDown={(e) => e.key === "Enter" && addNote()}
+                className="w-full focus:outline-none text-sm bg-transparent"
+              />
+            </div>
+            <button
+              onClick={addNote}
+              disabled={!noteInput.trim() || notes.includes(noteInput.trim())}
+              className="flex items-center gap-1.5 px-4 py-2.5 rounded-xl text-sm font-semibold bg-gray-900 text-white hover:bg-gray-700 transition-all cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
+            >
+              <FaPlus className="text-xs" />
+              Agregar
+            </button>
+          </div>
+
+          {notes.length > 0 ? (
+            <div className="flex flex-wrap gap-2">
+              {notes.map((note) => (
+                <span
+                  key={note}
+                  className="flex items-center gap-2 pl-3 pr-2 py-1.5 rounded-full border-2 border-gray-200 text-sm font-medium text-gray-700"
+                >
+                  {note}
+                  <button
+                    onClick={() => removeNote(note)}
+                    aria-label={`Eliminar nota ${note}`}
+                    className="w-5 h-5 flex items-center justify-center rounded-full text-gray-400 hover:bg-red/10 hover:text-red transition-colors cursor-pointer"
+                  >
+                    <FaTimes className="text-[10px]" />
+                  </button>
+                </span>
+              ))}
+            </div>
+          ) : (
+            <p className="text-xs text-gray-400">Ninguna nota configurada</p>
+          )}
+
+          <div className="flex justify-end">
+            <button
+              onClick={handleSaveNotes}
+              disabled={!isNotesDirty || updateNotesMutation.isPending}
+              className={`flex items-center gap-1.5 px-4 py-2 rounded-xl text-sm font-semibold transition-all cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed ${
+                notesSaved ? "bg-green text-white" : "bg-gray-900 text-white hover:bg-gray-700"
+              }`}
+            >
+              {notesSaved ? <><MdCheck className="text-base" />Guardado</> : updateNotesMutation.isPending ? "Guardando..." : "Guardar"}
+            </button>
+          </div>
         </div>
       </SettingsSection>
     </div>

@@ -1,3 +1,4 @@
+import axios from "axios";
 import { orderAdapter } from "../adapters/OrderAdapter";
 import { tableAdapater } from "../adapters/TableAdapter";
 import defaultApiClient from "@/shared/utils/apiClient";
@@ -33,9 +34,18 @@ export class TableServiceImpl implements ITableService {
     return orderAdapter(data);
   }
 
-  async getOrderActive(id: number): Promise<Order> {
-    const { data } = await defaultApiClient.get<OrderResponse>(`/orders/active/tables/${id}`);
-    return orderAdapter(data);
+  async getOrderActive(id: number): Promise<Order | null> {
+    try {
+      const { data } = await defaultApiClient.get<OrderResponse>(`/orders/active/tables/${id}`);
+      return orderAdapter(data);
+    } catch (error) {
+      // Mesa libre sin orden activa: el backend responde 404. No es un error real,
+      // significa que aún no hay pedido y debemos mostrar el CTA de crear.
+      if (axios.isAxiosError(error) && error.response?.status === 404) {
+        return null;
+      }
+      throw error;
+    }
   }
 
   async addItemToOrder(orderId: number, productId: number, quantity: number = 1, notes?: string, isTakeaway?: boolean): Promise<OrderItem> {

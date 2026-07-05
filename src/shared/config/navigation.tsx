@@ -1,4 +1,4 @@
-import { MdDashboard, MdTableBar, MdOutlineKitchen, MdSettings, MdPeople } from "react-icons/md";
+import { MdDashboard, MdTableBar, MdSettings, MdPeople } from "react-icons/md";
 import { BiSolidDish } from "react-icons/bi";
 import { PiBowlFoodFill } from "react-icons/pi";
 import type { ReactNode } from "react";
@@ -27,13 +27,6 @@ export const NAV_ITEMS: NavItem[] = [
     link: "/orders",
     icon: <BiSolidDish />,
     roles: ['ADMIN', 'CASHIER', 'WAITER'],
-    group: 'operations',
-  },
-  {
-    name: "Cocina",
-    link: "/chef",
-    icon: <MdOutlineKitchen />,
-    roles: ['ADMIN', 'CHEF'],
     group: 'operations',
   },
   {

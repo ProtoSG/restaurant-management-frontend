@@ -6,7 +6,7 @@ import { PiBowlFoodFill } from "react-icons/pi"
 import { NAV_ITEMS, type NavGroup } from "@/shared/config/navigation"
 import { ROLE_LABELS, ROLE_COLORS } from "@/shared/enums/RoleLabels"
 
-const OPERATIONS_PATHS = ["/", "/orders", "/chef", "/tables"]
+const OPERATIONS_PATHS = ["/", "/orders", "/tables"]
 
 const GROUP_ITEMS = [
   { key: 'operations' as NavGroup, label: 'Inicio', icon: <MdHome /> },
