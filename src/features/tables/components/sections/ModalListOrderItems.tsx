@@ -1,13 +1,13 @@
 import { Modal, TitleModal, Button, Tag } from "@/shared/components";
 import { useModal } from "@/shared/hooks/useModal";
 import { useOrderActive, useUpdateOrderItem as useUpdateOrderItemTable, useRemoveOrderItem as useRemoveOrderItemTable, useSelectedTable, useOrderItemsModal, useProductListModal, usePaymentConfirmationModal } from "@/features/tables";
-import { useOrderById, useUpdateOrderItem as useUpdateOrderItemOrder, useRemoveOrderItem as useRemoveOrderItemOrder, useCancelOrder, usePrintKitchen } from "@/features/orders";
+import { useOrderById, useUpdateOrderItem as useUpdateOrderItemOrder, useRemoveOrderItem as useRemoveOrderItemOrder, useCancelOrder, usePrintKitchen, useMarkOrderAsReady, useFinalizeOrder } from "@/features/orders";
 import { useAuth } from "@/features/auth";
 import { useSelectedCategory } from "@/features/menu";
 import { Variant } from "@/shared/enums/VariantEnum";
 import { PaymentMethodLabels } from "@/shared/enums/PaymentMethod";
-import { OrderStatusLabels } from "@/shared/enums/OrderStatus";
-import { FaMinus, FaPlus, FaTrash, FaShoppingBag, FaUtensils } from "react-icons/fa";
+import { OrderStatus, OrderStatusLabels } from "@/shared/enums/OrderStatus";
+import { FaMinus, FaPlus, FaTrash, FaShoppingBag, FaUtensils, FaCheckCircle, FaBan } from "react-icons/fa";
 import { toast } from "sonner";
 import { MdArrowBack } from "react-icons/md";
 import { useState, useEffect } from "react";
@@ -28,10 +28,14 @@ export function ModalListOrderItems({ orderItemsModal, productListModal, selecte
   const dialogRef = useModal(orderItemsModal.isOpen, orderItemsModal.sourceRef, true);
   const { user } = useAuth();
   const canPay = user?.role === 'ADMIN' || user?.role === 'CASHIER';
+  const canMarkReady = user?.role === 'ADMIN' || user?.role === 'CASHIER' || user?.role === 'WAITER';
+  const canFinalizeOrder = user?.role === 'ADMIN' || user?.role === 'CASHIER' || user?.role === 'WAITER';
   const [showCancelConfirm, setShowCancelConfirm] = useState(false);
   const [desktopPanel, setDesktopPanel] = useState<'catalog' | 'payment'>('catalog');
   const cancelOrderMutation = useCancelOrder();
   const printKitchenMutation = usePrintKitchen();
+  const markOrderAsReadyMutation = useMarkOrderAsReady();
+  const finalizeOrderMutation = useFinalizeOrder();
   const [showTransactions, setShowTransactions] = useState(false);
 
   const isOrderMode = orderId !== undefined && orderId > 0;
@@ -109,6 +113,20 @@ export function ModalListOrderItems({ orderItemsModal, productListModal, selecte
     paymentModal.open(source);
   };
 
+  const handleFinalize = () => {
+    if (!order) return;
+    const promise = finalizeOrderMutation.mutateAsync({
+      orderId: order.id,
+      tableId: selectedTable.selectedTable?.id,
+    });
+    toast.promise(promise, {
+      loading: "Finalizando pedido…",
+      success: "Pedido finalizado",
+      error: (e) => (e instanceof Error ? e.message : "Error al finalizar el pedido"),
+    });
+    promise.then(() => orderItemsModal.close()).catch(() => {});
+  };
+
   if (!isOrderMode && !selectedTable.selectedTable) {
     return null;
   }
@@ -128,7 +146,7 @@ export function ModalListOrderItems({ orderItemsModal, productListModal, selecte
         dialogRef={dialogRef}
         setOpen={orderItemsModal.close}
         fullScreenMobile
-        className="w-full lg:w-[920px] lg:max-w-[95vw] lg:max-h-[90vh] lg:overflow-y-auto"
+        className="w-full lg:w-[920px] lg:max-w-[95vw] lg:max-h-[84vh] lg:overflow-y-auto"
       >
         <TitleModal>{modalTitle}</TitleModal>
 
@@ -235,22 +253,39 @@ export function ModalListOrderItems({ orderItemsModal, productListModal, selecte
                       <Tag>{OrderStatusLabels[order.status]}</Tag>
                     </div>
                     <div className="flex items-center gap-2">
-                      <button
-                        onClick={() =>
-                          toast.promise(printKitchenMutation.mutateAsync({ orderId: order.id }), {
-                            loading: "Enviando comanda a cocina…",
-                            success: (r) =>
-                              r.printed > 0 ? "Comanda enviada a cocina" : "No hay productos nuevos para cocina",
-                            error: (e) => (e instanceof Error ? e.message : "Error al imprimir comanda"),
-                          })
-                        }
-                        disabled={!order.items?.length || printKitchenMutation.isPending}
-                        title="Imprimir comanda de cocina"
-                        aria-label="Imprimir comanda de cocina"
-                        className="min-w-[40px] min-h-[40px] flex items-center justify-center rounded-lg border border-gray-200 text-gray-500 hover:text-orange hover:border-orange hover:bg-orange/5 transition-colors cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
-                      >
-                        <FaUtensils className={`text-sm ${printKitchenMutation.isPending ? 'animate-pulse' : ''}`} />
-                      </button>
+                      {canMarkReady && order.status === OrderStatus.IN_PROGRESS && (
+                        <button
+                          onClick={() =>
+                            toast.promise(
+                              markOrderAsReadyMutation.mutateAsync({
+                                orderId: order.id,
+                                tableId: selectedTable.selectedTable?.id,
+                              }),
+                              {
+                                loading: "Marcando pedido como listo…",
+                                success: "Pedido marcado como listo",
+                                error: (e) => (e instanceof Error ? e.message : "Error al marcar el pedido como listo"),
+                              }
+                            )
+                          }
+                          disabled={markOrderAsReadyMutation.isPending}
+                          title="Marcar listo"
+                          aria-label="Marcar listo"
+                          className="min-w-[40px] min-h-[40px] flex items-center justify-center rounded-lg border border-gray-200 text-gray-500 hover:text-green hover:border-green hover:bg-green/5 transition-colors cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
+                        >
+                          <FaCheckCircle className={`text-sm ${markOrderAsReadyMutation.isPending ? 'animate-pulse' : ''}`} />
+                        </button>
+                      )}
+                      {canPay && order.status !== OrderStatus.PAID && order.status !== OrderStatus.FINALIZADO && (
+                        <button
+                          onClick={() => setShowCancelConfirm(true)}
+                          title="Cancelar pedido"
+                          aria-label="Cancelar pedido"
+                          className="min-w-[40px] min-h-[40px] flex items-center justify-center rounded-lg border border-gray-200 text-gray-500 hover:text-red hover:border-red hover:bg-red/5 transition-colors cursor-pointer"
+                        >
+                          <FaBan className="text-sm" />
+                        </button>
+                      )}
                       {canPay && (
                         <button
                           onClick={(e) => handleAddItem(e.currentTarget as HTMLElement)}
@@ -355,56 +390,90 @@ export function ModalListOrderItems({ orderItemsModal, productListModal, selecte
                     <span className="text-xl font-bold text-gray-900">S/ {order.total.toFixed(2)}</span>
                   </div>
 
-                  {/* Botones de acción */}
-                  {canPay ? (
-                    showCancelConfirm ? (
-                      <div className="rounded-xl border-2 border-red/30 bg-red/5 p-4 space-y-3">
-                        <div className="text-center space-y-1">
-                          <p className="font-semibold text-gray-900 text-sm">¿Cancelar este pedido?</p>
-                          <p className="text-xs text-gray-500">Esta acción no se puede deshacer.</p>
-                        </div>
-                        <div className="flex gap-2">
-                          <Button
-                            className="flex-1"
-                            variant={Variant.DEFAULT}
-                            styleButton="Secondary"
-                            onClick={() => setShowCancelConfirm(false)}
-                            disabled={cancelOrderMutation.isPending}
-                          >
-                            Volver
-                          </Button>
-                          <Button
-                            className="flex-1"
-                            variant={Variant.RED}
-                            onClick={async () => {
-                              try {
-                                await cancelOrderMutation.mutateAsync({
-                                  id: order.id,
-                                  tableId: selectedTable.selectedTable?.id,
-                                });
-                                setShowCancelConfirm(false);
-                                orderItemsModal.close();
-                              } catch {
-                                // error manejado en el hook
-                              }
-                            }}
-                            disabled={cancelOrderMutation.isPending}
-                          >
-                            {cancelOrderMutation.isPending ? 'Cancelando...' : 'Sí, cancelar'}
-                          </Button>
-                        </div>
+                  {/* Botones de acción — una sola acción principal según el estado del pedido */}
+                  {order.status === OrderStatus.FINALIZADO ? (
+                    <div className="flex items-center justify-center gap-2 py-2 text-sm text-gray-400">
+                      <FaCheckCircle className="text-green text-xs" />
+                      Pedido finalizado — mesa liberada
+                    </div>
+                  ) : order.status === OrderStatus.PAID ? (
+                    // En desktop esta acción vive en el panel derecho (reemplaza la confirmación de pago).
+                    canFinalizeOrder ? (
+                      <div className="pt-1 lg:hidden">
+                        <Button
+                          variant={Variant.GREEN}
+                          className="flex-1"
+                          onClick={handleFinalize}
+                          disabled={finalizeOrderMutation.isPending}
+                        >
+                          {finalizeOrderMutation.isPending ? 'Finalizando…' : 'Finalizar pedido'}
+                        </Button>
                       </div>
                     ) : (
-                      <div className="flex flex-col gap-2 pt-1">
-                        <div className="flex gap-2">
+                      <div className="text-center text-sm text-gray-400 py-2 lg:hidden">Pedido pagado — falta finalizar</div>
+                    )
+                  ) : showCancelConfirm ? (
+                    <div className="rounded-xl border-2 border-red/30 bg-red/5 p-4 space-y-3">
+                      <div className="text-center space-y-1">
+                        <p className="font-semibold text-gray-900 text-sm">¿Cancelar este pedido?</p>
+                        <p className="text-xs text-gray-500">Esta acción no se puede deshacer.</p>
+                      </div>
+                      <div className="flex gap-2">
+                        <Button
+                          className="flex-1"
+                          variant={Variant.DEFAULT}
+                          styleButton="Secondary"
+                          onClick={() => setShowCancelConfirm(false)}
+                          disabled={cancelOrderMutation.isPending}
+                        >
+                          Volver
+                        </Button>
+                        <Button
+                          className="flex-1"
+                          variant={Variant.RED}
+                          onClick={async () => {
+                            try {
+                              await cancelOrderMutation.mutateAsync({
+                                id: order.id,
+                                tableId: selectedTable.selectedTable?.id,
+                              });
+                              setShowCancelConfirm(false);
+                              orderItemsModal.close();
+                            } catch {
+                              // error manejado en el hook
+                            }
+                          }}
+                          disabled={cancelOrderMutation.isPending}
+                        >
+                          {cancelOrderMutation.isPending ? 'Cancelando...' : 'Sí, cancelar'}
+                        </Button>
+                      </div>
+                    </div>
+                  ) : (canMarkReady || canPay) ? (
+                    <div className="flex flex-col gap-1.5 pt-1">
+                      <div className="flex gap-2">
+                        {canMarkReady && (
                           <Button
-                            className="flex-1"
-                            variant={Variant.RED}
+                            className={`${canPay ? 'flex-1' : 'w-full'} ${printKitchenMutation.isPending ? 'grayscale opacity-60' : ''}`}
+                            variant={Variant.ORANGE}
                             styleButton="Secondary"
-                            onClick={() => setShowCancelConfirm(true)}
+                            onClick={() =>
+                              toast.promise(printKitchenMutation.mutateAsync({ orderId: order.id }), {
+                                loading: "Enviando comanda a cocina…",
+                                success: (r) =>
+                                  r.printed > 0 ? "Comanda enviada a cocina" : "No hay productos nuevos para cocina",
+                                error: (e) => (e instanceof Error ? e.message : "Error al imprimir comanda"),
+                              })
+                            }
+                            disabled={!order.items?.length || printKitchenMutation.isPending}
                           >
-                            Cancelar Orden
+                            <span className="flex items-center justify-center gap-2 whitespace-nowrap">
+                              <FaUtensils className={`text-xs ${printKitchenMutation.isPending ? 'animate-pulse' : ''}`} />
+                              {printKitchenMutation.isPending ? '...' : 'Enviar a cocina'}
+                            </span>
                           </Button>
+                        )}
+                        {canPay && (
                           <Button
                             variant={Variant.GREEN}
                             className="flex-1"
@@ -413,9 +482,9 @@ export function ModalListOrderItems({ orderItemsModal, productListModal, selecte
                           >
                             Pagar
                           </Button>
-                        </div>
+                        )}
                       </div>
-                    )
+                    </div>
                   ) : (
                     <div className="pt-1">
                       <Button
@@ -432,11 +501,36 @@ export function ModalListOrderItems({ orderItemsModal, productListModal, selecte
               )}
             </div>
 
-            {/* RIGHT COLUMN: catalog or payment (desktop only) */}
-            <div className="hidden lg:flex lg:flex-col lg:flex-1 lg:pl-6 lg:h-[58vh] lg:overflow-hidden">
-              {desktopPanel === 'catalog' ? (
+            {/* RIGHT COLUMN: catalog, payment, or finalize (desktop only) */}
+            <div className="hidden lg:flex lg:flex-col lg:flex-1 lg:pl-6 lg:min-h-[540px] lg:overflow-hidden">
+              {order && order.status === OrderStatus.PAID ? (
+                <div className="flex flex-col items-center justify-center flex-1 gap-4">
+                  <div className="w-full bg-gray-50 rounded-2xl p-5 flex flex-col items-center gap-3">
+                    <p className="text-xs font-semibold text-gray-400 uppercase tracking-widest">Pagado</p>
+                    <p className="text-5xl font-bold text-gray-900 tabular-nums">
+                      S/ {order.total.toFixed(2)}
+                    </p>
+                    {order.transactions && order.transactions.length > 0 && (
+                      <span className="inline-flex items-center gap-1.5 text-sm font-medium bg-orange/15 text-orange px-3 py-1 rounded-full">
+                        {PaymentMethodLabels[order.transactions[order.transactions.length - 1].paymentMethod]}
+                      </span>
+                    )}
+                  </div>
+                  {canFinalizeOrder ? (
+                    <Button
+                      variant={Variant.GREEN}
+                      className="w-full max-w-xs"
+                      onClick={handleFinalize}
+                      disabled={finalizeOrderMutation.isPending}
+                    >
+                      {finalizeOrderMutation.isPending ? 'Finalizando…' : 'Finalizar pedido'}
+                    </Button>
+                  ) : (
+                    <p className="text-sm text-gray-400">Pedido pagado — falta finalizar</p>
+                  )}
+                </div>
+              ) : desktopPanel === 'catalog' ? (
                 <>
-                  <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-3 shrink-0">Carta</p>
                   <ProductCatalogPanel
                     selectedCategory={selectedCategory}
                     selectedTable={selectedTable}
@@ -444,7 +538,7 @@ export function ModalListOrderItems({ orderItemsModal, productListModal, selecte
                   />
                 </>
               ) : (
-                <>
+                <div className="flex flex-col flex-1 min-h-0">
                   <button
                     onClick={() => setDesktopPanel('catalog')}
                     className="flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-700 transition-colors cursor-pointer mb-3 shrink-0"
@@ -461,11 +555,10 @@ export function ModalListOrderItems({ orderItemsModal, productListModal, selecte
                       showTitle={false}
                       onSuccess={() => {
                         setDesktopPanel('catalog');
-                        orderItemsModal.close();
                       }}
                     />
                   )}
-                </>
+                </div>
               )}
             </div>
           </div>
@@ -475,7 +568,6 @@ export function ModalListOrderItems({ orderItemsModal, productListModal, selecte
         order={order ?? undefined}
         paymentModal={paymentModal}
         selectedTable={selectedTable}
-        orderItemsModal={orderItemsModal}
         orderId={isOrderMode ? orderId : undefined}
       />
     </>

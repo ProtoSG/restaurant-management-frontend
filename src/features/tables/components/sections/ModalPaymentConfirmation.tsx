@@ -1,6 +1,6 @@
 import { Modal } from "@/shared/components";
 import { useModal } from "@/shared/hooks/useModal";
-import { useSelectedTable, usePaymentConfirmationModal, useOrderItemsModal } from "@/features/tables";
+import { useSelectedTable, usePaymentConfirmationModal } from "@/features/tables";
 import type { Order } from "@/shared/types/Order";
 import { PaymentPanel } from "../PaymentPanel";
 
@@ -8,7 +8,6 @@ interface ModalPaymentConfirmationProps {
   order: Order | undefined;
   paymentModal: ReturnType<typeof usePaymentConfirmationModal>;
   selectedTable: ReturnType<typeof useSelectedTable>;
-  orderItemsModal: ReturnType<typeof useOrderItemsModal>;
   orderId?: number;
 }
 
@@ -16,7 +15,6 @@ export function ModalPaymentConfirmation({
   order,
   paymentModal,
   selectedTable,
-  orderItemsModal,
   orderId
 }: ModalPaymentConfirmationProps) {
   const isOrderMode = orderId !== undefined && orderId > 0;
@@ -39,7 +37,6 @@ export function ModalPaymentConfirmation({
         orderId={orderId}
         onSuccess={() => {
           paymentModal.close();
-          orderItemsModal.close();
         }}
       />
     </Modal>

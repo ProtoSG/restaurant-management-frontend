@@ -75,4 +75,9 @@ export class TableServiceImpl implements ITableService {
     const { data } = await defaultApiClient.put<OrderResponse>(`/orders/${orderId}/table/${destinationTableId}`);
     return orderAdapter(data);
   }
+
+  async releaseTable(id: number): Promise<Table> {
+    const { data } = await defaultApiClient.post<TableResponse>(`/tables/${id}/release`);
+    return tableAdapater(data);
+  }
 }

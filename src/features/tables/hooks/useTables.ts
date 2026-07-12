@@ -181,10 +181,11 @@ export function usePayOrder() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: ({ orderId, paymentMethod }: { orderId: number; paymentMethod: string }) =>
+    mutationFn: ({ orderId, paymentMethod }: { orderId: number; paymentMethod: string; tableId: number }) =>
       tableService.payOrder(orderId, paymentMethod),
-    onSuccess: () => {
+    onSuccess: (_, { tableId }) => {
       queryClient.invalidateQueries({ queryKey: ['tables'] });
+      queryClient.invalidateQueries({ queryKey: [`order-${tableId}`] });
       queryClient.invalidateQueries({ queryKey: ['analytics'] });
     },
     onError: (error) => {
@@ -224,6 +225,24 @@ export function useChangeOrderTable() {
     },
     onError: (error) => {
       console.error('Error al cambiar la orden de mesa:', error);
+      toast.error(getApiErrorMessage(error));
+    }
+  });
+}
+
+export function useReleaseTable() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (id: number) => tableService.releaseTable(id),
+    onSuccess: (_, id) => {
+      queryClient.invalidateQueries({ queryKey: ['tables'] });
+      queryClient.invalidateQueries({ queryKey: ['active-orders'] });
+      queryClient.invalidateQueries({ queryKey: [`order-${id}`] });
+      queryClient.invalidateQueries({ queryKey: ['analytics'] });
+    },
+    onError: (error) => {
+      console.error('Error al liberar la mesa:', error);
       toast.error(getApiErrorMessage(error));
     }
   });

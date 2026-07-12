@@ -60,6 +60,11 @@ export class OrderServiceImpl {
     return orderAdapter(data);
   }
 
+  async finalizeOrder(orderId: number): Promise<Order> {
+    const { data } = await defaultApiClient.post<OrderResponse>(`/orders/${orderId}/finalize`);
+    return orderAdapter(data);
+  }
+
   async payOrder(orderId: number, paymentMethod: string): Promise<Order> {
     const { data } = await defaultApiClient.post<OrderResponse>(`/orders/${orderId}/pay/${paymentMethod}`);
     return orderAdapter(data);

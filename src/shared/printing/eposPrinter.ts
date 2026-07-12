@@ -24,6 +24,39 @@ interface Conn {
 
 const CONNECT_TIMEOUT_MS = 8000;
 
+// El SDK de Epson devuelve códigos técnicos en inglés (ERROR_TIMEOUT, DEVICE_NOT_FOUND, etc.)
+// que no le dicen nada a un mozo/cajero. Los traducimos acá; el código crudo queda
+// solo en la consola para quien tenga que diagnosticar el problema.
+const CONNECT_ERRORS: Record<string, string> = {
+  ERROR_TIMEOUT: "La impresora no respondió a tiempo. Revisá que esté encendida y conectada a la red.",
+  ERROR_PARAMETER: "Configuración de impresora inválida. Avisá a soporte.",
+  ERROR_ALREADY_CONNECT: "Ya hay una conexión abierta con la impresora, probá de nuevo en unos segundos.",
+  ERROR_ALREADY_OPEN: "Ya hay una conexión abierta con la impresora, probá de nuevo en unos segundos.",
+  ERROR_SSL: "No se pudo establecer una conexión segura con la impresora.",
+};
+
+const INIT_ERRORS: Record<string, string> = {
+  DEVICE_NOT_FOUND: "No se encontró la impresora en la red.",
+  DEVICE_IN_USE: "La impresora está siendo usada por otro dispositivo.",
+  DEVICE_TYPE_INVALID: "Configuración de impresora inválida. Avisá a soporte.",
+};
+
+const PRINT_ERRORS: Record<string, string> = {
+  EPTR_REC_EMPTY: "La impresora se quedó sin papel.",
+  EPTR_COVER_OPEN: "La tapa de la impresora está abierta.",
+  EPTR_PAPER_JAM: "Hay un atasco de papel en la impresora.",
+  EPTR_AUTOCUTTER_ERR: "Error en la cuchilla automática de la impresora.",
+  EPTR_UNRECOVERABLE: "Error grave en la impresora, puede necesitar reiniciarse.",
+};
+
+function friendlyMessage(map: Record<string, string>, code: string, fallback: string, label: string): string {
+  const message = map[code];
+  if (!message) {
+    console.error(`[printer] ${label} — código no mapeado: ${code}`);
+  }
+  return message ?? fallback;
+}
+
 function connect(): Promise<Conn> {
   return loadEpos().then(
     (epson: any) =>
@@ -37,7 +70,11 @@ function connect(): Promise<Conn> {
         device.connect(EPSON_PRINTER_IP, EPSON_PRINTER_PORT, (res: string) => {
           if (res !== "OK" && res !== "SSL_CONNECT_OK") {
             clearTimeout(timer);
-            reject(new Error(`No se pudo conectar a la impresora (${res})`));
+            reject(new Error(friendlyMessage(
+              CONNECT_ERRORS, res,
+              "No se pudo conectar a la impresora. Revisá que esté encendida y en la misma red.",
+              "connect"
+            )));
             return;
           }
           device.createDevice(
@@ -47,7 +84,11 @@ function connect(): Promise<Conn> {
             (printer: any, code: string) => {
               clearTimeout(timer);
               if (code !== "OK") {
-                reject(new Error(`No se pudo inicializar la impresora (${code})`));
+                reject(new Error(friendlyMessage(
+                  INIT_ERRORS, code,
+                  "No se pudo inicializar la impresora.",
+                  "init"
+                )));
                 return;
               }
               resolve({ device, printer });
@@ -81,7 +122,11 @@ function runPrint(build: (p: any) => void): Promise<void> {
         printer.onreceive = (r: { success: boolean; code: string }) => {
           disconnect(conn);
           if (r.success) resolve();
-          else reject(new Error(`Error de impresión: ${r.code}`));
+          else reject(new Error(friendlyMessage(
+            PRINT_ERRORS, r.code,
+            "No se pudo completar la impresión.",
+            "print"
+          )));
         };
         printer.onerror = () => {
           disconnect(conn);
