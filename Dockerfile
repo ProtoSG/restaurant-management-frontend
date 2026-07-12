@@ -14,6 +14,13 @@ RUN npm run build
 # ── Etapa 2: runtime (nginx) ──────────────────────────────────────────────────
 FROM nginx:alpine
 
+# Parchar paquetes del SO de la base (p.ej. libexpat, c-ares) a la última versión
+# de Alpine. CACHEBUST invalida esta capa en cada build — con cache-to: type=gha
+# el resultado de "apk upgrade" quedaba cacheado indefinidamente y nunca traía
+# CVEs parchados después del build inicial.
+ARG CACHEBUST=1
+RUN apk upgrade --no-cache
+
 COPY nginx.conf /etc/nginx/conf.d/default.conf
 COPY --from=build /app/dist /usr/share/nginx/html
 
