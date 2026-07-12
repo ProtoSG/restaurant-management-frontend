@@ -20,4 +20,6 @@ export interface ITableService {
   payPartialOrder(orderId: number, amount: number, paymentMethod: string): Promise<Order>;
   
   changeOrderTable(orderId: number, destinationTableId: number): Promise<Order>;
+
+  releaseTable(id: number): Promise<Table>;
 }

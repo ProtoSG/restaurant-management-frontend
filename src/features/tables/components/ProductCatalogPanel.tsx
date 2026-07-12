@@ -25,7 +25,7 @@ export function ProductCatalogPanel({ selectedCategory, selectedTable, orderId }
   };
 
   return (
-    <>
+    <div className="flex flex-col flex-1 min-h-0">
       <div className="overflow-x-auto py-1 shrink-0">
         <ul className="flex gap-1 min-w-max">
           {isLoading ? <p className="text-sm text-gray-400">Cargando…</p>
@@ -54,6 +54,6 @@ export function ProductCatalogPanel({ selectedCategory, selectedTable, orderId }
         selectedCategory={selectedCategory}
         orderId={orderId}
       />
-    </>
+    </div>
   );
 }

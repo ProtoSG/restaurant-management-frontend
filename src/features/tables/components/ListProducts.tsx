@@ -136,8 +136,8 @@ export function ListProducts({ searchTerm, setSearchTerm, selectedTable, selecte
   return (
     <>
       <div className="flex flex-col gap-3 flex-1 min-h-0 overflow-hidden">
-        {/* Buscador */}
-        <div className="flex items-center gap-2 border-2 border-gray-200 rounded-xl px-3 py-2.5 focus-within:border-orange transition-colors shrink-0">
+        {/* Buscador — solo desktop (xl: excluye tablets landscape ~10-11", que ya pasan el breakpoint lg) */}
+        <div className="hidden xl:flex items-center gap-2 border-2 border-gray-200 rounded-xl px-3 py-2.5 focus-within:border-orange transition-colors shrink-0">
           <FaSearch className="text-gray-400 shrink-0 text-xs" />
           <input
             ref={inputRef}

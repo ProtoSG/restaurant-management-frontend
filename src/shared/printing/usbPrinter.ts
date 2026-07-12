@@ -12,12 +12,19 @@ function send(bytes: Uint8Array): Promise<void> {
     method: "POST",
     headers: { "Content-Type": "application/octet-stream" },
     body: bytes,
-  }).then(async (res) => {
-    if (!res.ok) {
-      const msg = await res.text().catch(() => "");
-      throw new Error(`Error al imprimir (USB): ${msg || res.status}`);
-    }
-  });
+  })
+    .then(async (res) => {
+      if (!res.ok) {
+        const msg = await res.text().catch(() => "");
+        console.error(`[printer] USB error ${res.status}: ${msg}`);
+        throw new Error("No se pudo imprimir. Revisá que la impresora esté encendida y conectada.");
+      }
+    })
+    .catch((e) => {
+      if (e instanceof Error && e.message.startsWith("No se pudo imprimir")) throw e;
+      console.error("[printer] USB fetch falló:", e);
+      throw new Error("No se pudo conectar con el servicio de impresión. Revisá la conexión local.");
+    });
 }
 
 export function printOrderTicket(order: Order): Promise<void> {

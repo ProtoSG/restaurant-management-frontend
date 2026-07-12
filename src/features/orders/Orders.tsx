@@ -21,6 +21,8 @@ function getStatusVariant(status: OrderStatus): Variant {
       return Variant.GREEN;
     case OrderStatus.PARTIALLY_PAID:
       return Variant.ORANGE;
+    case OrderStatus.FINALIZADO:
+      return Variant.GREEN;
     default:
       return Variant.DEFAULT;
   }

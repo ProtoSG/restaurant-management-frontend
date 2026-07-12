@@ -164,13 +164,32 @@ export function useMarkOrderAsReady() {
   });
 }
 
+export function useFinalizeOrder() {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ orderId }: { orderId: number; tableId?: number }) => orderService.finalizeOrder(orderId),
+    onSuccess: (_, { orderId, tableId }) => {
+      queryClient.invalidateQueries({ queryKey: ['order', orderId] });
+      queryClient.invalidateQueries({ queryKey: ['active-orders'] });
+      queryClient.invalidateQueries({ queryKey: ['tables'] });
+      if (tableId) queryClient.invalidateQueries({ queryKey: [`order-${tableId}`] });
+    },
+    onError: (error) => {
+      console.error('Error al finalizar la orden:', error);
+      toast.error(getApiErrorMessage(error));
+    }
+  });
+}
+
 export function usePayOrder() {
   const queryClient = useQueryClient();
 
   return useMutation({
     mutationFn: ({ orderId, paymentMethod }: { orderId: number; paymentMethod: string }) =>
       orderService.payOrder(orderId, paymentMethod),
-    onSuccess: () => {
+    onSuccess: (_, { orderId }) => {
+      queryClient.invalidateQueries({ queryKey: ['order', orderId] });
       queryClient.invalidateQueries({ queryKey: ['active-orders'] });
     },
     onError: (error) => {
