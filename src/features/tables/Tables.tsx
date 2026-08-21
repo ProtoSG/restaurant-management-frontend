@@ -5,13 +5,12 @@ import {
   useOrderItemsModal,
   useProductListModal,
   useChangeTableModal,
-  usePaymentConfirmationModal,
   useSelectedTable
 } from "@/features/tables";
 import { useSelectedCategory } from "@/features/menu";
 import { useAuth } from "@/features/auth";
 import { useOrderModal, ModalCreateOrder } from "@/features/orders";
-import { ListTables, ModalFormTable, ModalListOrderItems, ModalProductList, ModalChangeTable } from "@/features/tables/components/sections";
+import { ListTables, ListTakeawayOrders, ModalFormTable, OrderDetailView, ModalProductList, ModalChangeTable } from "@/features/tables/components/sections";
 import { HeaderSection } from "@/shared/components";
 import { OrderType } from "@/shared/enums/OrderType";
 import type { Order } from "@/shared/types/Order";
@@ -21,7 +20,6 @@ export function Tables() {
   const orderItemsModal = useOrderItemsModal();
   const productListModal = useProductListModal();
   const changeTableModal = useChangeTableModal();
-  const paymentModal = usePaymentConfirmationModal();
   const selectedTable = useSelectedTable();
   const selectedCategory = useSelectedCategory();
   const takeawayModal = useOrderModal();
@@ -29,9 +27,6 @@ export function Tables() {
   const isAdmin = user?.role === 'ADMIN';
   const [selectedOrderId, setSelectedOrderId] = useState<number | null>(null);
 
-  // Una mesa usa modo "mesa" (selectedTable); un pedido para llevar usa modo
-  // "orden" (selectedOrderId). Al abrir desde una mesa hay que limpiar el id de
-  // orden para no quedar en el modo equivocado.
   const clearOrderSelection = useCallback(() => setSelectedOrderId(null), []);
 
   const handleTakeawayCreated = useCallback((order: Order) => {
@@ -42,6 +37,10 @@ export function Tables() {
       orderItemsModal.open();
     }
   }, [productListModal, orderItemsModal]);
+
+  const handleSelectTakeawayOrder = useCallback((orderId: number) => {
+    setSelectedOrderId(orderId);
+  }, []);
 
   return (
     <main className="flex flex-col gap-8 w-full p-6">
@@ -65,12 +64,15 @@ export function Tables() {
         selectedTable={selectedTable}
         clearOrderSelection={clearOrderSelection}
       />
-      <ModalFormTable modal={tableModal} />
-      <ModalListOrderItems
+      <ListTakeawayOrders
         orderItemsModal={orderItemsModal}
         productListModal={productListModal}
+        onSelectOrder={handleSelectTakeawayOrder}
+      />
+      <ModalFormTable modal={tableModal} />
+      <OrderDetailView
+        orderItemsModal={orderItemsModal}
         selectedTable={selectedTable}
-        paymentModal={paymentModal}
         selectedCategory={selectedCategory}
         orderId={selectedOrderId || undefined}
       />

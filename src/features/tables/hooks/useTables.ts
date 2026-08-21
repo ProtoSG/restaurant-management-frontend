@@ -97,25 +97,27 @@ export function useAddItemToOrder() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: ({ orderId, productId, quantity, notes, isTakeaway }: {
+    mutationFn: ({ orderId, productId, quantity, notes, isTakeaway, selectedPrice }: {
       orderId: number;
       tableId: number;
       productId: number;
       quantity?: number;
       notes?: string;
       isTakeaway?: boolean;
+      selectedPrice?: number;
       product?: import("@/shared/types/OrderProduct").OrderProduct;
-    }) => tableService.addItemToOrder(orderId, productId, quantity, notes, isTakeaway),
+    }) => tableService.addItemToOrder(orderId, productId, quantity, notes, isTakeaway, selectedPrice),
 
-    onMutate: async ({ tableId, quantity = 1, product }) => {
+    onMutate: async ({ tableId, quantity = 1, product, selectedPrice }) => {
       if (!product) return undefined;
       await queryClient.cancelQueries({ queryKey: [`order-${tableId}`] });
       const previous = queryClient.getQueryData<import("@/shared/types/Order").Order>([`order-${tableId}`]);
       if (previous) {
+        const unitPrice = selectedPrice ?? product.price;
         const optimisticItem: import("@/shared/types/OrderItem").OrderItem = {
           id: nextOptimisticId(),
           quantity,
-          subTotal: product.price * quantity,
+          subTotal: unitPrice * quantity,
           product,
         };
         queryClient.setQueryData<import("@/shared/types/Order").Order>([`order-${tableId}`], {
@@ -181,8 +183,8 @@ export function usePayOrder() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: ({ orderId, paymentMethod }: { orderId: number; paymentMethod: string; tableId: number }) =>
-      tableService.payOrder(orderId, paymentMethod),
+    mutationFn: ({ orderId, paymentMethod, idempotencyKey }: { orderId: number; paymentMethod: string; tableId: number; idempotencyKey?: string }) =>
+      tableService.payOrder(orderId, paymentMethod, idempotencyKey),
     onSuccess: (_, { tableId }) => {
       queryClient.invalidateQueries({ queryKey: ['tables'] });
       queryClient.invalidateQueries({ queryKey: [`order-${tableId}`] });
@@ -199,8 +201,8 @@ export function usePayPartialOrder() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: ({ orderId, amount, paymentMethod }: { orderId: number; amount: number; paymentMethod: string; tableId: number }) =>
-      tableService.payPartialOrder(orderId, amount, paymentMethod),
+    mutationFn: ({ orderId, amount, paymentMethod, idempotencyKey }: { orderId: number; amount: number; paymentMethod: string; tableId: number; idempotencyKey?: string }) =>
+      tableService.payPartialOrder(orderId, amount, paymentMethod, idempotencyKey),
     onSuccess: (_, { tableId }) => {
       queryClient.invalidateQueries({ queryKey: ['tables'] });
       queryClient.invalidateQueries({ queryKey: [`order-${tableId}`] });

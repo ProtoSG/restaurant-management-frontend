@@ -16,8 +16,8 @@ export interface ITableService {
   updateOrderItem(orderId: number, itemId: number, quantity: number): Promise<void>;
   removeOrderItem(orderId: number, itemId: number): Promise<void>;
   
-  payOrder(orderId: number, paymentMethod: string): Promise<Order>;
-  payPartialOrder(orderId: number, amount: number, paymentMethod: string): Promise<Order>;
+  payOrder(orderId: number, paymentMethod: string, idempotencyKey?: string): Promise<Order>;
+  payPartialOrder(orderId: number, amount: number, paymentMethod: string, idempotencyKey?: string): Promise<Order>;
   
   changeOrderTable(orderId: number, destinationTableId: number): Promise<Order>;
 

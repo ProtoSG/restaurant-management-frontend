@@ -1,12 +1,21 @@
 import z from "zod";
 
+export const productVariantSchema = z.object({
+  id: z.number().optional(),
+  name: z.string().min(1, "El nombre es obligatorio"),
+  price: z.string().min(1, "El precio es obligatorio"),
+  sortOrder: z.number().default(0),
+});
+
 export const createProductRequestSchema = z.object({
   name: z.string().min(1, "El nombre del producto es obligatorio"),
   price: z.string().min(1, "El precio es obligatorio"),
-  categoryId: z.string().min(1, "La categoría es obligatoria")
+  categoryId: z.string().min(1, "La categoría es obligatoria"),
+  variants: z.array(productVariantSchema).optional(),
 });
 
 export const updateProductRequestSchema = createProductRequestSchema.extend({});
 
+export type ProductVariantForm = z.infer<typeof productVariantSchema>;
 export type CreateProductRequest = z.infer<typeof createProductRequestSchema>;
 export type UpdateProductRequest = z.infer<typeof updateProductRequestSchema>;

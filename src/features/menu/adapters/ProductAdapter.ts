@@ -7,6 +7,13 @@ export function ProductAdapter(product: ProductResponse): Product {
     categoryId: product.category?.id ?? 0,
     categoryName: product.category?.name,
     price: product.price,
-    active: product.isAvailable ?? true
+    active: product.isAvailable ?? true,
+    variants: (product.variants ?? []).map((v) => ({
+      id: v.id,
+      name: v.name,
+      price: v.price,
+      isAvailable: v.isAvailable ?? true,
+      sortOrder: v.sortOrder ?? 0,
+    })),
   }
 }

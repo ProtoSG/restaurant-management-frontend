@@ -25,9 +25,10 @@ export function ProductCatalogPanel({ selectedCategory, selectedTable, orderId }
   };
 
   return (
-    <div className="flex flex-col flex-1 min-h-0">
-      <div className="overflow-x-auto py-1 shrink-0">
-        <ul className="flex gap-1 min-w-max">
+    <div className="flex flex-col lg:flex-row flex-1 min-h-0 lg:gap-4">
+      {/* Categorías: fila horizontal con scroll en mobile, columna lateral fija en desktop */}
+      <div className="overflow-x-auto lg:overflow-x-visible lg:overflow-y-auto py-1 lg:py-0 shrink-0 lg:w-[160px] lg:border-r lg:border-gray-100 lg:pr-3">
+        <ul className="flex lg:flex-col gap-1 min-w-max lg:min-w-0">
           {isLoading ? <p className="text-sm text-gray-400">Cargando…</p>
             : error ? <p className="text-sm text-red">Error al cargar las categorías</p>
             : categories.map((c) => (
@@ -35,7 +36,7 @@ export function ProductCatalogPanel({ selectedCategory, selectedTable, orderId }
               key={c.id}
               onClick={() => handleChangeCategory(c)}
               className={`
-                min-h-[36px] px-4 py-2 rounded-lg text-sm font-medium cursor-pointer whitespace-nowrap transition-all
+                min-h-[44px] px-4 py-2 rounded-lg text-sm font-medium cursor-pointer whitespace-nowrap transition-all lg:w-full lg:text-left
                 ${c.id === selectedCategory.selectedCategory?.id
                   ? "bg-orange text-white"
                   : "text-gray-600 hover:bg-gray-100 active:bg-gray-200"}
@@ -47,13 +48,15 @@ export function ProductCatalogPanel({ selectedCategory, selectedTable, orderId }
         </ul>
       </div>
 
-      <ListProducts
-        searchTerm={searchTerm}
-        setSearchTerm={setSearchTerm}
-        selectedTable={selectedTable}
-        selectedCategory={selectedCategory}
-        orderId={orderId}
-      />
+      <div className="flex flex-col flex-1 min-h-0 min-w-0">
+        <ListProducts
+          searchTerm={searchTerm}
+          setSearchTerm={setSearchTerm}
+          selectedTable={selectedTable}
+          selectedCategory={selectedCategory}
+          orderId={orderId}
+        />
+      </div>
     </div>
   );
 }

@@ -1,6 +1,8 @@
 import axios, { type AxiosInstance } from "axios";
 import { API_URL } from "../Config";
 
+const REQUEST_TIMEOUT_MS = 15000;
+
 interface FailedQueue {
   resolve: (value?: unknown) => void;
   reject: (reason?: unknown) => void;
@@ -16,7 +18,8 @@ class ApiClient {
     this.api = axios.create({
       baseURL: API_URL,
       headers: { 'Content-Type': 'application/json' },
-      withCredentials: true
+      withCredentials: true,
+      timeout: REQUEST_TIMEOUT_MS
     });
 
     this.setupInterceptors();

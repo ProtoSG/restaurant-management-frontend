@@ -3,7 +3,7 @@ import { HeaderSection, Tag, SkeletonCard, ErrorState, EmptyState } from "@/shar
 import { useActiveOrders } from "./hooks/useOrders";
 import { useOrderModal } from "./hooks/useOrderModal";
 import { ModalCreateOrder } from "./components/sections/ModalCreateOrder";
-import { useOrderItemsModal, useProductListModal, usePaymentConfirmationModal, useSelectedTable, ModalListOrderItems, ModalProductList } from "@/features/tables";
+import { useOrderItemsModal, useProductListModal, useSelectedTable, OrderDetailView, ModalProductList } from "@/features/tables";
 import { useSelectedCategory } from "@/features/menu";
 import type { Order } from "@/shared/types/Order";
 import { OrderStatus, OrderStatusLabels } from "@/shared/enums/OrderStatus";
@@ -34,7 +34,6 @@ export function Orders() {
   const orderModal = useOrderModal();
   const orderItemsModal = useOrderItemsModal();
   const productListModal = useProductListModal();
-  const paymentModal = usePaymentConfirmationModal();
   const selectedTable = useSelectedTable();
   const selectedCategory = useSelectedCategory();
 
@@ -152,11 +151,9 @@ export function Orders() {
         </div>
       )}
 
-      <ModalListOrderItems
+      <OrderDetailView
         orderItemsModal={orderItemsModal}
-        productListModal={productListModal}
         selectedTable={selectedTable}
-        paymentModal={paymentModal}
         selectedCategory={selectedCategory}
         orderId={selectedOrderId || undefined}
       />
