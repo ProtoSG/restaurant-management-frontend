@@ -4,7 +4,7 @@ export const productVariantSchema = z.object({
   id: z.number().optional(),
   name: z.string().min(1, "El nombre es obligatorio"),
   price: z.string().min(1, "El precio es obligatorio"),
-  sortOrder: z.number().default(0),
+  sortOrder: z.number().optional(),
 });
 
 export const createProductRequestSchema = z.object({

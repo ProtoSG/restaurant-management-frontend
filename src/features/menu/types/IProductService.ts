@@ -7,7 +7,7 @@ export interface IProductService {
   getAvailableProducts(page?: number, size?: number): Promise<PaginatedResponse<Product>>;
   getProductById(id: number): Promise<Product>;
   getProductsByCategoryId(categoryId: number, page?: number, size?: number): Promise<PaginatedResponse<Product>>;
-  createProduct(product: Omit<Product, 'id'>): Promise<Product>;
+  createProduct(product: Omit<Product, 'id' | 'variants'>): Promise<Product>;
   updateProduct(id: number, product: Partial<Product>): Promise<Product>;
   toggleProductAvailability(id: number): Promise<Product>;
   deleteProduct(id: number): Promise<void>;

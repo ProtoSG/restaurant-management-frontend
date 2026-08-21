@@ -70,6 +70,7 @@ export function useAddItemToOrder() {
         const optimisticItem: import("@/shared/types/OrderItem").OrderItem = {
           id: nextOptimisticId(),
           quantity,
+          unitPrice,
           subTotal: unitPrice * quantity,
           product,
         };
