@@ -6,6 +6,7 @@
 // satisfacen estructuralmente, de modo que el formato se define una sola vez.
 
 import type { Order } from "@/shared/types/Order";
+import { OrderType, OrderTypeLabels } from "@/shared/enums/OrderType";
 
 /** Subconjunto de la API ePOS que necesitan los tickets. */
 export interface TicketPrinter {
@@ -108,7 +109,7 @@ export function buildTicket(p: TicketPrinter, order: Order): void {
       p.addText(
         itemRow(
           item.product.name,
-          `S/${Number(item.product.price).toFixed(2)}`,
+          `S/${Number(item.unitPrice).toFixed(2)}`,
           String(item.quantity),
           `S/${lineBase.toFixed(2)}`
         ) + "\n"
@@ -146,35 +147,50 @@ export function buildKitchenTicket(p: TicketPrinter, order: Order): void {
   p.addTextAlign(p.ALIGN_CENTER);
   p.addTextStyle(false, false, true, p.COLOR_1);
   p.addTextSize(2, 2);
-  p.addText("COCINA\n");
+  p.addText("COMANDA\n");
   p.addTextSize(1, 1);
   p.addTextStyle(false, false, false, p.COLOR_1);
 
-  // Cabecera de la orden
+  // Cabecera de la orden — mesa/tipo y pedido en grande: al personal le cuesta leer letra chica.
+  // Si no es DINE_IN no hay mesa: mostrar el tipo (Para Llevar/Delivery) + nombre de cliente en su lugar.
   p.addTextAlign(p.ALIGN_LEFT);
-  p.addText(lr(`Mesa: ${order.tableNumber ?? "-"}`, hora) + "\n");
+  p.addTextStyle(false, false, true, p.COLOR_1);
+  p.addTextSize(2, 2);
+  if (order.type === OrderType.DINE_IN) {
+    p.addText(`Mesa: ${order.tableNumber ?? "-"}\n`);
+  } else {
+    const label = OrderTypeLabels[order.type].toUpperCase();
+    p.addText(order.customerName ? `${label} - ${order.customerName}\n` : `${label}\n`);
+  }
   p.addText(`Orden: ${order.orderCode}\n`);
+  p.addTextSize(1, 1);
+  p.addTextStyle(false, false, false, p.COLOR_1);
+  p.addText(`Hora: ${hora}\n`);
   p.addText("-".repeat(WIDTH) + "\n");
 
   const byCategory = groupByCategory(order);
-  const showHeaders = byCategory.size > 1;
 
   for (const [cat, items] of byCategory) {
-    if (showHeaders) {
-      p.addTextStyle(false, false, true, p.COLOR_1);
-      p.addText(cat.toUpperCase().slice(0, WIDTH) + "\n");
-      p.addTextStyle(false, false, false, p.COLOR_1);
-    }
+    p.addTextStyle(false, false, true, p.COLOR_1);
+    p.addText(cat.toUpperCase().slice(0, WIDTH) + "\n");
+    p.addTextStyle(false, false, false, p.COLOR_1);
     for (const item of items) {
       // Cantidad + nombre en doble alto para legibilidad
       p.addTextSize(1, 2);
-      p.addText(`${item.quantity}x ${item.product.name} S/${Number(item.product.price).toFixed(2)}\n`);
+      p.addText(`${item.quantity}x ${item.product.name}\n`);
       p.addTextSize(1, 1);
+      // Item puntual marcado "para llevar" dentro de un pedido EN MESA. Si el pedido
+      // entero ya es TAKEAWAY (título de la cabecera), no repetirlo acá — es redundante.
+      if (order.type === OrderType.DINE_IN && item.isTakeaway) {
+        p.addTextStyle(false, false, true, p.COLOR_1);
+        p.addText(`   >> PARA LLEVAR\n`);
+        p.addTextStyle(false, false, false, p.COLOR_1);
+      }
       // Notas indentadas, si hay
       const notes = item.notes?.trim();
       if (notes) p.addText(`   >> ${notes}\n`);
     }
-    if (showHeaders) p.addFeedLine(1);
+    p.addFeedLine(1);
   }
 
   p.addText("-".repeat(WIDTH) + "\n");

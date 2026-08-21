@@ -11,6 +11,8 @@ import {
   EPSON_PRINTER_PORT,
   EPSON_PRINTER_CRYPTO,
   EPSON_DEVICE_ID,
+  KITCHEN_PRINTER_IP,
+  KITCHEN_DEVICE_ID,
 } from "@/shared/Config";
 import type { Order } from "@/shared/types/Order";
 import { buildTicket, buildKitchenTicket } from "./ticketBuilder";
@@ -57,7 +59,7 @@ function friendlyMessage(map: Record<string, string>, code: string, fallback: st
   return message ?? fallback;
 }
 
-function connect(): Promise<Conn> {
+function connect(ip: string, deviceId: string): Promise<Conn> {
   return loadEpos().then(
     (epson: any) =>
       new Promise<Conn>((resolve, reject) => {
@@ -67,7 +69,7 @@ function connect(): Promise<Conn> {
           CONNECT_TIMEOUT_MS
         );
 
-        device.connect(EPSON_PRINTER_IP, EPSON_PRINTER_PORT, (res: string) => {
+        device.connect(ip, EPSON_PRINTER_PORT, (res: string) => {
           if (res !== "OK" && res !== "SSL_CONNECT_OK") {
             clearTimeout(timer);
             reject(new Error(friendlyMessage(
@@ -78,7 +80,7 @@ function connect(): Promise<Conn> {
             return;
           }
           device.createDevice(
-            EPSON_DEVICE_ID,
+            deviceId,
             device.DEVICE_TYPE_PRINTER,
             { crypto: EPSON_PRINTER_CRYPTO, buffer: false },
             (printer: any, code: string) => {
@@ -113,8 +115,8 @@ function disconnect({ device, printer }: Conn): void {
 }
 
 /** Ejecuta una impresión: conecta, construye, envía y desconecta limpiamente. */
-function runPrint(build: (p: any) => void): Promise<void> {
-  return connect().then(
+function runPrint(ip: string, deviceId: string, build: (p: any) => void): Promise<void> {
+  return connect(ip, deviceId).then(
     (conn) =>
       new Promise<void>((resolve, reject) => {
         const { printer } = conn;
@@ -144,12 +146,12 @@ function runPrint(build: (p: any) => void): Promise<void> {
   );
 }
 
-/** Ticket de cuenta (cliente): productos, precios y total. */
+/** Ticket de cuenta (cliente): productos, precios y total. Impresora de comprobantes. */
 export function printOrderTicket(order: Order): Promise<void> {
-  return runPrint((p) => buildTicket(p, order));
+  return runPrint(EPSON_PRINTER_IP, EPSON_DEVICE_ID, (p) => buildTicket(p, order));
 }
 
-/** Comanda de cocina: nombre, cantidad y notas por categoría. */
+/** Comanda de cocina: nombre, cantidad y notas por categoría. Impresora de cocina. */
 export function printKitchenTicket(order: Order): Promise<void> {
-  return runPrint((p) => buildKitchenTicket(p, order));
+  return runPrint(KITCHEN_PRINTER_IP, KITCHEN_DEVICE_ID, (p) => buildKitchenTicket(p, order));
 }

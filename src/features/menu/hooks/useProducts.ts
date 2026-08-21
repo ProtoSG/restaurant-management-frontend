@@ -1,15 +1,17 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { ProductServiceImpl } from "../services/ProductServiceImpl";
+import { ProductVariantServiceImpl } from "../services/ProductVariantServiceImpl";
 import type { Product } from "../types/Product";
 import type { CreateProductRequest } from "../schemas/Product.schema";
 import type { PaginatedResponse } from "@/shared/types/PaginatedResponse";
 
-const DEFAULT_SIZE = 20;
+const DEFAULT_SIZE = 15;
 
 export function useProducts(categoryId: number | null = null) {
   const queryClient = useQueryClient();
   const service = useMemo(() => new ProductServiceImpl(), []);
+  const variantService = useMemo(() => new ProductVariantServiceImpl(), []);
 
   const [products, setProducts] = useState<Product[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -43,19 +45,45 @@ export function useProducts(categoryId: number | null = null) {
     loadProducts(newPage);
   }, [loadProducts]);
 
+  const syncVariants = useCallback(async (productId: number, variants: CreateProductRequest['variants']) => {
+    if (!variants) return;
+    const existing = await variantService.getByProductId(productId);
+    const existingIds = new Set(existing.map((v) => v.id));
+    const incomingIds = new Set(variants.filter((v) => v.id).map((v) => v.id!));
+
+    for (const v of variants) {
+      const payload = { name: v.name, price: parseFloat(v.price), sortOrder: v.sortOrder ?? 0 };
+      if (v.id && existingIds.has(v.id)) {
+        await variantService.update(v.id, payload);
+        existingIds.delete(v.id);
+      } else {
+        await variantService.create(productId, payload);
+      }
+    }
+
+    for (const remainingId of existingIds) {
+      if (!incomingIds.has(remainingId)) {
+        await variantService.delete(remainingId);
+      }
+    }
+  }, [variantService]);
+
   const createProduct = useCallback(async (data: CreateProductRequest): Promise<void> => {
     try {
       setIsLoading(true);
       setError(null);
 
-      const productData: Omit<Product, 'id'> = {
+      const productData: Omit<Product, 'id' | 'variants'> = {
         name: data.name,
         price: parseFloat(data.price),
         categoryId: parseInt(data.categoryId),
         active: true
       };
 
-      await service.createProduct(productData);
+      const created = await service.createProduct(productData);
+      if (data.variants && data.variants.length > 0) {
+        await syncVariants(created.id, data.variants);
+      }
       await queryClient.invalidateQueries({ queryKey: ['products'] });
       await loadProducts(page);
     } catch (err) {
@@ -65,7 +93,7 @@ export function useProducts(categoryId: number | null = null) {
     } finally {
       setIsLoading(false);
     }
-  }, [service, queryClient, loadProducts, page]);
+  }, [service, syncVariants, queryClient, loadProducts, page]);
 
   const updateProduct = useCallback(async (id: number, data: CreateProductRequest): Promise<void> => {
     try {
@@ -79,6 +107,7 @@ export function useProducts(categoryId: number | null = null) {
       };
 
       await service.updateProduct(id, productData);
+      await syncVariants(id, data.variants);
       await queryClient.invalidateQueries({ queryKey: ['products'] });
       await loadProducts(page);
     } catch (err) {
@@ -88,7 +117,7 @@ export function useProducts(categoryId: number | null = null) {
     } finally {
       setIsLoading(false);
     }
-  }, [service, queryClient, loadProducts, page]);
+  }, [service, syncVariants, queryClient, loadProducts, page]);
 
   const deleteProduct = useCallback(async (id: number): Promise<void> => {
     try {
@@ -163,4 +192,3 @@ export function useAvailableProducts() {
 
   return { products, isLoading, error };
 }
-

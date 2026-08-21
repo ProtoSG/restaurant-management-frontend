@@ -7,6 +7,11 @@ export const EPSON_PRINTER_IP     = import.meta.env.VITE_EPSON_PRINTER_IP || "19
 export const EPSON_PRINTER_PORT   = EPSON_SSL ? 8043 : 8008;
 export const EPSON_PRINTER_CRYPTO = EPSON_SSL;
 export const EPSON_DEVICE_ID      = import.meta.env.VITE_EPSON_DEVICE_ID || "local_printer";
+
+// Impresora de cocina: misma LAN, otra IP estática, mismo puerto/SDK que la de comprobantes.
+// Device ID debe coincidir con "Identificación del dispositivo" configurado en la impresora (WebConfig > ePOS-Print).
+export const KITCHEN_PRINTER_IP   = import.meta.env.VITE_KITCHEN_PRINTER_IP || "192.168.18.135";
+export const KITCHEN_DEVICE_ID    = import.meta.env.VITE_KITCHEN_DEVICE_ID || "kitchen_printer";
 export const RESTAURANT_NAME      = import.meta.env.VITE_RESTAURANT_NAME || "La Carte";
 
 // Transporte de impresión: "epson" (browser → impresora LAN vía ePOS SDK) o

@@ -51,24 +51,27 @@ export function useAddItemToOrder() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: ({ orderId, productId, quantity, notes, isTakeaway }: {
+    mutationFn: ({ orderId, productId, quantity, notes, isTakeaway, selectedPrice }: {
       orderId: number;
       productId: number;
       quantity?: number;
       notes?: string;
       isTakeaway?: boolean;
+      selectedPrice?: number;
       product?: import("@/shared/types/OrderProduct").OrderProduct;
-    }) => orderService.addItemToOrder(orderId, productId, quantity, notes, isTakeaway),
+    }) => orderService.addItemToOrder(orderId, productId, quantity, notes, isTakeaway, selectedPrice),
 
-    onMutate: async ({ orderId, quantity = 1, product }) => {
+    onMutate: async ({ orderId, quantity = 1, product, selectedPrice }) => {
       if (!product) return undefined;
       await queryClient.cancelQueries({ queryKey: ['order', orderId] });
       const previous = queryClient.getQueryData<import("@/shared/types/Order").Order>(['order', orderId]);
       if (previous) {
+        const unitPrice = selectedPrice ?? product.price;
         const optimisticItem: import("@/shared/types/OrderItem").OrderItem = {
           id: nextOptimisticId(),
           quantity,
-          subTotal: product.price * quantity,
+          unitPrice,
+          subTotal: unitPrice * quantity,
           product,
         };
         queryClient.setQueryData<import("@/shared/types/Order").Order>(['order', orderId], {
@@ -186,8 +189,8 @@ export function usePayOrder() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: ({ orderId, paymentMethod }: { orderId: number; paymentMethod: string }) =>
-      orderService.payOrder(orderId, paymentMethod),
+    mutationFn: ({ orderId, paymentMethod, idempotencyKey }: { orderId: number; paymentMethod: string; idempotencyKey?: string }) =>
+      orderService.payOrder(orderId, paymentMethod, idempotencyKey),
     onSuccess: (_, { orderId }) => {
       queryClient.invalidateQueries({ queryKey: ['order', orderId] });
       queryClient.invalidateQueries({ queryKey: ['active-orders'] });
@@ -203,8 +206,8 @@ export function usePayPartialOrder() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: ({ orderId, amount, paymentMethod }: { orderId: number; amount: number; paymentMethod: string }) =>
-      orderService.payPartialOrder(orderId, amount, paymentMethod),
+    mutationFn: ({ orderId, amount, paymentMethod, idempotencyKey }: { orderId: number; amount: number; paymentMethod: string; idempotencyKey?: string }) =>
+      orderService.payPartialOrder(orderId, amount, paymentMethod, idempotencyKey),
     onSuccess: (_, { orderId }) => {
       queryClient.invalidateQueries({ queryKey: ['order', orderId] });
       queryClient.invalidateQueries({ queryKey: ['active-orders'] });
@@ -226,9 +229,11 @@ export function usePrintThermal() {
 }
 
 export function usePrintKitchen() {
+  const queryClient = useQueryClient();
+
   return useMutation({
     // Imprime PRIMERO el delta, y solo si la impresión sale bien lo marca como enviado.
-    mutationFn: async ({ orderId }: { orderId: number }): Promise<{ printed: number }> => {
+    mutationFn: async ({ orderId }: { orderId: number; tableId?: number }): Promise<{ printed: number }> => {
       const delta = await orderService.getKitchenPending(orderId);
       if (!delta.items?.length) return { printed: 0 };
       await printKitchenTicket(delta);
@@ -237,6 +242,12 @@ export function usePrintKitchen() {
         delta.items.map((i) => ({ itemId: i.id, quantity: i.quantity }))
       );
       return { printed: delta.items.length };
+    },
+    // kitchenPrintedQuantity cambió en el backend: sin invalidar, el pedido en pantalla
+    // queda con datos viejos y el botón "Enviado a cocina" nunca refleja el envío.
+    onSettled: (_data, _error, { orderId, tableId }) => {
+      queryClient.invalidateQueries({ queryKey: ['order', orderId] });
+      if (tableId) queryClient.invalidateQueries({ queryKey: [`order-${tableId}`] });
     },
     onError: (error) => {
       console.error('Error al imprimir comanda de cocina:', error);

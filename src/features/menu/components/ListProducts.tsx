@@ -81,7 +81,17 @@ export function ListProducts({ products, isLoading, onEdit, onToggleActive, isAd
                   <span className="text-xs text-gray-500">{p.categoryName ?? p.categoryId}</span>
                 </td>
                 <td className="px-4 py-3 text-center">
-                  <span className="font-semibold text-gray-700 tabular-nums text-nowrap">S/ {p.price.toFixed(2)}</span>
+                  {p.variants && p.variants.length > 0 ? (
+                    <div className="flex flex-wrap justify-center gap-1">
+                      {p.variants.map((v) => (
+                        <span key={v.id} className="inline-flex items-center gap-0.5 text-[11px] font-medium bg-gray-100 text-gray-600 px-2 py-0.5 rounded-full tabular-nums">
+                          {v.name} <span className="text-gray-900">S/{v.price.toFixed(0)}</span>
+                        </span>
+                      ))}
+                    </div>
+                  ) : (
+                    <span className="font-semibold text-gray-700 tabular-nums text-nowrap">S/ {p.price.toFixed(2)}</span>
+                  )}
                 </td>
                 {isAdmin && (
                   <>

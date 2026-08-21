@@ -44,7 +44,7 @@ export class ProductServiceImpl implements IProductService {
     };
   }
 
-  async createProduct(product: Omit<Product, 'id'>): Promise<Product> {
+  async createProduct(product: Omit<Product, 'id' | 'variants'>): Promise<Product> {
     const { data } = await this.apiClient.post<ProductResponse>('/products', product);
     return ProductAdapter(data);
   }

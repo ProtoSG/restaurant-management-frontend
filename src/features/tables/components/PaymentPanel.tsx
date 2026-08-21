@@ -9,6 +9,18 @@ import { OrderType, OrderTypeLabels } from "@/shared/enums/OrderType";
 import type { Order } from "@/shared/types/Order";
 import { FaPrint } from "react-icons/fa";
 
+/**
+ * crypto.randomUUID() solo existe en contexto seguro (HTTPS o localhost). La tablet
+ * accede por http:// a una IP de LAN (no localhost), donde la API no está disponible —
+ * no hace falta que sea criptográficamente fuerte, solo única por intento de pago.
+ */
+function generateIdempotencyKey(): string {
+  if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") {
+    return crypto.randomUUID();
+  }
+  return `${Date.now().toString(36)}-${Math.random().toString(36).slice(2)}`;
+}
+
 interface PaymentPanelProps {
   order: Order;
   isOpen: boolean;
@@ -16,6 +28,8 @@ interface PaymentPanelProps {
   orderId?: number;
   showTitle?: boolean;
   onSuccess: () => void;
+  /** Notifica al contenedor si hay un pago en curso, para bloquear la navegación mientras tanto. */
+  onProcessingChange?: (isProcessing: boolean) => void;
 }
 
 export function PaymentPanel({
@@ -25,11 +39,17 @@ export function PaymentPanel({
   orderId,
   showTitle = true,
   onSuccess,
+  onProcessingChange,
 }: PaymentPanelProps) {
   const isOrderMode = orderId !== undefined && orderId > 0;
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>(PaymentMethod.CASH);
   const [isPartialPayment, setIsPartialPayment] = useState(false);
   const [partialAmount, setPartialAmount] = useState<string>("");
+  // Una sola clave por intento de pago: los reintentos del mismo intento (p. ej.
+  // tras un timeout) deben reusarla para que el backend los trate como idempotentes.
+  // Al desmontarse (pago exitoso, o el usuario sale y vuelve a entrar al paso de
+  // pago) se genera una clave nueva porque eso sí es un intento distinto.
+  const [idempotencyKey] = useState<string>(() => generateIdempotencyKey());
 
   const payOrderTableMutation = usePayOrder();
   const payPartialTableMutation = usePayPartialOrder();
@@ -73,23 +93,25 @@ export function PaymentPanel({
       const amount = parseFloat(partialAmount);
       if (isPartial && amount) {
         if (isOrderMode) {
-          await payPartialOrdersMutation.mutateAsync({ orderId: order.id, amount, paymentMethod });
+          await payPartialOrdersMutation.mutateAsync({ orderId: order.id, amount, paymentMethod, idempotencyKey });
         } else {
           await payPartialTableMutation.mutateAsync({
             orderId: order.id,
             amount,
             paymentMethod,
             tableId: selectedTable.selectedTable!.id,
+            idempotencyKey,
           });
         }
       } else {
         if (isOrderMode) {
-          await payOrderOrdersMutation.mutateAsync({ orderId: order.id, paymentMethod });
+          await payOrderOrdersMutation.mutateAsync({ orderId: order.id, paymentMethod, idempotencyKey });
         } else {
           await payOrderTableMutation.mutateAsync({
             orderId: order.id,
             paymentMethod,
             tableId: selectedTable.selectedTable!.id,
+            idempotencyKey,
           });
         }
       }
@@ -102,6 +124,18 @@ export function PaymentPanel({
   const isProcessing =
     payOrderTableMutation.isPending || payPartialTableMutation.isPending ||
     payOrderOrdersMutation.isPending || payPartialOrdersMutation.isPending;
+
+  useEffect(() => {
+    onProcessingChange?.(isProcessing);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [isProcessing]);
+
+  // Red de seguridad: si el panel se desmonta mientras había un pago en curso,
+  // no dejar al contenedor creyendo que sigue pendiente para siempre.
+  useEffect(() => {
+    return () => onProcessingChange?.(false);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const table = selectedTable.selectedTable;
   const orderInfo = isOrderMode
@@ -123,7 +157,7 @@ export function PaymentPanel({
       )}
 
       <div className="flex items-center gap-2">
-        <div className="w-10 shrink-0" />
+        <div className="w-11 shrink-0" />
         <p className="flex-1 text-sm text-gray-500 text-center">
           <span className="font-semibold text-gray-700">{orderInfo}</span>
           {' · '}
@@ -140,7 +174,7 @@ export function PaymentPanel({
           disabled={isProcessing || !order.items?.length || printThermalMutation.isPending}
           title="Imprimir ticket"
           aria-label="Imprimir ticket"
-          className="shrink-0 min-w-[40px] min-h-[40px] flex items-center justify-center rounded-lg border border-gray-200 text-gray-500 hover:text-orange hover:border-orange hover:bg-orange/5 transition-colors cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
+          className="shrink-0 min-w-[44px] min-h-[44px] flex items-center justify-center rounded-lg border border-gray-200 text-gray-500 hover:text-orange hover:border-orange hover:bg-orange/5 transition-colors cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
         >
           <FaPrint className={`text-sm ${printThermalMutation.isPending ? 'animate-pulse' : ''}`} />
         </button>

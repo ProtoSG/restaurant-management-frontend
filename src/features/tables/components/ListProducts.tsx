@@ -18,9 +18,38 @@ interface Props {
 
 interface PendingItem {
   product: Product;
+  selectedPrice?: number;
   notes: string;
   quantity: number;
   isTakeaway: boolean;
+}
+
+interface PriceOption {
+  price: number;
+  ariaLabel: string;
+}
+
+/**
+ * Un producto puede tener varios precios: el precio inicial (con el que se creó)
+ * más, opcionalmente, uno o más precios adicionales (sus variantes). Ninguno es
+ * un caso especial del otro — acá se listan todos como un único conjunto de
+ * opciones, deduplicando por valor exacto para no mostrar dos chips idénticos.
+ */
+function getPriceOptions(product: Product): PriceOption[] {
+  const options: PriceOption[] = [
+    { price: product.price, ariaLabel: `Precio inicial, S/ ${product.price.toFixed(2)}` },
+  ];
+  for (const variant of product.variants ?? []) {
+    if (!options.some((option) => option.price === variant.price)) {
+      options.push({ price: variant.price, ariaLabel: `${variant.name}, S/ ${variant.price.toFixed(2)}` });
+    }
+  }
+  return options;
+}
+
+function getUnitPrice(item: PendingItem, surcharge: number): number {
+  const base = item.selectedPrice ?? item.product.price;
+  return base + (item.isTakeaway ? surcharge : 0);
 }
 
 export function ListProducts({ searchTerm, setSearchTerm, selectedTable, selectedCategory, orderId }: Props) {
@@ -54,17 +83,43 @@ export function ListProducts({ searchTerm, setSearchTerm, selectedTable, selecte
     ? allAvailableProducts
     : allAvailableProducts.filter(p => p.categoryId === selectedCategoryId);
 
-  const handleAddItem = async (product: Product) => {
-    setPendingItem({ product, notes: "", quantity: 1, isTakeaway: false });
+  const pendingPriceOptions = pendingItem ? getPriceOptions(pendingItem.product) : [];
+
+  // Con una sola opción de precio, se auto-selecciona (comportamiento actual sin
+  // cambios). Con más de una, se abre el modal sin precio elegido: hay que
+  // elegir explícitamente adentro (ver cabecera de precios más abajo).
+  const handleAddItem = (product: Product) => {
+    const hasMultipleOptions = getPriceOptions(product).length > 1;
+    setPendingItem({
+      product,
+      selectedPrice: hasMultipleOptions ? undefined : product.price,
+      notes: "",
+      quantity: 1,
+      isTakeaway: false,
+    });
+  };
+
+  const handleSelectPrice = (price: number) => {
+    setPendingItem((prev) => prev ? { ...prev, selectedPrice: price } : prev);
   };
 
   const handleConfirm = async () => {
     if (!pendingItem) return;
+    if (pendingItem.selectedPrice === undefined) return;
     try {
       const notes = pendingItem.notes.trim() || undefined;
       const isTakeaway = pendingItem.isTakeaway;
+      const selectedPrice = pendingItem.selectedPrice;
+
       if (orderId) {
-        await addItemOrdersMutation.mutateAsync({ orderId, productId: pendingItem.product.id, quantity: pendingItem.quantity, notes, isTakeaway });
+        await addItemOrdersMutation.mutateAsync({
+          orderId,
+          productId: pendingItem.product.id,
+          quantity: pendingItem.quantity,
+          notes,
+          isTakeaway,
+          selectedPrice,
+        });
       } else {
         if (!selectedTable.selectedTable) return;
         let currentOrderId = activeOrder?.id;
@@ -79,6 +134,7 @@ export function ListProducts({ searchTerm, setSearchTerm, selectedTable, selecte
           quantity: pendingItem.quantity,
           notes,
           isTakeaway,
+          selectedPrice,
         });
       }
     } catch (error) {
@@ -90,7 +146,6 @@ export function ListProducts({ searchTerm, setSearchTerm, selectedTable, selecte
 
   const isAdding = createOrderMutation.isPending || addItemTableMutation.isPending || addItemOrdersMutation.isPending;
 
-  // Acceso rápido: agrega 1 unidad directo (sin modal de notas/llevar), creando la orden si no existe.
   const handleQuickAdd = async (productId: number) => {
     try {
       if (orderId) {
@@ -136,7 +191,6 @@ export function ListProducts({ searchTerm, setSearchTerm, selectedTable, selecte
   return (
     <>
       <div className="flex flex-col gap-3 flex-1 min-h-0 overflow-hidden">
-        {/* Buscador — solo desktop (xl: excluye tablets landscape ~10-11", que ya pasan el breakpoint lg) */}
         <div className="hidden xl:flex items-center gap-2 border-2 border-gray-200 rounded-xl px-3 py-2.5 focus-within:border-orange transition-colors shrink-0">
           <FaSearch className="text-gray-400 shrink-0 text-xs" />
           <input
@@ -159,7 +213,6 @@ export function ListProducts({ searchTerm, setSearchTerm, selectedTable, selecte
           )}
         </div>
 
-        {/* Lista */}
         {filteredProducts.length === 0 ? (
           <div className="flex flex-col items-center justify-center flex-1 gap-2 py-8">
             <p className="text-gray-400 text-sm">
@@ -168,30 +221,42 @@ export function ListProducts({ searchTerm, setSearchTerm, selectedTable, selecte
           </div>
         ) : (
           <ul className="flex flex-col overflow-y-auto flex-1 -mx-1">
-            {filteredProducts.map((p: Product) => (
-              <li
-                key={p.id}
-                onClick={() => !isAdding && handleAddItem(p)}
-                role="button"
-                aria-label={`Agregar ${p.name}`}
-                className="flex items-center gap-3 px-1 py-3.5 border-b border-gray-100 last:border-0 hover:bg-gray-50 active:bg-gray-100 transition-colors cursor-pointer select-none"
-              >
-                <p className="flex-1 text-sm font-medium text-gray-900 leading-snug">{p.name}</p>
-                <span className="text-sm font-semibold text-gray-600 tabular-nums shrink-0 min-w-[56px] text-right">
-                  S/ {p.price.toFixed(2)}
-                </span>
-              </li>
-            ))}
+            {filteredProducts.map((p: Product) => {
+              const priceOptions = getPriceOptions(p);
+              const hasMultipleOptions = priceOptions.length > 1;
+              const minPrice = Math.min(...priceOptions.map((option) => option.price));
+
+              return (
+                <li key={p.id} className="border-b border-gray-100 last:border-0">
+                  <div
+                    onClick={() => !isAdding && handleAddItem(p)}
+                    role="button"
+                    aria-label={`Agregar ${p.name}`}
+                    className="flex items-center gap-3 px-1 py-3.5 min-h-[44px] transition-colors cursor-pointer select-none hover:bg-gray-50 active:bg-gray-100"
+                  >
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium text-gray-900 leading-snug">{p.name}</p>
+                      {hasMultipleOptions && (
+                        <p className="text-xs text-gray-400 mt-0.5">
+                          {priceOptions.length} precios
+                        </p>
+                      )}
+                    </div>
+                    <span className="text-sm font-semibold text-gray-600 tabular-nums shrink-0 text-right">
+                      {hasMultipleOptions ? `Desde S/ ${minPrice.toFixed(2)}` : `S/ ${p.price.toFixed(2)}`}
+                    </span>
+                  </div>
+                </li>
+              );
+            })}
           </ul>
         )}
       </div>
 
-      {/* Acceso rápido — mini sección al fondo del catálogo */}
       <div className="shrink-0 pt-3 mt-1 border-t border-gray-100">
         <QuickAddItems onAdd={handleQuickAdd} disabled={isAdding} />
       </div>
 
-      {/* Modal notas */}
       {pendingItem && (
         <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/40" onClick={() => setPendingItem(null)}>
           <div
@@ -199,19 +264,21 @@ export function ListProducts({ searchTerm, setSearchTerm, selectedTable, selecte
             onClick={(e) => e.stopPropagation()}
           >
             <div className="flex items-start justify-between gap-3">
-              <div>
+              <div className="min-w-0">
                 <p className="font-semibold text-gray-900">{pendingItem.product.name}</p>
-                <p className="text-sm text-gray-400">
-                  S/ {(pendingItem.product.price + (pendingItem.isTakeaway ? surcharge : 0)).toFixed(2)} c/u
-                  {pendingItem.isTakeaway && (
-                    <span className="ml-1 text-orange font-medium">(+S/ {surcharge.toFixed(2)} llevar)</span>
-                  )}
-                </p>
+                {pendingPriceOptions.length <= 1 && (
+                  <p className="text-sm text-gray-400">
+                    S/ {getUnitPrice(pendingItem, surcharge).toFixed(2)} c/u
+                    {pendingItem.isTakeaway && (
+                      <span className="ml-1 text-orange font-medium">(+S/ {surcharge.toFixed(2)} llevar)</span>
+                    )}
+                  </p>
+                )}
               </div>
               <div className="flex items-center gap-2 shrink-0">
                 <button
                   onClick={() => setPendingItem({ ...pendingItem, quantity: Math.max(1, pendingItem.quantity - 1) })}
-                  className="w-9 h-9 flex items-center justify-center rounded-xl border-2 border-gray-200 text-gray-600 active:bg-gray-50 transition-colors cursor-pointer"
+                  className="w-11 h-11 flex items-center justify-center rounded-xl border-2 border-gray-200 text-gray-600 active:bg-gray-50 transition-colors cursor-pointer"
                   aria-label="Disminuir cantidad"
                 >
                   <FaMinus className="text-xs" />
@@ -221,7 +288,7 @@ export function ListProducts({ searchTerm, setSearchTerm, selectedTable, selecte
                 </span>
                 <button
                   onClick={() => setPendingItem({ ...pendingItem, quantity: pendingItem.quantity + 1 })}
-                  className="w-9 h-9 flex items-center justify-center rounded-xl bg-green text-white active:opacity-75 transition-opacity cursor-pointer"
+                  className="w-11 h-11 flex items-center justify-center rounded-xl bg-green text-white active:opacity-75 transition-opacity cursor-pointer"
                   aria-label="Aumentar cantidad"
                 >
                   <FaPlus className="text-xs" />
@@ -229,7 +296,36 @@ export function ListProducts({ searchTerm, setSearchTerm, selectedTable, selecte
               </div>
             </div>
 
-            {/* Toggle para llevar */}
+            {/* Cabecera de precios: con más de una opción, el precio se elige acá en vez de en la lista */}
+            {pendingPriceOptions.length > 1 && (
+              <div className="flex flex-col gap-1.5">
+                <label className="text-sm font-medium text-gray-700">Elegí el precio</label>
+                <div className="flex flex-wrap gap-1.5">
+                  {pendingPriceOptions.map((option) => {
+                    const selected = pendingItem.selectedPrice === option.price;
+                    return (
+                      <button
+                        key={option.price}
+                        type="button"
+                        onClick={() => handleSelectPrice(option.price)}
+                        aria-label={option.ariaLabel}
+                        className={`px-4 py-2 min-h-[44px] rounded-xl border-2 transition-all cursor-pointer select-none ${
+                          selected
+                            ? "border-orange bg-orange text-white"
+                            : "border-gray-200 text-gray-700 hover:border-orange hover:bg-orange/5"
+                        }`}
+                      >
+                        <span className="text-sm font-bold tabular-nums">S/ {option.price.toFixed(2)}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+                {pendingItem.isTakeaway && pendingItem.selectedPrice !== undefined && (
+                  <p className="text-xs text-orange font-medium">+S/ {surcharge.toFixed(2)} llevar</p>
+                )}
+              </div>
+            )}
+
             <div className={`flex items-center gap-2.5 w-full px-3.5 py-2.5 rounded-xl border-2 transition-colors text-sm font-medium ${
               pendingItem.isTakeaway
                 ? "border-orange bg-orange/10 text-orange"
@@ -284,12 +380,14 @@ export function ListProducts({ searchTerm, setSearchTerm, selectedTable, selecte
               </button>
               <button
                 onClick={handleConfirm}
-                disabled={isAdding}
+                disabled={isAdding || pendingItem.selectedPrice === undefined}
                 className="flex-1 py-3 rounded-xl bg-green text-white text-sm font-semibold disabled:opacity-40 cursor-pointer"
               >
                 {isAdding
                   ? "Agregando..."
-                  : `Agregar — S/ ${((pendingItem.product.price + (pendingItem.isTakeaway ? surcharge : 0)) * pendingItem.quantity).toFixed(2)}`
+                  : pendingItem.selectedPrice === undefined
+                  ? "Elegí un precio"
+                  : `Agregar — S/ ${(getUnitPrice(pendingItem, surcharge) * pendingItem.quantity).toFixed(2)}`
                 }
               </button>
             </div>

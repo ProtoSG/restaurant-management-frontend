@@ -1,3 +1,11 @@
+export interface ProductVariant {
+  id: number;
+  name: string;
+  price: number;
+  isAvailable: boolean;
+  sortOrder: number;
+}
+
 export interface Product {
   id: number;
   name: string;
@@ -5,6 +13,15 @@ export interface Product {
   categoryId: number;
   categoryName?: string;
   active: boolean;
+  variants: ProductVariant[];
+}
+
+export interface ProductVariantResponse {
+  id: number;
+  name: string;
+  price: number;
+  isAvailable?: boolean;
+  sortOrder?: number;
 }
 
 export interface ProductResponse {
@@ -13,4 +30,5 @@ export interface ProductResponse {
   price: number;
   category?: { id: number; name: string };
   isAvailable?: boolean;
+  variants?: ProductVariantResponse[];
 }

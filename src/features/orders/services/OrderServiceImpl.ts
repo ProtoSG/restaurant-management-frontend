@@ -30,12 +30,13 @@ export class OrderServiceImpl {
     return orderAdapter(response);
   }
 
-  async addItemToOrder(orderId: number, productId: number, quantity = 1, notes?: string, isTakeaway?: boolean): Promise<void> {
+  async addItemToOrder(orderId: number, productId: number, quantity = 1, notes?: string, isTakeaway?: boolean, selectedPrice?: number): Promise<void> {
     await defaultApiClient.post(`/orders/${orderId}/items`, {
       productId,
       quantity,
       notes,
       isTakeaway: isTakeaway ?? false,
+      selectedPrice: selectedPrice ?? null,
     });
   }
 
@@ -65,15 +66,16 @@ export class OrderServiceImpl {
     return orderAdapter(data);
   }
 
-  async payOrder(orderId: number, paymentMethod: string): Promise<Order> {
-    const { data } = await defaultApiClient.post<OrderResponse>(`/orders/${orderId}/pay/${paymentMethod}`);
+  async payOrder(orderId: number, paymentMethod: string, idempotencyKey?: string): Promise<Order> {
+    const { data } = await defaultApiClient.post<OrderResponse>(`/orders/${orderId}/pay/${paymentMethod}`, { idempotencyKey });
     return orderAdapter(data);
   }
 
-  async payPartialOrder(orderId: number, amount: number, paymentMethod: string): Promise<Order> {
+  async payPartialOrder(orderId: number, amount: number, paymentMethod: string, idempotencyKey?: string): Promise<Order> {
     const { data } = await defaultApiClient.post<OrderResponse>(`/orders/${orderId}/pay-partial`, {
       amount,
-      paymentMethod
+      paymentMethod,
+      idempotencyKey
     });
     return orderAdapter(data);
   }
