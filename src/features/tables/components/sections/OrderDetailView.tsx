@@ -14,7 +14,7 @@ import { useState, useEffect, type ReactNode } from "react";
 import { ProductCatalogPanel } from "../ProductCatalogPanel";
 import { PaymentPanel } from "../PaymentPanel";
 
-type Step = "items" | "catalog" | "payment";
+type Step = "order" | "payment";
 
 interface Props {
   orderItemsModal: ReturnType<typeof useOrderItemsModal>;
@@ -82,7 +82,7 @@ export function OrderDetailView({ orderItemsModal, selectedTable, selectedCatego
   const canMarkReady = user?.role === 'ADMIN' || user?.role === 'CASHIER' || user?.role === 'WAITER';
   const canFinalizeOrder = user?.role === 'ADMIN' || user?.role === 'CASHIER' || user?.role === 'WAITER';
   const [showCancelConfirm, setShowCancelConfirm] = useState(false);
-  const [step, setStep] = useState<Step>('items');
+  const [step, setStep] = useState<Step>('order');
   const cancelOrderMutation = useCancelOrder();
   const printKitchenMutation = usePrintKitchen();
   const markOrderAsReadyMutation = useMarkOrderAsReady();
@@ -112,7 +112,7 @@ export function OrderDetailView({ orderItemsModal, selectedTable, selectedCatego
   useEffect(() => {
     if (!orderItemsModal.isOpen) {
       setShowCancelConfirm(false);
-      setStep('items');
+      setStep('order');
     }
   }, [orderItemsModal.isOpen]);
 
@@ -168,10 +168,6 @@ export function OrderDetailView({ orderItemsModal, selectedTable, selectedCatego
   };
 
   const handleBack = () => {
-    if (step !== 'items') {
-      setStep('items');
-      return;
-    }
     orderItemsModal.close();
   };
 
@@ -193,8 +189,11 @@ export function OrderDetailView({ orderItemsModal, selectedTable, selectedCatego
   const hasPendingKitchenItems =
     order?.items?.some((item) => item.quantity > (item.kitchenPrintedQuantity ?? 0)) ?? false;
 
-  // Los pasos (Carta/Pagar) solo tienen sentido mientras el pedido admite cambios.
+  // Los pasos (Pedido/Pagar) solo tienen sentido mientras el pedido admite cambios.
   const showSteps = !!order && order.status !== OrderStatus.PAID && order.status !== OrderStatus.FINALIZADO;
+  // La carta solo se muestra junto al pedido mientras se puede seguir agregando
+  // productos — un pedido pagado/finalizado no debe ofrecer agregar más.
+  const canEditOrder = !order || (order.status !== OrderStatus.PAID && order.status !== OrderStatus.FINALIZADO);
 
   // Mientras una mutación crítica está en vuelo (cancelar/finalizar/marcar listo/pagar)
   // no se debe poder salir del flujo: el back/tabs quedan bloqueados hasta que resuelva.
@@ -218,7 +217,7 @@ export function OrderDetailView({ orderItemsModal, selectedTable, selectedCatego
         <button
           onClick={handleBack}
           disabled={isCriticalMutationPending}
-          aria-label={isCriticalMutationPending ? navigationBlockedTitle : (step !== 'items' ? "Volver al pedido" : "Cerrar")}
+          aria-label={isCriticalMutationPending ? navigationBlockedTitle : "Cerrar"}
           title={isCriticalMutationPending ? navigationBlockedTitle : undefined}
           className={cn(
             "min-w-[44px] min-h-[44px] flex items-center justify-center rounded-lg text-gray-500 hover:text-red hover:bg-red/5 transition-colors cursor-pointer shrink-0",
@@ -275,24 +274,16 @@ export function OrderDetailView({ orderItemsModal, selectedTable, selectedCatego
         </div>
       </header>
 
-      {/* Pasos: Pedido ↔ Carta ↔ Pagar — una sola tarea visible a la vez */}
+      {/* Pasos: Pedido (carta + items juntos) ↔ Pagar — una sola tarea visible a la vez */}
       {showSteps && (
         <div className="flex gap-1.5 px-3 pt-3 lg:px-8 shrink-0">
           <TabButton
-            active={step === 'items'}
+            active={step === 'order'}
             disabled={isCriticalMutationPending}
             title={isCriticalMutationPending ? navigationBlockedTitle : undefined}
-            onClick={() => setStep('items')}
+            onClick={() => setStep('order')}
           >
             Pedido
-          </TabButton>
-          <TabButton
-            active={step === 'catalog'}
-            disabled={isCriticalMutationPending}
-            title={isCriticalMutationPending ? navigationBlockedTitle : undefined}
-            onClick={() => setStep('catalog')}
-          >
-            Carta
           </TabButton>
           {canPay && (
             <TabButton
@@ -334,12 +325,6 @@ export function OrderDetailView({ orderItemsModal, selectedTable, selectedCatego
           <div className="text-center py-8">
             <p className="text-red font-medium">Error al cargar el pedido</p>
           </div>
-        ) : step === 'catalog' ? (
-          <ProductCatalogPanel
-            selectedCategory={selectedCategory}
-            selectedTable={selectedTable}
-            orderId={isOrderMode ? orderId : undefined}
-          />
         ) : step === 'payment' && order ? (
           <div className="max-w-2xl mx-auto w-full flex-1 min-h-0">
             <PaymentPanel
@@ -347,26 +332,35 @@ export function OrderDetailView({ orderItemsModal, selectedTable, selectedCatego
               isOpen={step === 'payment'}
               selectedTable={selectedTable}
               orderId={isOrderMode ? orderId : undefined}
-              onSuccess={() => setStep('items')}
+              onSuccess={() => setStep('order')}
               onProcessingChange={setIsPaymentProcessing}
             />
           </div>
         ) : (
-          <div className="flex flex-col gap-4 max-w-2xl mx-auto w-full flex-1 min-h-0 overflow-y-auto px-1">
+          // Carta + pedido en una sola pantalla: elegir un producto y ver el
+          // total actualizarse sin cambiar de paso. Apilado en mobile (poco
+          // ancho para dos columnas), lado a lado desde `lg` (tablet+).
+          <div className="flex flex-col lg:flex-row gap-4 flex-1 min-h-0">
+            {canEditOrder && (
+              <div className="flex flex-col min-h-0 min-w-0 max-h-[45vh] lg:max-h-none lg:h-full flex-1 lg:border-r lg:border-gray-100 lg:pr-4">
+                <ProductCatalogPanel
+                  selectedCategory={selectedCategory}
+                  selectedTable={selectedTable}
+                  orderId={isOrderMode ? orderId : undefined}
+                />
+              </div>
+            )}
+            <div className={cn(
+              "flex flex-col gap-4 flex-1 min-h-0 min-w-0 overflow-y-auto px-1",
+              canEditOrder && "lg:flex-none lg:w-[380px] xl:w-[420px] lg:shrink-0",
+              !canEditOrder && "max-w-2xl mx-auto w-full"
+            )}>
             {!order ? (
               <>
                 {/* Pedido vacío — se crea de forma diferida al agregar el primer item (ver ListProducts) */}
                 <div className="flex flex-col items-center gap-2 py-10 text-center">
                   <p className="text-gray-400 text-sm">Sin productos aún</p>
-                  <p className="text-gray-300 text-xs px-4">Agrega productos desde la carta para iniciar el pedido</p>
-                  <Button
-                    variant={Variant.GREEN}
-                    className="mt-3"
-                    onClick={() => setStep('catalog')}
-                  >
-                    <FaPlus className="text-xs mr-2" />
-                    Agregar Producto
-                  </Button>
+                  <p className="text-gray-300 text-xs px-4">Elegí un producto de la carta para iniciar el pedido</p>
                 </div>
                 <div className="flex items-center justify-between pt-4 border-t border-gray-200">
                   <span className="text-sm text-gray-500">Total del pedido</span>
@@ -377,6 +371,31 @@ export function OrderDetailView({ orderItemsModal, selectedTable, selectedCatego
               <>
                 {order.status === OrderStatus.PAID ? (
                   <div className="flex flex-col items-center gap-4 py-4">
+                    {/* Pedido pagado: sigue mostrando qué se pidió, solo sin controles de edición */}
+                    {order.items && order.items.length > 0 && (
+                      <ul className="flex flex-col gap-2 w-full">
+                        {order.items.map((item) => (
+                          <li key={item.id} className={`flex items-center gap-3 px-3 py-2.5 rounded-xl border ${item.isTakeaway ? "bg-orange/5 border-orange/20" : "bg-gray-50 border-gray-100"}`}>
+                            <div className="flex-1 min-w-0">
+                              <div className="flex items-center gap-1.5">
+                                <p className="font-semibold text-sm text-gray-900 break-words">{item.product.name}</p>
+                                {item.isTakeaway && (
+                                  <FaShoppingBag className="text-orange text-[10px] shrink-0" title="Para llevar" />
+                                )}
+                              </div>
+                              <p className="text-xs text-gray-400">
+                                S/ {item.unitPrice.toFixed(2)} c/u
+                                {item.isTakeaway && item.takeawaySurcharge ? (
+                                  <span className="text-orange ml-1">+S/ {item.takeawaySurcharge.toFixed(2)} llevar</span>
+                                ) : null}
+                              </p>
+                            </div>
+                            <span className="text-sm font-bold text-gray-700 shrink-0">x{item.quantity}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    )}
+
                     <div className="w-full max-w-sm bg-gray-50 rounded-2xl p-5 flex flex-col items-center gap-3">
                       <p className="text-xs font-semibold text-gray-400 uppercase tracking-widest">Pagado</p>
                       <p className="text-5xl font-bold text-gray-900 tabular-nums">
@@ -577,6 +596,7 @@ export function OrderDetailView({ orderItemsModal, selectedTable, selectedCatego
                 )}
               </>
             )}
+            </div>
           </div>
         )}
       </div>
