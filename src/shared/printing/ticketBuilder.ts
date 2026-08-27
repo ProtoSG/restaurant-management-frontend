@@ -69,7 +69,7 @@ export function buildTicket(p: TicketPrinter, order: Order): void {
   p.addTextAlign(p.ALIGN_CENTER);
   p.addTextStyle(false, false, true, p.COLOR_1);
   p.addTextSize(2, 1);
-  p.addText("PRECUENTA\n");
+  p.addText("CUENTA\n");
   p.addTextSize(1, 1);
   p.addTextStyle(false, false, false, p.COLOR_1);
 
