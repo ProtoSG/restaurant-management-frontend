@@ -19,7 +19,7 @@ export const NAV_ITEMS: NavItem[] = [
     name: "Dashboard",
     link: "/",
     icon: <MdDashboard />,
-    roles: ['ADMIN', 'CASHIER'],
+    roles: ['ADMIN'],
     group: 'operations',
   },
   {
