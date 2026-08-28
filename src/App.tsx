@@ -25,13 +25,9 @@ function App() {
           <Route path="/orders" element={<Orders />} />
           <Route path="/tables" element={<Tables />} />
 
-          {/* ADMIN or CASHIER */}
-          <Route element={<ProtectedRoute allowedRoles={['ADMIN', 'CASHIER']} />}>
-            <Route index element={<Dashboard />} />
-          </Route>
-
           {/* ADMIN only */}
           <Route element={<ProtectedRoute allowedRoles={['ADMIN']} />}>
+            <Route index element={<Dashboard />} />
             <Route path="/menu" element={<Menu />} />
             <Route path="/users" element={<Users />} />
             <Route path="/settings" element={<Settings />} />
