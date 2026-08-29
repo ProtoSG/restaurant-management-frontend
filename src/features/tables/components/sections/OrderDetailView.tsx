@@ -14,7 +14,11 @@ import { useState, useEffect, type ReactNode } from "react";
 import { ProductCatalogPanel } from "../ProductCatalogPanel";
 import { PaymentPanel } from "../PaymentPanel";
 
-type Step = "order" | "payment";
+// "menu" solo existe como paso navegable en mobile — la pestaña "Carta" es
+// lg:hidden más abajo. En desktop, carta+pedido siguen juntos como siempre
+// (nunca se llega a "menu" por UI ahí), controlado con clases lg: puras, sin
+// detección de viewport en JS.
+type Step = "order" | "menu" | "payment";
 
 interface Props {
   orderItemsModal: ReturnType<typeof useOrderItemsModal>;
@@ -274,7 +278,10 @@ export function OrderDetailView({ orderItemsModal, selectedTable, selectedCatego
         </div>
       </header>
 
-      {/* Pasos: Pedido (carta + items juntos) ↔ Pagar — una sola tarea visible a la vez */}
+      {/* Pasos: en mobile, Pedido/Carta/Pagar por separado — una sola tarea visible
+          a la vez, como pide el principio #2 de .impeccable.md. En desktop, carta +
+          pedido siguen juntos (la pestaña "Carta" es lg:hidden, nunca se navega ahí),
+          solo Pedido ↔ Pagar como antes. */}
       {showSteps && (
         <div className="flex gap-1.5 px-3 pt-3 lg:px-8 shrink-0">
           <TabButton
@@ -285,6 +292,18 @@ export function OrderDetailView({ orderItemsModal, selectedTable, selectedCatego
           >
             Pedido
           </TabButton>
+          {canEditOrder && (
+            <div className="lg:hidden flex-1 flex">
+              <TabButton
+                active={step === 'menu'}
+                disabled={isCriticalMutationPending}
+                title={isCriticalMutationPending ? navigationBlockedTitle : undefined}
+                onClick={() => setStep('menu')}
+              >
+                Carta
+              </TabButton>
+            </div>
+          )}
           {canPay && (
             <TabButton
               active={step === 'payment'}
@@ -337,12 +356,19 @@ export function OrderDetailView({ orderItemsModal, selectedTable, selectedCatego
             />
           </div>
         ) : (
-          // Carta + pedido en una sola pantalla: elegir un producto y ver el
-          // total actualizarse sin cambiar de paso. Apilado en mobile (poco
-          // ancho para dos columnas), lado a lado desde `lg` (tablet+).
+          // Desktop (lg+): carta + pedido siempre juntos, lado a lado — un vistazo,
+          // el total se actualiza sin cambiar de paso. Mobile: uno u otro según
+          // `step` ("order"/"menu"), pantalla completa para cada uno — no hay ancho
+          // para dos columnas ni sentido en apilarlas y perder la mitad del alto.
           <div className="flex flex-col lg:flex-row gap-4 flex-1 min-h-0">
+            {/* Sin pedido todavía, showSteps es false y no hay pestaña "Carta" que
+                pulsar — ahí la carta se muestra igual por defecto en mobile, si no
+                el mesero queda sin forma de agregar el primer producto. */}
             {canEditOrder && (
-              <div className="flex flex-col min-h-0 min-w-0 max-h-[45vh] lg:max-h-none lg:h-full flex-1 lg:border-r lg:border-gray-100 lg:pr-4">
+              <div className={cn(
+                "flex-col min-h-0 min-w-0 h-full flex-1 lg:border-r lg:border-gray-100 lg:pr-4",
+                (step === 'menu' || !order) ? "flex" : "hidden lg:flex"
+              )}>
                 <ProductCatalogPanel
                   selectedCategory={selectedCategory}
                   selectedTable={selectedTable}
@@ -351,7 +377,8 @@ export function OrderDetailView({ orderItemsModal, selectedTable, selectedCatego
               </div>
             )}
             <div className={cn(
-              "flex flex-col gap-4 flex-1 min-h-0 min-w-0 overflow-y-auto px-1",
+              "flex-col gap-4 flex-1 min-h-0 min-w-0 overflow-y-auto px-1",
+              (step === 'menu' || !order) ? "hidden lg:flex" : "flex",
               canEditOrder && "lg:flex-none lg:w-[380px] xl:w-[420px] lg:shrink-0",
               !canEditOrder && "max-w-2xl mx-auto w-full"
             )}>

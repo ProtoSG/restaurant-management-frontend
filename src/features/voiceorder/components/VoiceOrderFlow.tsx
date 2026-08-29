@@ -168,7 +168,13 @@ export function VoiceOrderFlow({ isOpen, onClose }: Props) {
         closing ? "modal-slide-exit" : "modal-slide-enter"
       )}
     >
-      <header className="flex items-center gap-2 px-3 py-2.5 lg:px-8 lg:py-4 border-b border-gray-200 shrink-0">
+      {/* Este overlay reemplaza TopBar/BottomNav enteros mientras está abierto — a
+          diferencia de esas dos, no hay layout padre que le reserve el área segura
+          de notch/home-indicator, así que la maneja acá (mismo criterio que
+          TopBar.tsx/BottomNav.tsx: pt-/pb-[env(safe-area-inset-*)]). Sin esto, en
+          tablet no se nota (insets suelen ser 0 ahí), pero en un celular con
+          home-indicator el botón "Confirmar pedido" queda pegado al borde real. */}
+      <header className="flex items-center gap-2 px-3 pt-[calc(0.625rem+env(safe-area-inset-top))] pb-2.5 lg:px-8 lg:py-4 border-b border-gray-200 shrink-0">
         <button
           onClick={handleClose}
           disabled={isBlocked}
@@ -190,7 +196,7 @@ export function VoiceOrderFlow({ isOpen, onClose }: Props) {
         <div className="w-11 shrink-0" />
       </header>
 
-      <div className="flex-1 min-h-0 px-3 py-4 lg:px-8 lg:py-6 overflow-hidden flex flex-col">
+      <div className="flex-1 min-h-0 px-3 pt-4 pb-[calc(1rem+env(safe-area-inset-bottom))] lg:px-8 lg:py-6 overflow-hidden flex flex-col">
         {step === 'dictate' ? (
           <DictateStep
             text={text}
