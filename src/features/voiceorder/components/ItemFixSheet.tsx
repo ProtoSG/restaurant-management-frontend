@@ -1,6 +1,8 @@
 import { useMemo, useRef, useState } from "react";
-import { FaSearch, FaMinus, FaPlus, FaArrowLeft } from "react-icons/fa";
+import { FaSearch, FaMinus, FaPlus, FaArrowLeft, FaShoppingBag } from "react-icons/fa";
 import { useAvailableProducts, type Product } from "@/features/menu";
+import { Toggle } from "@/shared/components";
+import { useTakeawaySurcharge } from "@/shared/hooks/useTakeawaySurcharge";
 import type { VoiceOrderPreviewItem } from "../types/VoiceOrder";
 
 interface PriceOption {
@@ -31,22 +33,28 @@ export interface ResolvedFix {
   selectedPrice: number;
   quantity: number;
   notes: string | null;
+  isTakeaway: boolean;
 }
 
 interface Props {
   item: VoiceOrderPreviewItem;
+  /** false para un pedido entero para llevar — ahí el toggle no aporta, todo ítem ya es para llevar. */
+  showTakeawayToggle: boolean;
   onResolve: (resolved: ResolvedFix) => void;
   onClose: () => void;
 }
 
 /**
  * Picker de producto/precio reutilizado del flujo táctil (ListProducts.tsx):
- * si el ítem ya trae un producto identificado (PRICE_MISMATCH) se salta directo
- * a elegir precio; si no (NOT_FOUND / NOT_AVAILABLE) primero hay que buscar
- * y elegir el producto.
+ * si el ítem ya trae un producto identificado (RESOLVED / PRICE_MISMATCH) se
+ * salta directo a elegir precio; si no (NOT_FOUND / NOT_AVAILABLE) primero hay
+ * que buscar y elegir el producto. Se abre para cualquier ítem, no solo los
+ * que quedaron sin resolver — así el mesero también puede ajustar cantidad,
+ * nota o marcarlo para llevar en uno que ya está bien.
  */
-export function ItemFixSheet({ item, onResolve, onClose }: Props) {
+export function ItemFixSheet({ item, showTakeawayToggle, onResolve, onClose }: Props) {
   const { products, isLoading, error } = useAvailableProducts();
+  const surcharge = useTakeawaySurcharge();
   const preselected = useMemo(
     () => (item.productId != null ? products.find((p) => p.id === item.productId) ?? null : null),
     [products, item.productId]
@@ -54,9 +62,12 @@ export function ItemFixSheet({ item, onResolve, onClose }: Props) {
 
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [search, setSearch] = useState(item.productName ?? item.rawText);
-  const [selectedPrice, setSelectedPrice] = useState<number | undefined>(undefined);
+  // Si el ítem ya tenía un precio resuelto (RESOLVED), lo mantenemos preseleccionado en vez de
+  // forzar a elegir de nuevo — el sheet ahora también se abre para ítems que ya estaban bien.
+  const [selectedPrice, setSelectedPrice] = useState<number | undefined>(item.selectedPrice ?? undefined);
   const [quantity, setQuantity] = useState(item.quantity || 1);
   const [notes, setNotes] = useState(item.notes ?? "");
+  const [isTakeaway, setIsTakeaway] = useState(item.isTakeaway);
   const inputRef = useRef<HTMLInputElement>(null);
 
   const activeProduct = selectedProduct ?? preselected;
@@ -87,6 +98,7 @@ export function ItemFixSheet({ item, onResolve, onClose }: Props) {
       selectedPrice: effectiveSelectedPrice,
       quantity,
       notes: notes.trim() || null,
+      isTakeaway,
     });
   };
 
@@ -222,6 +234,20 @@ export function ItemFixSheet({ item, onResolve, onClose }: Props) {
                     );
                   })}
                 </div>
+              </div>
+            )}
+
+            {showTakeawayToggle && (
+              <div className={`flex items-center gap-2.5 w-full px-3.5 py-2.5 rounded-xl border-2 transition-colors text-sm font-medium ${
+                isTakeaway
+                  ? "border-orange bg-orange/10 text-orange"
+                  : "border-gray-200 text-gray-500"
+              }`}>
+                <FaShoppingBag className="text-sm shrink-0" />
+                <Toggle checked={isTakeaway} onChange={setIsTakeaway} label="Para llevar" />
+                {isTakeaway && (
+                  <span className="ml-auto text-xs font-medium">+S/ {surcharge.toFixed(2)}</span>
+                )}
               </div>
             )}
 

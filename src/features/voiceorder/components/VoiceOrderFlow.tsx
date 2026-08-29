@@ -128,17 +128,12 @@ export function VoiceOrderFlow({ isOpen, onClose }: Props) {
               selectedPrice: resolved.selectedPrice,
               quantity: resolved.quantity,
               notes: resolved.notes,
+              isTakeaway: resolved.isTakeaway,
             }
           : item
       )
     );
     setFixingIndex(null);
-  };
-
-  const handleToggleItemTakeaway = (index: number) => {
-    setItems((prev) =>
-      prev.map((item, i) => (i === index ? { ...item, isTakeaway: !item.isTakeaway } : item))
-    );
   };
 
   const handleConfirm = async () => {
@@ -234,7 +229,6 @@ export function VoiceOrderFlow({ isOpen, onClose }: Props) {
             total={total}
             isConfirming={confirmMutation.isPending}
             onFixItem={setFixingIndex}
-            onToggleItemTakeaway={handleToggleItemTakeaway}
             onConfirm={handleConfirm}
             onBackToDictate={handleBackToDictate}
           />
@@ -244,6 +238,7 @@ export function VoiceOrderFlow({ isOpen, onClose }: Props) {
       {fixingIndex !== null && items[fixingIndex] && (
         <ItemFixSheet
           item={items[fixingIndex]}
+          showTakeawayToggle={!isTakeawayOrder}
           onResolve={handleResolveFix}
           onClose={() => setFixingIndex(null)}
         />
