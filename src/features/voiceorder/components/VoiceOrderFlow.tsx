@@ -2,7 +2,6 @@ import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { MdArrowBack } from "react-icons/md";
-import { FaMicrophone } from "react-icons/fa";
 import { cn } from "@/shared/utils/utils";
 import { useExtractVoiceOrder, useConfirmVoiceOrder } from "../hooks/useVoiceOrder";
 import { DictateStep } from "./DictateStep";
@@ -188,8 +187,7 @@ export function VoiceOrderFlow({ isOpen, onClose }: Props) {
           <MdArrowBack size={22} className={isBlocked ? "animate-pulse" : ""} />
         </button>
 
-        <div className="flex-1 min-w-0 flex items-center justify-center lg:justify-start gap-2">
-          <FaMicrophone className="text-orange text-sm shrink-0" />
+        <div className="flex-1 min-w-0 flex items-center justify-center lg:justify-start">
           <h1 className="font-semibold text-base lg:text-xl leading-tight truncate">Pedido por voz</h1>
         </div>
 
