@@ -1,5 +1,5 @@
 import { useMemo, useRef, useState } from "react";
-import { FaSearch, FaMinus, FaPlus, FaArrowLeft, FaShoppingBag } from "react-icons/fa";
+import { FaSearch, FaMinus, FaPlus, FaArrowLeft, FaShoppingBag, FaTrash } from "react-icons/fa";
 import { useAvailableProducts, type Product } from "@/features/menu";
 import { Toggle } from "@/shared/components";
 import { useTakeawaySurcharge } from "@/shared/hooks/useTakeawaySurcharge";
@@ -41,6 +41,7 @@ interface Props {
   /** false para un pedido entero para llevar — ahí el toggle no aporta, todo ítem ya es para llevar. */
   showTakeawayToggle: boolean;
   onResolve: (resolved: ResolvedFix) => void;
+  onDelete: () => void;
   onClose: () => void;
 }
 
@@ -52,7 +53,7 @@ interface Props {
  * que quedaron sin resolver — así el mesero también puede ajustar cantidad,
  * nota o marcarlo para llevar en uno que ya está bien.
  */
-export function ItemFixSheet({ item, showTakeawayToggle, onResolve, onClose }: Props) {
+export function ItemFixSheet({ item, showTakeawayToggle, onResolve, onDelete, onClose }: Props) {
   const { products, isLoading, error } = useAvailableProducts();
   const surcharge = useTakeawaySurcharge();
   const preselected = useMemo(
@@ -167,12 +168,22 @@ export function ItemFixSheet({ item, showTakeawayToggle, onResolve, onClose }: P
               </ul>
             )}
 
-            <button
-              onClick={onClose}
-              className="py-3 rounded-xl border-2 border-gray-200 text-sm font-semibold text-gray-600 cursor-pointer"
-            >
-              Cancelar
-            </button>
+            <div className="flex gap-3">
+              <button
+                onClick={onClose}
+                className="flex-1 py-3 rounded-xl border-2 border-gray-200 text-sm font-semibold text-gray-600 cursor-pointer"
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={onDelete}
+                aria-label="Eliminar ítem del pedido"
+                className="flex items-center justify-center gap-2 px-4 py-3 rounded-xl border-2 border-red/30 text-sm font-semibold text-red hover:bg-red/5 cursor-pointer"
+              >
+                <FaTrash className="text-xs" />
+                Eliminar
+              </button>
+            </div>
           </>
         ) : (
           <>
@@ -279,6 +290,14 @@ export function ItemFixSheet({ item, showTakeawayToggle, onResolve, onClose }: P
                 {effectiveSelectedPrice === undefined ? "Elegí un precio" : "Usar este producto"}
               </button>
             </div>
+            <button
+              onClick={onDelete}
+              aria-label="Eliminar ítem del pedido"
+              className="flex items-center justify-center gap-2 py-3 rounded-xl border-2 border-red/30 text-sm font-semibold text-red hover:bg-red/5 cursor-pointer"
+            >
+              <FaTrash className="text-xs" />
+              Eliminar ítem
+            </button>
           </>
         )}
       </div>
