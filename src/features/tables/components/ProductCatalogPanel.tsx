@@ -26,9 +26,17 @@ export function ProductCatalogPanel({ selectedCategory, selectedTable, orderId }
 
   return (
     <div className="flex flex-col lg:flex-row flex-1 min-h-0 lg:gap-4">
-      {/* Categorías: fila horizontal con scroll en mobile, columna lateral fija en desktop */}
-      <div className="overflow-x-auto lg:overflow-x-visible lg:overflow-y-auto py-1 lg:py-0 shrink-0 lg:w-[160px] lg:border-r lg:border-gray-100 lg:pr-3">
-        <ul className="flex lg:flex-col gap-1 min-w-max lg:min-w-0">
+      {/* Categorías: fila horizontal con scroll en mobile, columna lateral fija en
+          desktop. El degradado en el borde derecho (solo mobile, apagado en lg: donde
+          pasa a columna vertical) es la señal de que hay más categorías para
+          deslizar — sin él, la última se ve cortada en seco en vez de invitar a
+          scrollear (mismo criterio abajo en QuickAddItems.tsx). */}
+      <div
+        className="overflow-x-auto lg:overflow-x-visible lg:overflow-y-auto py-1 lg:py-0 shrink-0 lg:w-[160px] lg:border-r lg:border-gray-100 lg:pr-3
+          [mask-image:linear-gradient(to_right,black_85%,transparent_100%)] lg:[mask-image:none]
+          [-webkit-mask-image:linear-gradient(to_right,black_85%,transparent_100%)] lg:[-webkit-mask-image:none]"
+      >
+        <ul className="flex lg:flex-col gap-1 min-w-max lg:min-w-0 pr-6 lg:pr-0">
           {isLoading ? <p className="text-sm text-gray-400">Cargando…</p>
             : error ? <p className="text-sm text-red">Error al cargar las categorías</p>
             : categories.map((c) => (

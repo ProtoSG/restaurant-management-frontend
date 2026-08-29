@@ -38,8 +38,14 @@ export function QuickAddItems({ onAdd, disabled }: Props) {
           Acceso rápido
         </span>
       </div>
-      <div className="overflow-x-auto -mx-1 px-1 pb-0.5">
-        <div className="flex gap-2 min-w-max">
+      {/* Mismo criterio que ProductCatalogPanel.tsx: degradado en el borde derecho
+          para que el último chip se vea "hay más, deslizá" en vez de cortado en seco. */}
+      <div
+        className="overflow-x-auto -mx-1 px-1 pb-0.5
+          [mask-image:linear-gradient(to_right,black_85%,transparent_100%)]
+          [-webkit-mask-image:linear-gradient(to_right,black_85%,transparent_100%)]"
+      >
+        <div className="flex gap-2 min-w-max pr-6">
           {products.map((p) => {
             const isThisAdding = addingId === p.id;
             return (

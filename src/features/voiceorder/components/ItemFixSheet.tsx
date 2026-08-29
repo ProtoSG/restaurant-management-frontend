@@ -92,8 +92,11 @@ export function ItemFixSheet({ item, onResolve, onClose }: Props) {
 
   return (
     <div className="fixed inset-0 z-[80] flex items-end sm:items-center justify-center bg-black/40" onClick={onClose}>
+      {/* pb dinámico: mismo criterio que VoiceOrderFlow.tsx — bottom sheet anclado al
+          borde real en móvil, sin esto el botón de confirmar queda pegado al
+          home-indicator en celulares con notch. */}
       <div
-        className="bg-white w-full max-w-md rounded-t-2xl sm:rounded-2xl p-5 flex flex-col gap-4 max-h-[85vh] animate-[slide-up_0.28s_cubic-bezier(0.4,0,0.2,1)]"
+        className="bg-white w-full max-w-md rounded-t-2xl sm:rounded-2xl p-5 pb-[calc(1.25rem+env(safe-area-inset-bottom))] sm:pb-5 flex flex-col gap-4 max-h-[85vh] animate-[slide-up_0.28s_cubic-bezier(0.4,0,0.2,1)]"
         onClick={(e) => e.stopPropagation()}
       >
         {showProductPicker ? (

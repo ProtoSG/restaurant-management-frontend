@@ -24,7 +24,12 @@ export function VoiceOrderFAB({ onClick }: Props) {
       onClick={onClick}
       aria-label="Pedido por voz"
       title="Pedido por voz"
-      className="fixed z-40 right-4 bottom-24 lg:right-8 lg:bottom-8 w-14 h-14 rounded-full bg-orange text-white shadow-lg flex items-center justify-center text-xl cursor-pointer hover:opacity-90 active:opacity-75 transition-opacity"
+      // z-[45]: por encima de BottomNav/MobileAsideNav (z-40) a propósito, no por
+      // orden de montaje accidental — sigue visible/clickeable sobre la nav móvil.
+      // bottom-64 (256px) en mobile: FabButton.tsx (el "+" para llevar) ocupa hasta
+      // 168px desde el borde — este arranca bien arriba, separación real, no
+      // pegado. FabButton es lg:hidden así que en desktop vuelve al bottom-8 de siempre.
+      className="fixed z-[45] right-4 bottom-[calc(16rem+env(safe-area-inset-bottom))] lg:right-8 lg:bottom-8 w-14 h-14 rounded-full bg-orange text-white shadow-lg flex items-center justify-center text-xl cursor-pointer hover:opacity-90 active:opacity-75 transition-opacity"
     >
       <FaMicrophone />
     </button>
