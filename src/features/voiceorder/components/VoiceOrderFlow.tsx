@@ -136,6 +136,11 @@ export function VoiceOrderFlow({ isOpen, onClose }: Props) {
     setFixingIndex(null);
   };
 
+  const handleDeleteItem = () => {
+    setItems((prev) => prev.filter((_, index) => index !== fixingIndex));
+    setFixingIndex(null);
+  };
+
   const handleConfirm = async () => {
     if (!allResolved) return;
     if (!isTakeawayOrder && tableNumber == null) return;
@@ -240,6 +245,7 @@ export function VoiceOrderFlow({ isOpen, onClose }: Props) {
           item={items[fixingIndex]}
           showTakeawayToggle={!isTakeawayOrder}
           onResolve={handleResolveFix}
+          onDelete={handleDeleteItem}
           onClose={() => setFixingIndex(null)}
         />
       )}
