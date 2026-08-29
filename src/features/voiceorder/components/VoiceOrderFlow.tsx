@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { toast } from "sonner";
 import { MdArrowBack } from "react-icons/md";
 import { cn } from "@/shared/utils/utils";
+import { OrderType } from "@/shared/enums/OrderType";
 import { useExtractVoiceOrder, useConfirmVoiceOrder } from "../hooks/useVoiceOrder";
 import { DictateStep } from "./DictateStep";
 import { ReviewStep } from "./ReviewStep";
@@ -56,6 +57,7 @@ export function VoiceOrderFlow({ isOpen, onClose }: Props) {
   const [showEmptyMessage, setShowEmptyMessage] = useState(false);
   const [tableNumber, setTableNumber] = useState<number | null>(null);
   const [tableStatus, setTableStatus] = useState<VoiceOrderTableStatus>('MISSING');
+  const [isTakeawayOrder, setIsTakeawayOrder] = useState(false);
   const [items, setItems] = useState<VoiceOrderPreviewItem[]>([]);
   const [fixingIndex, setFixingIndex] = useState<number | null>(null);
 
@@ -68,6 +70,7 @@ export function VoiceOrderFlow({ isOpen, onClose }: Props) {
     setShowEmptyMessage(false);
     setTableNumber(null);
     setTableStatus('MISSING');
+    setIsTakeawayOrder(false);
     setItems([]);
     setFixingIndex(null);
   };
@@ -76,7 +79,10 @@ export function VoiceOrderFlow({ isOpen, onClose }: Props) {
     if (!isOpen) resetDraft();
   }, [isOpen]);
 
-  const allResolved = tableStatus === 'RESOLVED' && items.length > 0 && items.every((i) => i.status === 'RESOLVED');
+  // La mesa está resuelta si se identificó una real, O si el pedido entero es para llevar y
+  // por diseño no necesita ninguna (NOT_APPLICABLE) — mismo criterio que VoiceOrderValidator.
+  const tableDimensionResolved = tableStatus === 'RESOLVED' || tableStatus === 'NOT_APPLICABLE';
+  const allResolved = tableDimensionResolved && items.length > 0 && items.every((i) => i.status === 'RESOLVED');
   const total = useMemo(
     () => items.reduce((sum, i) => sum + (i.selectedPrice ?? 0) * i.quantity, 0),
     [items]
@@ -94,6 +100,7 @@ export function VoiceOrderFlow({ isOpen, onClose }: Props) {
       }
       setTableNumber(preview.tableNumber);
       setTableStatus(preview.tableStatus);
+      setIsTakeawayOrder(preview.isTakeawayOrder);
       setItems(preview.items);
       setStep('review');
     } catch {
@@ -106,6 +113,7 @@ export function VoiceOrderFlow({ isOpen, onClose }: Props) {
     setItems([]);
     setTableNumber(null);
     setTableStatus('MISSING');
+    setIsTakeawayOrder(false);
   };
 
   const handleResolveFix = (resolved: ResolvedFix) => {
@@ -127,19 +135,32 @@ export function VoiceOrderFlow({ isOpen, onClose }: Props) {
     setFixingIndex(null);
   };
 
+  const handleToggleItemTakeaway = (index: number) => {
+    setItems((prev) =>
+      prev.map((item, i) => (i === index ? { ...item, isTakeaway: !item.isTakeaway } : item))
+    );
+  };
+
   const handleConfirm = async () => {
-    if (!allResolved || tableNumber == null) return;
+    if (!allResolved) return;
+    if (!isTakeawayOrder && tableNumber == null) return;
     try {
       const order = await confirmMutation.mutateAsync({
-        tableNumber,
+        tableNumber: isTakeawayOrder ? null : tableNumber,
+        isTakeawayOrder,
         items: items.map((i) => ({
           productId: i.productId!,
           selectedPrice: i.selectedPrice!,
           quantity: i.quantity,
           notes: i.notes,
+          isTakeaway: i.isTakeaway,
         })),
       });
-      toast.success(`Pedido creado — Mesa ${order.tableNumber ?? tableNumber}`);
+      toast.success(
+        order.type === OrderType.TAKEAWAY
+          ? "Pedido para llevar creado"
+          : `Pedido creado — Mesa ${order.tableNumber ?? tableNumber}`
+      );
       onClose();
       navigate('/orders', { state: { openOrderId: order.id } });
     } catch {
@@ -207,11 +228,13 @@ export function VoiceOrderFlow({ isOpen, onClose }: Props) {
           <ReviewStep
             tableNumber={tableNumber}
             tableStatus={tableStatus}
+            isTakeawayOrder={isTakeawayOrder}
             items={items}
             allResolved={allResolved}
             total={total}
             isConfirming={confirmMutation.isPending}
             onFixItem={setFixingIndex}
+            onToggleItemTakeaway={handleToggleItemTakeaway}
             onConfirm={handleConfirm}
             onBackToDictate={handleBackToDictate}
           />

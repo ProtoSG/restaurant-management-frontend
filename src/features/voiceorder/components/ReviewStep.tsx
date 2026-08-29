@@ -1,6 +1,7 @@
-import { FaCheckCircle, FaExclamationCircle, FaChevronRight } from "react-icons/fa";
-import { Tag } from "@/shared/components";
+import { FaCheckCircle, FaExclamationCircle, FaChevronRight, FaShoppingBag } from "react-icons/fa";
+import { Tag, Toggle } from "@/shared/components";
 import { Variant } from "@/shared/enums/VariantEnum";
+import { useTakeawaySurcharge } from "@/shared/hooks/useTakeawaySurcharge";
 import type { VoiceOrderPreviewItem, VoiceOrderItemStatus, VoiceOrderTableStatus } from "../types/VoiceOrder";
 
 const ITEM_STATUS_LABEL: Record<Exclude<VoiceOrderItemStatus, 'RESOLVED'>, string> = {
@@ -24,11 +25,21 @@ function ItemStatusChip({ status }: { status: VoiceOrderItemStatus }) {
   );
 }
 
-function TableBanner({ tableNumber, tableStatus, onBackToDictate }: {
+function TableBanner({ tableNumber, tableStatus, isTakeawayOrder, onBackToDictate }: {
   tableNumber: number | null;
   tableStatus: VoiceOrderTableStatus;
+  isTakeawayOrder: boolean;
   onBackToDictate: () => void;
 }) {
+  if (isTakeawayOrder) {
+    return (
+      <div className="flex items-center gap-2 px-3 py-2.5 rounded-xl bg-orange/10">
+        <FaShoppingBag className="text-orange text-sm shrink-0" />
+        <span className="text-sm font-semibold text-gray-900">Para llevar — sin mesa</span>
+      </div>
+    );
+  }
+
   if (tableStatus === 'RESOLVED') {
     return (
       <div className="flex items-center gap-2 px-3 py-2.5 rounded-xl bg-green/10">
@@ -61,20 +72,36 @@ function TableBanner({ tableNumber, tableStatus, onBackToDictate }: {
 interface Props {
   tableNumber: number | null;
   tableStatus: VoiceOrderTableStatus;
+  isTakeawayOrder: boolean;
   items: VoiceOrderPreviewItem[];
   allResolved: boolean;
   total: number;
   isConfirming: boolean;
   onFixItem: (index: number) => void;
+  onToggleItemTakeaway: (index: number) => void;
   onConfirm: () => void;
   onBackToDictate: () => void;
 }
 
-export function ReviewStep({ tableNumber, tableStatus, items, allResolved, total, isConfirming, onFixItem, onConfirm, onBackToDictate }: Props) {
+export function ReviewStep({
+  tableNumber, tableStatus, isTakeawayOrder, items, allResolved, total, isConfirming,
+  onFixItem, onToggleItemTakeaway, onConfirm, onBackToDictate,
+}: Props) {
+  const surcharge = useTakeawaySurcharge();
+  // El pedido entero para llevar no necesita el toggle por ítem — ya es para llevar por
+  // definición. El toggle solo tiene sentido en un pedido de mesa, para marcar UN ítem puntual.
+  const showPerItemToggle = !isTakeawayOrder;
+  const hasAnyTakeawayItem = isTakeawayOrder || items.some((i) => i.isTakeaway);
+
   return (
     <div className="flex flex-col flex-1 min-h-0 max-w-2xl mx-auto w-full">
       <div className="flex flex-col gap-3 flex-1 min-h-0 overflow-y-auto px-1 pb-4">
-        <TableBanner tableNumber={tableNumber} tableStatus={tableStatus} onBackToDictate={onBackToDictate} />
+        <TableBanner
+          tableNumber={tableNumber}
+          tableStatus={tableStatus}
+          isTakeawayOrder={isTakeawayOrder}
+          onBackToDictate={onBackToDictate}
+        />
 
         <ul className="flex flex-col gap-2">
           {items.map((item, index) => {
@@ -82,39 +109,60 @@ export function ReviewStep({ tableNumber, tableStatus, items, allResolved, total
             return (
               <li key={index}>
                 <div
-                  onClick={() => !isResolved && onFixItem(index)}
-                  role={isResolved ? undefined : "button"}
-                  aria-label={isResolved ? undefined : `Corregir ${item.rawText}`}
-                  className={`flex items-center gap-3 px-3 py-3 rounded-xl border transition-colors ${
-                    isResolved
-                      ? "bg-gray-50 border-gray-100"
-                      : "bg-white border-gray-200 cursor-pointer select-none hover:bg-gray-50 active:bg-gray-100"
+                  className={`flex flex-col gap-2 px-3 py-3 rounded-xl border transition-colors ${
+                    isResolved ? "bg-gray-50 border-gray-100" : "bg-white border-gray-200"
                   }`}
                 >
-                  <div className="flex-1 min-w-0 flex flex-col gap-1">
-                    <p className="font-semibold text-sm text-gray-900 break-words">
-                      {item.productName ?? item.rawText}
-                    </p>
-                    {!isResolved && (
-                      <p className="text-xs text-gray-400 italic">Dictado: “{item.rawText}”</p>
-                    )}
-                    {item.notes && (
-                      <p className="text-xs text-gray-400">Nota: {item.notes}</p>
-                    )}
-                    <ItemStatusChip status={item.status} />
+                  <div
+                    onClick={() => !isResolved && onFixItem(index)}
+                    role={isResolved ? undefined : "button"}
+                    aria-label={isResolved ? undefined : `Corregir ${item.rawText}`}
+                    className={`flex items-center gap-3 ${
+                      isResolved ? "" : "cursor-pointer select-none -m-1 p-1 rounded-lg hover:bg-gray-50 active:bg-gray-100"
+                    }`}
+                  >
+                    <div className="flex-1 min-w-0 flex flex-col gap-1">
+                      <p className="font-semibold text-sm text-gray-900 break-words">
+                        {item.productName ?? item.rawText}
+                      </p>
+                      {!isResolved && (
+                        <p className="text-xs text-gray-400 italic">Dictado: “{item.rawText}”</p>
+                      )}
+                      {item.notes && (
+                        <p className="text-xs text-gray-400">Nota: {item.notes}</p>
+                      )}
+                      <ItemStatusChip status={item.status} />
+                    </div>
+                    <div className="flex items-center gap-2 shrink-0">
+                      {isResolved ? (
+                        <>
+                          <span className="text-sm font-bold text-gray-700">x{item.quantity}</span>
+                          <span className="text-sm font-semibold text-gray-600 tabular-nums">
+                            S/ {((item.selectedPrice ?? 0) * item.quantity).toFixed(2)}
+                          </span>
+                        </>
+                      ) : (
+                        <FaChevronRight className="text-gray-300 text-xs" />
+                      )}
+                    </div>
                   </div>
-                  <div className="flex items-center gap-2 shrink-0">
-                    {isResolved ? (
-                      <>
-                        <span className="text-sm font-bold text-gray-700">x{item.quantity}</span>
-                        <span className="text-sm font-semibold text-gray-600 tabular-nums">
-                          S/ {((item.selectedPrice ?? 0) * item.quantity).toFixed(2)}
-                        </span>
-                      </>
-                    ) : (
-                      <FaChevronRight className="text-gray-300 text-xs" />
-                    )}
-                  </div>
+
+                  {showPerItemToggle && (
+                    <div
+                      className={`flex items-center gap-2 px-2.5 py-1.5 rounded-lg border transition-colors text-xs font-medium ${
+                        item.isTakeaway
+                          ? "border-orange bg-orange/10 text-orange"
+                          : "border-gray-200 text-gray-400"
+                      }`}
+                    >
+                      <FaShoppingBag className="text-xs shrink-0" />
+                      <Toggle
+                        checked={item.isTakeaway}
+                        onChange={() => onToggleItemTakeaway(index)}
+                        label={item.isTakeaway ? `Para llevar (+S/ ${surcharge.toFixed(2)})` : "Para llevar"}
+                      />
+                    </div>
+                  )}
                 </div>
               </li>
             );
@@ -127,6 +175,11 @@ export function ReviewStep({ tableNumber, tableStatus, items, allResolved, total
           <span className="text-sm text-gray-500">Total del pedido</span>
           <span className="text-2xl font-bold text-gray-900">S/ {total.toFixed(2)}</span>
         </div>
+        {hasAnyTakeawayItem && (
+          <p className="text-xs text-gray-400 text-center">
+            El recargo por llevar se calcula al confirmar, según categoría
+          </p>
+        )}
         {!allResolved && (
           <p className="text-xs text-red font-medium text-center">
             Resolvé los ítems pendientes antes de confirmar
