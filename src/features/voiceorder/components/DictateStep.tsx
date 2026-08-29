@@ -33,7 +33,7 @@ export function DictateStep({ text, onChangeText, onExtract, isExtracting, showE
           <FaMicrophone />
         </div>
         <p className="text-sm text-gray-400 px-4">
-          Tocá el campo, dictá con el micrófono del teclado y revisá antes de confirmar.
+          Toca el campo, dicta con el micrófono del teclado y revisa antes de confirmar.
         </p>
       </div>
 
@@ -41,9 +41,9 @@ export function DictateStep({ text, onChangeText, onExtract, isExtracting, showE
         ref={textareaRef}
         value={text}
         onChange={(e) => onChangeText(e.target.value)}
-        placeholder="Tocá acá y dictá el pedido — por ejemplo: 'para la mesa 5, un trio marisco de 25...'"
+        placeholder="Para la mesa 5, un trio marisco de 25 y una coca de un litro"
         rows={8}
-        className="flex-1 min-h-[160px] resize-none border-2 border-gray-200 rounded-2xl px-4 py-3.5 text-base focus:outline-none focus:border-orange transition-colors bg-white"
+        className="flex-1 min-h-[160px] resize-none border-2 border-gray-200 rounded-2xl px-4 py-3.5 text-xl leading-relaxed focus:outline-none focus:border-orange transition-colors bg-white"
       />
 
       {speech.error && (
@@ -57,6 +57,14 @@ export function DictateStep({ text, onChangeText, onExtract, isExtracting, showE
       )}
 
       <div className="flex gap-3">
+        <button
+          onClick={onExtract}
+          disabled={!text.trim() || isExtracting}
+          className="flex-1 py-3.5 rounded-xl bg-green text-white text-sm font-semibold disabled:opacity-40 cursor-pointer transition-opacity"
+        >
+          {isExtracting ? "Escuchando tu pedido…" : "Extraer pedido"}
+        </button>
+
         {/* En prueba: reconocimiento de voz del navegador (Web Speech API), no el
             dictado del teclado. Requiere Chrome + contexto seguro (https o
             localhost) — si no, queda deshabilitado con el motivo en el title,
@@ -81,14 +89,6 @@ export function DictateStep({ text, onChangeText, onExtract, isExtracting, showE
           )}
         >
           {speech.listening ? <FaMicrophoneSlash /> : <FaMicrophone />}
-        </button>
-
-        <button
-          onClick={onExtract}
-          disabled={!text.trim() || isExtracting}
-          className="flex-1 py-3.5 rounded-xl bg-green text-white text-sm font-semibold disabled:opacity-40 cursor-pointer transition-opacity"
-        >
-          {isExtracting ? "Escuchando tu pedido…" : "Extraer pedido"}
         </button>
       </div>
     </div>

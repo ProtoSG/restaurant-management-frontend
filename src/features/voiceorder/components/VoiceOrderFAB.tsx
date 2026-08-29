@@ -27,10 +27,9 @@ export function VoiceOrderFAB({ onClick }: Props) {
       // z-[45]: por encima de BottomNav/MobileAsideNav (z-40) a propósito, no por
       // orden de montaje accidental — sigue visible/clickeable sobre la nav móvil.
       // Este es global (toda página, ver Layout.tsx) mientras que FabButton.tsx (el
-      // "+" para llevar) es por página (solo Users/Menu/Orders/Tables) — por eso el
-      // mic ocupa la posición base/baja, y es FabButton el que se corre para arriba
-      // cuando coincide en la misma pantalla, no al revés. Sin esto, en una página
-      // sin FabButton (Dashboard, Settings…) el mic quedaba flotando arriba sin motivo.
+      // "+")/HeaderSection.tsx ("para llevar") son por página — por eso el mic
+      // ocupa la posición base/baja, y son esos los que se corren para arriba
+      // cuando coinciden en la misma pantalla, no al revés.
       className="fixed z-[45] right-4 bottom-[calc(7rem+env(safe-area-inset-bottom))] lg:right-8 lg:bottom-8 w-14 h-14 rounded-full bg-orange text-white shadow-lg flex items-center justify-center text-xl cursor-pointer hover:opacity-90 active:opacity-75 transition-opacity"
     >
       <FaMicrophone />
