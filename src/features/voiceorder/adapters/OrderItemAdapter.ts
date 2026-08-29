@@ -1,0 +1,15 @@
+import type { OrderItem, OrderItemResponse } from "@/shared/types/OrderItem";
+
+export function orderItemAdapter(orderItem: OrderItemResponse): OrderItem {
+  return {
+    id: orderItem.id,
+    quantity: orderItem.quantity,
+    unitPrice: orderItem.unitPrice,
+    subTotal: orderItem.subTotal,
+    product: orderItem.product,
+    notes: orderItem.notes,
+    isTakeaway: orderItem.isTakeaway ?? false,
+    takeawaySurcharge: orderItem.takeawaySurcharge ?? 0,
+    kitchenPrintedQuantity: orderItem.kitchenPrintedQuantity ?? 0,
+  }
+}

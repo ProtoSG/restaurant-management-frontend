@@ -1,4 +1,5 @@
-import { useState, useCallback } from "react";
+import { useState, useCallback, useEffect } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
 import { HeaderSection, Tag, SkeletonCard, ErrorState, EmptyState } from "@/shared/components";
 import { useActiveOrders } from "./hooks/useOrders";
 import { useOrderModal } from "./hooks/useOrderModal";
@@ -36,6 +37,20 @@ export function Orders() {
   const productListModal = useProductListModal();
   const selectedTable = useSelectedTable();
   const selectedCategory = useSelectedCategory();
+  const location = useLocation();
+  const navigate = useNavigate();
+
+  // Aterrizaje desde el flujo de pedido por voz (VoiceOrderFlow, global en Layout):
+  // llega acá con el id del pedido recién creado y lo abre igual que si el mesero
+  // hubiera tocado su card. Se limpia el state para no reabrirlo en un back/forward.
+  useEffect(() => {
+    const openOrderId = (location.state as { openOrderId?: number } | null)?.openOrderId;
+    if (!openOrderId) return;
+    setSelectedOrderId(openOrderId);
+    orderItemsModal.open();
+    navigate(location.pathname, { replace: true, state: null });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [location.state]);
 
   const handleOrderCreated = useCallback((order: Order) => {
     setSelectedOrderId(order.id);
