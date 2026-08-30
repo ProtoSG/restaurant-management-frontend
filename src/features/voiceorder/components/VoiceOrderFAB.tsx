@@ -5,19 +5,21 @@ interface Props {
   onClick: () => void;
 }
 
+// Mismos roles que el backend detrás de /voice-order-test/** (ver SecurityConfig /
+// VoiceOrderTestController): quienes realmente toman pedidos. CHEF no tiene acceso a la
+// app en absoluto, así que ni entra en la lista.
+const VOICE_ORDER_ROLES = ['ADMIN', 'CASHIER', 'WAITER'];
+
 /**
  * Punto de entrada global del pedido por voz: el mesero dicta la mesa como parte
  * del pedido ("para la mesa 8...") así que este botón no puede depender de estar
  * ya dentro de la pantalla de una mesa puntual — vive en el layout, no en una página.
- *
- * Solo ADMIN por ahora: el backend expone estos endpoints en modo experimental
- * detrás de @PreAuthorize("hasRole('ADMIN')").
  */
 export function VoiceOrderFAB({ onClick }: Props) {
   const { user } = useAuth();
-  const isAdmin = user?.role === 'ADMIN';
+  const canUseVoiceOrder = !!user?.role && VOICE_ORDER_ROLES.includes(user.role);
 
-  if (!isAdmin) return null;
+  if (!canUseVoiceOrder) return null;
 
   return (
     <button
