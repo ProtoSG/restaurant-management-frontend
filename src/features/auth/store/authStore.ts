@@ -12,6 +12,7 @@ interface AuthState {
   errors          : string[];
   loading         : boolean;
   signin          : (user: LoginRequest) => Promise<void>;
+  signinWithPin   : (userId: number, pin: string) => Promise<void>;
   register        : (user: RegisterRequest) => Promise<void>;
   logout          : () => Promise<void>;
   verifyAuth      : () => Promise<void>;
@@ -56,6 +57,26 @@ export const useAuthStore = create<AuthState>()(
             set({ user: meData, isAuthenticated: true, loading: false });
           } else {
             set({ errors: ['Credenciales incorrectas'], loading: false });
+          }
+        } catch (err: unknown) {
+          set({ errors: [getApiErrorMessage(err)], loading: false });
+        }
+      },
+
+      signinWithPin: async (userId, pin) => {
+        set({ loading: true, errors: [] });
+        try {
+          const { status } = await authService.pinLogin(userId, pin);
+
+          if (status >= 200 && status < 300) {
+            const meData = await authService.getMe();
+            if (!meData) {
+              set({ errors: ['Error al obtener perfil. Intenta de nuevo.'], loading: false });
+              return;
+            }
+            set({ user: meData, isAuthenticated: true, loading: false });
+          } else {
+            set({ errors: ['PIN incorrecto'], loading: false });
           }
         } catch (err: unknown) {
           set({ errors: [getApiErrorMessage(err)], loading: false });

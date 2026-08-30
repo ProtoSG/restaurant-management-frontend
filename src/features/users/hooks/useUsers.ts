@@ -36,6 +36,16 @@ export function useUsers() {
     onSuccess: () => queryClient.invalidateQueries({ queryKey: ["users"] }),
   });
 
+  const setPinMutation = useMutation({
+    mutationFn: ({ id, pin }: { id: number; pin: string }) => userService.setPin(id, pin),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["users"] }),
+  });
+
+  const removePinMutation = useMutation({
+    mutationFn: (id: number) => userService.removePin(id),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["users"] }),
+  });
+
   return {
     users: data?.content ?? [],
     isLoading,
@@ -50,9 +60,13 @@ export function useUsers() {
     updateUser: updateMutation.mutateAsync,
     toggleActive: toggleMutation.mutateAsync,
     deleteUser: deleteMutation.mutateAsync,
+    setPin: setPinMutation.mutateAsync,
+    removePin: removePinMutation.mutateAsync,
     isCreating: createMutation.isPending,
     isUpdating: updateMutation.isPending,
     isTogglingId: toggleMutation.isPending ? toggleMutation.variables : null,
     isDeletingId: deleteMutation.isPending ? deleteMutation.variables : null,
+    isSettingPin: setPinMutation.isPending,
+    isRemovingPinId: removePinMutation.isPending ? removePinMutation.variables : null,
   };
 }

@@ -18,3 +18,9 @@ export interface RegisterRequest {
   password: string;
   role: RoleName;
 }
+
+/** Una entrada del selector de nombre para login por PIN — sin datos sensibles. */
+export interface PinLoginCandidate {
+  id: number;
+  name: string;
+}

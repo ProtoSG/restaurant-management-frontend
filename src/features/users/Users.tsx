@@ -1,20 +1,29 @@
 import { useRef, useState } from "react";
 import { useUsers } from "./hooks/useUsers";
 import { ModalUserForm } from "./components/ModalUserForm";
+import { ModalSetPin } from "./components/ModalSetPin";
 import { ROLE_LABELS, ROLE_COLORS } from "@/shared/enums/RoleLabels";
 import { HeaderSection, SkeletonCard, ErrorState, EmptyState, Pagination } from "@/shared/components";
 import { useAuth } from "@/features/auth";
 import type { User } from "./types/User";
-import { MdEdit, MdDelete, MdPeople } from "react-icons/md";
+import { MdEdit, MdDelete, MdPeople, MdPin, MdPinDrop } from "react-icons/md";
 import { getApiErrorMessage } from "@/shared/utils/apiError";
 
+const PIN_ELIGIBLE_ROLES: User["role"][] = ["WAITER", "CASHIER"];
+
 export function Users() {
-  const { users, isLoading, error, page, setPage, pagination, createUser, updateUser, toggleActive, deleteUser, isCreating, isUpdating, isTogglingId, isDeletingId } = useUsers();
+  const {
+    users, isLoading, error, page, setPage, pagination,
+    createUser, updateUser, toggleActive, deleteUser, setPin, removePin,
+    isCreating, isUpdating, isTogglingId, isDeletingId, isSettingPin, isRemovingPinId,
+  } = useUsers();
   const { user: me } = useAuth();
 
   const [modalOpen, setModalOpen] = useState(false);
   const [modalMode, setModalMode] = useState<"create" | "edit">("edit");
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
+  const [pinModalOpen, setPinModalOpen] = useState(false);
+  const [pinUser, setPinUser] = useState<User | null>(null);
   const [actionError, setActionError] = useState<string | null>(null);
   const sourceRef = useRef<HTMLElement | null>(null);
 
@@ -30,6 +39,22 @@ export function Users() {
     setSelectedUser(u);
     setModalMode("edit");
     setModalOpen(true);
+  };
+
+  const openSetPin = (u: User, src: HTMLElement) => {
+    sourceRef.current = src;
+    setPinUser(u);
+    setPinModalOpen(true);
+  };
+
+  const handleRemovePin = async (u: User) => {
+    if (!confirm(`¿Quitar el PIN de "${u.name}"? Ya no va a poder entrar por PIN.`)) return;
+    setActionError(null);
+    try {
+      await removePin(u.id);
+    } catch (err) {
+      setActionError(getApiErrorMessage(err));
+    }
   };
 
   const handleToggle = async (u: User) => {
@@ -142,6 +167,26 @@ export function Users() {
                           >
                             <MdEdit size={16} />
                           </button>
+                          {PIN_ELIGIBLE_ROLES.includes(u.role) && (
+                            u.hasPinEnabled ? (
+                              <button
+                                onClick={() => handleRemovePin(u)}
+                                disabled={isRemovingPinId === u.id}
+                                className="p-1.5 rounded-lg hover:bg-red/10 text-orange hover:text-red transition-colors cursor-pointer disabled:opacity-40"
+                                title="Quitar PIN de acceso"
+                              >
+                                <MdPinDrop size={16} />
+                              </button>
+                            ) : (
+                              <button
+                                onClick={(e) => openSetPin(u, e.currentTarget as HTMLElement)}
+                                className="p-1.5 rounded-lg hover:bg-gray-100 text-gray-400 hover:text-orange transition-colors cursor-pointer"
+                                title="Asignar PIN de acceso"
+                              >
+                                <MdPin size={16} />
+                              </button>
+                            )
+                          )}
                           {!isMe && (
                             <button
                               onClick={() => handleDelete(u)}
@@ -180,6 +225,15 @@ export function Users() {
         onCreate={createUser}
         onUpdate={updateUser}
         isSubmitting={isCreating || isUpdating}
+      />
+
+      <ModalSetPin
+        isOpen={pinModalOpen}
+        onClose={() => setPinModalOpen(false)}
+        sourceRef={sourceRef}
+        user={pinUser}
+        onSetPin={setPin}
+        isSubmitting={isSettingPin}
       />
     </>
   );

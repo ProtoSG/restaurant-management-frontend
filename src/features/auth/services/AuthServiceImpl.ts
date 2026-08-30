@@ -1,7 +1,7 @@
 import type { AxiosInstance } from 'axios';
 import defaultApiClient from '@/shared/utils/apiClient';
 import type { IAuthService } from '../types/IAuthService';
-import type { LoginResponse, MeResponse, RegisterRequest } from '../types/Login';
+import type { LoginResponse, MeResponse, PinLoginCandidate, RegisterRequest } from '../types/Login';
 import type { LoginRequest } from '../schemas/Login.schema';
 
 export class AuthServiceImpl implements IAuthService {
@@ -11,6 +11,16 @@ export class AuthServiceImpl implements IAuthService {
 
   async login(user: LoginRequest) {
     const { data, status } = await this.apiClient.post<LoginResponse>('/auth/login', user);
+    return { status, data };
+  }
+
+  async getPinLoginCandidates(): Promise<PinLoginCandidate[]> {
+    const { data } = await this.apiClient.get<PinLoginCandidate[]>('/auth/pin-login-users');
+    return data;
+  }
+
+  async pinLogin(userId: number, pin: string) {
+    const { data, status } = await this.apiClient.post<LoginResponse>('/auth/pin-login', { userId, pin });
     return { status, data };
   }
 
