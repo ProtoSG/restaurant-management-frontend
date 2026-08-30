@@ -6,6 +6,7 @@ export interface User {
   username: string;
   role: RoleName;
   isActive: boolean;
+  hasPinEnabled: boolean;
 }
 
 export interface CreateUserRequest {

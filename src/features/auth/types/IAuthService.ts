@@ -1,5 +1,5 @@
 import type { LoginRequest } from '../schemas/Login.schema';
-import type { LoginResponse, MeResponse, RegisterRequest } from './Login';
+import type { LoginResponse, MeResponse, PinLoginCandidate, RegisterRequest } from './Login';
 
 export interface IAuthService {
   login(user: LoginRequest): Promise<{
@@ -12,4 +12,9 @@ export interface IAuthService {
   }>;
   logout(): Promise<void>;
   getMe(): Promise<MeResponse | null>;
+  getPinLoginCandidates(): Promise<PinLoginCandidate[]>;
+  pinLogin(userId: number, pin: string): Promise<{
+    status: number;
+    data: LoginResponse | { message: string };
+  }>;
 }

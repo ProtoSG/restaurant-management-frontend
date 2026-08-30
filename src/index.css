@@ -44,6 +44,12 @@ body {
   to   { transform: translateX(100%); }
 }
 
+@keyframes pin-shake {
+  0%, 100% { transform: translateX(0); }
+  20%, 60% { transform: translateX(-8px); }
+  40%, 80% { transform: translateX(8px); }
+}
+
 .modal-slide-enter {
   animation: slide-from-right 0.2s ease-out both;
   will-change: transform;

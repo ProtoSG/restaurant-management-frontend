@@ -23,6 +23,16 @@ export class UserServiceImpl {
     return data;
   }
 
+  async setPin(id: number, pin: string): Promise<User> {
+    const { data } = await defaultApiClient.patch<User>(`/users/${id}/pin`, { pin });
+    return data;
+  }
+
+  async removePin(id: number): Promise<User> {
+    const { data } = await defaultApiClient.delete<User>(`/users/${id}/pin`);
+    return data;
+  }
+
   async delete(id: number): Promise<void> {
     await defaultApiClient.delete(`/users/${id}`);
   }
