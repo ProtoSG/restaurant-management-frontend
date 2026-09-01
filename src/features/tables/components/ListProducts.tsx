@@ -29,7 +29,7 @@ function ProductThumbnail({ product }: { product: Product }) {
     <img
       src={product.imageUrl!}
       alt=""
-      className="w-full aspect-square object-cover"
+      className="w-full aspect-square object-contain bg-gray-50"
       onError={() => setFailed(true)}
     />
   );

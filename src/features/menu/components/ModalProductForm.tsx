@@ -185,7 +185,7 @@ export function ModalProductForm({ modal, productsHook }: Props) {
             <div className="flex items-center gap-3">
               <div className="w-16 h-16 shrink-0 rounded-xl overflow-hidden border border-gray-200 bg-gray-50 flex items-center justify-center">
                 {imageUrl ? (
-                  <img src={imageUrl} alt="" className="w-full h-full object-cover" />
+                  <img src={imageUrl} alt="" className="w-full h-full object-contain" />
                 ) : (
                   <FaImage className="text-gray-300 text-xl" />
                 )}
