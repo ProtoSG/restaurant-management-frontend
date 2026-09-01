@@ -7,6 +7,7 @@ export * from './hooks/useProductFilters';
 export * from './hooks/useSelectedCategory';
 export { ProductServiceImpl } from './services/ProductServiceImpl';
 export { CategoryServiceImpl } from './services/CategoryServiceImpl';
+export { categoryColorClasses } from './utils/categoryColor';
 export type { Product, ProductResponse, ProductVariant } from './types/Product';
 export type { Category, CategoryResponse } from './types/Category';
 export type { CreateProductRequest, UpdateProductRequest } from './schemas/Product.schema';

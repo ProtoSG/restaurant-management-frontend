@@ -15,5 +15,6 @@ export function ProductAdapter(product: ProductResponse): Product {
       isAvailable: v.isAvailable ?? true,
       sortOrder: v.sortOrder ?? 0,
     })),
+    imageUrl: product.imageUrl ?? null,
   }
 }

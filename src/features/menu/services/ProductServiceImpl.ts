@@ -62,4 +62,16 @@ export class ProductServiceImpl implements IProductService {
   async deleteProduct(id: number): Promise<void> {
     await this.apiClient.delete(`/products/${id}`);
   }
+
+  async uploadProductImage(id: number, image: File): Promise<Product> {
+    const formData = new FormData();
+    formData.append('image', image);
+    const { data } = await this.apiClient.post<ProductResponse>(`/products/${id}/image`, formData);
+    return ProductAdapter(data);
+  }
+
+  async deleteProductImage(id: number): Promise<Product> {
+    const { data } = await this.apiClient.delete<ProductResponse>(`/products/${id}/image`);
+    return ProductAdapter(data);
+  }
 }

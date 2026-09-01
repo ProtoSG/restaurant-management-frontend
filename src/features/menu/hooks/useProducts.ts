@@ -77,7 +77,8 @@ export function useProducts(categoryId: number | null = null) {
         name: data.name,
         price: parseFloat(data.price),
         categoryId: parseInt(data.categoryId),
-        active: true
+        active: true,
+        imageUrl: null,
       };
 
       const created = await service.createProduct(productData);
@@ -150,6 +151,43 @@ export function useProducts(categoryId: number | null = null) {
     }
   }, [service, loadProducts, page]);
 
+  // Devuelven el Product actualizado (a diferencia de create/update/delete, que son void) —
+  // ModalProductForm lo necesita para refrescar la preview de la foto en el momento, sin
+  // depender de si ya llegó el re-render con la lista recargada.
+  const uploadProductImage = useCallback(async (id: number, image: File): Promise<Product> => {
+    try {
+      setIsLoading(true);
+      setError(null);
+      const updated = await service.uploadProductImage(id, image);
+      await queryClient.invalidateQueries({ queryKey: ['products'] });
+      await loadProducts(page);
+      return updated;
+    } catch (err) {
+      setError(err as Error);
+      console.error('Error uploading product image:', err);
+      throw err;
+    } finally {
+      setIsLoading(false);
+    }
+  }, [service, queryClient, loadProducts, page]);
+
+  const deleteProductImage = useCallback(async (id: number): Promise<Product> => {
+    try {
+      setIsLoading(true);
+      setError(null);
+      const updated = await service.deleteProductImage(id);
+      await queryClient.invalidateQueries({ queryKey: ['products'] });
+      await loadProducts(page);
+      return updated;
+    } catch (err) {
+      setError(err as Error);
+      console.error('Error deleting product image:', err);
+      throw err;
+    } finally {
+      setIsLoading(false);
+    }
+  }, [service, queryClient, loadProducts, page]);
+
   return {
     products,
     isLoading,
@@ -160,6 +198,8 @@ export function useProducts(categoryId: number | null = null) {
     deleteProduct,
     getProductById,
     toggleProductActive,
+    uploadProductImage,
+    deleteProductImage,
     page,
     pagination,
     goToPage,
