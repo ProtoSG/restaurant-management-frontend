@@ -66,7 +66,14 @@ export class ProductServiceImpl implements IProductService {
   async uploadProductImage(id: number, image: File): Promise<Product> {
     const formData = new FormData();
     formData.append('image', image);
-    const { data } = await this.apiClient.post<ProductResponse>(`/products/${id}/image`, formData);
+    // apiClient fija 'Content-Type: application/json' como default de la instancia — eso NO se
+    // pisa solo al mandar FormData, el navegador nunca llega a poner el multipart/form-data con
+    // el boundary correcto. undefined acá borra el header explícitamente para esta request y
+    // deja que el navegador arme el suyo (confirmado en logs de prod: "Current request is not a
+    // multipart request" hasta este fix).
+    const { data } = await this.apiClient.post<ProductResponse>(`/products/${id}/image`, formData, {
+      headers: { 'Content-Type': undefined },
+    });
     return ProductAdapter(data);
   }
 
