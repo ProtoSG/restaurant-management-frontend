@@ -11,4 +11,6 @@ export interface IProductService {
   updateProduct(id: number, product: Partial<Product>): Promise<Product>;
   toggleProductAvailability(id: number): Promise<Product>;
   deleteProduct(id: number): Promise<void>;
+  uploadProductImage(id: number, image: File): Promise<Product>;
+  deleteProductImage(id: number): Promise<Product>;
 }

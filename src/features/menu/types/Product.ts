@@ -14,6 +14,8 @@ export interface Product {
   categoryName?: string;
   active: boolean;
   variants: ProductVariant[];
+  /** null hasta que un ADMIN sube una foto — es el estado normal, no un caso de error. */
+  imageUrl: string | null;
 }
 
 export interface ProductVariantResponse {
@@ -31,4 +33,5 @@ export interface ProductResponse {
   category?: { id: number; name: string };
   isAvailable?: boolean;
   variants?: ProductVariantResponse[];
+  imageUrl?: string | null;
 }

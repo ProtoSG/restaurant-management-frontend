@@ -1,4 +1,4 @@
-import { useAvailableProducts, useSelectedCategory, type Product } from "@/features/menu"
+import { useAvailableProducts, useSelectedCategory, categoryColorClasses, type Product } from "@/features/menu"
 import { useSelectedTable, useAddItemToOrder as useAddItemToOrderTable, useOrderActive, useCreateOrder } from "@/features/tables"
 import { useAddItemToOrder as useAddItemToOrderOrders } from "@/features/orders"
 import { useTakeawaySurcharge } from "@/shared/hooks/useTakeawaySurcharge"
@@ -7,6 +7,33 @@ import { Toggle } from "@/shared/components"
 import { QuickAddItems } from "./sections/QuickAddItems"
 import { FaSearch, FaPlus, FaMinus, FaShoppingBag } from "react-icons/fa";
 import { useRef, useState } from "react";
+
+/**
+ * Foto si la hay; si no, un círculo con el color de la categoría y la inicial del nombre —
+ * mismo tamaño, igual de tappeable. `imageUrl` roto (404, borrado a mano) cae al mismo
+ * placeholder vía onError, no deja un ícono de imagen rota en medio de la grilla.
+ */
+function ProductThumbnail({ product }: { product: Product }) {
+  const [failed, setFailed] = useState(false);
+  const showPlaceholder = !product.imageUrl || failed;
+
+  if (showPlaceholder) {
+    return (
+      <div className={`w-full aspect-square flex items-center justify-center text-2xl font-bold ${categoryColorClasses(product.categoryId)}`}>
+        {product.name.trim().charAt(0).toUpperCase()}
+      </div>
+    );
+  }
+
+  return (
+    <img
+      src={product.imageUrl!}
+      alt=""
+      className="w-full aspect-square object-cover"
+      onError={() => setFailed(true)}
+    />
+  );
+}
 
 interface Props {
   searchTerm: string;
@@ -176,13 +203,17 @@ export function ListProducts({ searchTerm, setSearchTerm, selectedTable, selecte
   if (isLoading) return (
     <div className="flex flex-col gap-3 flex-1 animate-pulse">
       <div className="h-10 bg-gray-100 rounded-xl" />
-      {Array.from({ length: 5 }).map((_, i) => (
-        <div key={i} className="flex items-center gap-3 py-3 border-b border-gray-100">
-          <div className="flex-1 h-4 bg-gray-100 rounded" />
-          <div className="w-14 h-4 bg-gray-100 rounded" />
-          <div className="w-11 h-11 bg-gray-100 rounded-xl shrink-0" />
-        </div>
-      ))}
+      <div className="grid grid-cols-[repeat(auto-fit,minmax(110px,1fr))] gap-2.5">
+        {Array.from({ length: 8 }).map((_, i) => (
+          <div key={i} className="rounded-xl overflow-hidden border border-gray-100">
+            <div className="w-full aspect-square bg-gray-100" />
+            <div className="p-2 flex flex-col gap-1.5">
+              <div className="h-3 bg-gray-100 rounded w-4/5" />
+              <div className="h-3 bg-gray-100 rounded w-1/2" />
+            </div>
+          </div>
+        ))}
+      </div>
     </div>
   );
 
@@ -220,31 +251,27 @@ export function ListProducts({ searchTerm, setSearchTerm, selectedTable, selecte
             </p>
           </div>
         ) : (
-          <ul className="flex flex-col overflow-y-auto flex-1 -mx-1">
+          <ul className="grid grid-cols-[repeat(auto-fit,minmax(110px,1fr))] gap-2.5 overflow-y-auto flex-1 content-start pb-1 -mx-1 px-1">
             {filteredProducts.map((p: Product) => {
               const priceOptions = getPriceOptions(p);
               const hasMultipleOptions = priceOptions.length > 1;
               const minPrice = Math.min(...priceOptions.map((option) => option.price));
 
               return (
-                <li key={p.id} className="border-b border-gray-100 last:border-0">
+                <li key={p.id}>
                   <div
                     onClick={() => !isAdding && handleAddItem(p)}
                     role="button"
                     aria-label={`Agregar ${p.name}`}
-                    className="flex items-center gap-3 px-1 py-3.5 min-h-[44px] transition-colors cursor-pointer select-none hover:bg-gray-50 active:bg-gray-100"
+                    className="flex flex-col rounded-xl overflow-hidden border border-gray-100 transition-colors cursor-pointer select-none hover:border-orange/50 active:bg-gray-50"
                   >
-                    <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-gray-900 leading-snug">{p.name}</p>
-                      {hasMultipleOptions && (
-                        <p className="text-xs text-gray-400 mt-0.5">
-                          {priceOptions.length} precios
-                        </p>
-                      )}
+                    <ProductThumbnail product={p} />
+                    <div className="flex flex-col gap-0.5 px-2 py-2">
+                      <p className="text-sm font-medium text-gray-900 leading-snug line-clamp-2">{p.name}</p>
+                      <span className="text-sm font-semibold text-gray-600 tabular-nums">
+                        {hasMultipleOptions ? `Desde S/ ${minPrice.toFixed(2)}` : `S/ ${p.price.toFixed(2)}`}
+                      </span>
                     </div>
-                    <span className="text-sm font-semibold text-gray-600 tabular-nums shrink-0 text-right">
-                      {hasMultipleOptions ? `Desde S/ ${minPrice.toFixed(2)}` : `S/ ${p.price.toFixed(2)}`}
-                    </span>
                   </div>
                 </li>
               );

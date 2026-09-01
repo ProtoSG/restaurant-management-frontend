@@ -5,11 +5,12 @@ import { Button, Input, Modal, TitleModal, Select } from "@/shared/components";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { createProductRequestSchema } from "../schemas/Product.schema";
 import type { CreateProductRequest } from "../schemas/Product.schema";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useCategories } from "../hooks/useCategories";
 import type { useProductModal } from "../hooks/useProductModal";
 import type { useProducts } from "../hooks/useProducts";
-import { FaPlus, FaTrash } from "react-icons/fa";
+import { FaPlus, FaTrash, FaImage, FaTimes } from "react-icons/fa";
+import { getApiErrorMessage } from "@/shared/utils/apiError";
 
 interface Props {
   modal: ReturnType<typeof useProductModal>;
@@ -27,6 +28,10 @@ export function ModalProductForm({ modal, productsHook }: Props) {
   const dialogRef = useModal(modal.isOpen, modal.sourceRef, true);
   const { categories = [] } = useCategories();
   const inputRef = useRef<HTMLInputElement>(null);
+  const imageInputRef = useRef<HTMLInputElement>(null);
+  const [imageUrl, setImageUrl] = useState<string | null>(null);
+  const [imageError, setImageError] = useState<string | null>(null);
+  const [isUploadingImage, setIsUploadingImage] = useState(false);
 
   const {
     register,
@@ -62,9 +67,45 @@ export function ModalProductForm({ modal, productsHook }: Props) {
           }
         : EMPTY_FORM
     );
+    setImageUrl(modal.selectedProduct?.imageUrl ?? null);
+    setImageError(null);
 
     setTimeout(() => inputRef.current?.focus(), 100);
   }, [modal.isOpen, modal.isEdit, modal.selectedProduct, reset]);
+
+  const handlePickImage = () => imageInputRef.current?.click();
+
+  const handleImageSelected = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    e.target.value = ""; // permite volver a elegir el mismo archivo si hace falta
+    if (!file || !modal.selectedProduct) return;
+
+    setImageError(null);
+    setIsUploadingImage(true);
+    try {
+      const updated = await productsHook.uploadProductImage(modal.selectedProduct.id, file);
+      setImageUrl(updated.imageUrl);
+    } catch (err) {
+      setImageError(getApiErrorMessage(err));
+    } finally {
+      setIsUploadingImage(false);
+    }
+  };
+
+  const handleRemoveImage = async () => {
+    if (!modal.selectedProduct) return;
+
+    setImageError(null);
+    setIsUploadingImage(true);
+    try {
+      const updated = await productsHook.deleteProductImage(modal.selectedProduct.id);
+      setImageUrl(updated.imageUrl);
+    } catch (err) {
+      setImageError(getApiErrorMessage(err));
+    } finally {
+      setIsUploadingImage(false);
+    }
+  };
 
   const onSubmit = async (data: CreateProductRequest) => {
     try {
@@ -135,6 +176,52 @@ export function ModalProductForm({ modal, productsHook }: Props) {
           error={errors.categoryId?.message}
           {...register("categoryId")}
         />
+
+        {/* Foto: solo aplica a un producto que ya existe (necesita un id real para asociarla) —
+            se sube/reemplaza al tocar, sin depender del botón "Guardar" del resto del form. */}
+        {modal.isEdit && modal.selectedProduct && (
+          <div className="flex flex-col gap-2 pt-2 border-t border-gray-100">
+            <p className="text-sm font-semibold text-gray-900">Foto del plato</p>
+            <div className="flex items-center gap-3">
+              <div className="w-16 h-16 shrink-0 rounded-xl overflow-hidden border border-gray-200 bg-gray-50 flex items-center justify-center">
+                {imageUrl ? (
+                  <img src={imageUrl} alt="" className="w-full h-full object-cover" />
+                ) : (
+                  <FaImage className="text-gray-300 text-xl" />
+                )}
+              </div>
+              <div className="flex flex-col gap-1.5">
+                <input
+                  ref={imageInputRef}
+                  type="file"
+                  accept="image/jpeg,image/png,image/webp"
+                  className="hidden"
+                  onChange={handleImageSelected}
+                />
+                <button
+                  type="button"
+                  onClick={handlePickImage}
+                  disabled={isUploadingImage}
+                  className="text-sm font-semibold text-orange hover:underline cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed text-left"
+                >
+                  {isUploadingImage ? "Subiendo…" : imageUrl ? "Cambiar foto" : "Subir foto"}
+                </button>
+                {imageUrl && (
+                  <button
+                    type="button"
+                    onClick={handleRemoveImage}
+                    disabled={isUploadingImage}
+                    className="flex items-center gap-1 text-xs font-medium text-gray-400 hover:text-red transition-colors cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed text-left"
+                  >
+                    <FaTimes className="text-[10px]" />
+                    Quitar foto
+                  </button>
+                )}
+              </div>
+            </div>
+            {imageError && <p className="text-red text-xs">{imageError}</p>}
+          </div>
+        )}
 
         {/* Variantes */}
         <div className="flex flex-col gap-3 pt-2 border-t border-gray-100">
