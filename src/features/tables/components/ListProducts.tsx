@@ -203,7 +203,7 @@ export function ListProducts({ searchTerm, setSearchTerm, selectedTable, selecte
   if (isLoading) return (
     <div className="flex flex-col gap-3 flex-1 animate-pulse">
       <div className="h-10 bg-gray-100 rounded-xl" />
-      <div className="grid grid-cols-[repeat(auto-fit,minmax(110px,1fr))] gap-2.5">
+      <div className="grid grid-cols-[repeat(auto-fit,minmax(200px,1fr))] gap-2.5">
         {Array.from({ length: 8 }).map((_, i) => (
           <div key={i} className="rounded-xl overflow-hidden border border-gray-100">
             <div className="w-full aspect-square bg-gray-100" />
@@ -251,7 +251,7 @@ export function ListProducts({ searchTerm, setSearchTerm, selectedTable, selecte
             </p>
           </div>
         ) : (
-          <ul className="grid grid-cols-[repeat(auto-fit,minmax(110px,1fr))] gap-2.5 overflow-y-auto flex-1 content-start pb-1 -mx-1 px-1">
+          <ul className="grid grid-cols-[repeat(auto-fit,minmax(200px,1fr))] gap-2.5 overflow-y-auto flex-1 content-start pb-1 -mx-1 px-1">
             {filteredProducts.map((p: Product) => {
               const priceOptions = getPriceOptions(p);
               const hasMultipleOptions = priceOptions.length > 1;
