@@ -267,7 +267,7 @@ export function ListProducts({ searchTerm, setSearchTerm, selectedTable, selecte
                   >
                     <ProductThumbnail product={p} />
                     <div className="flex flex-col gap-0.5 px-2 py-2">
-                      <p className="text-sm font-medium text-gray-900 leading-snug line-clamp-2">{p.name}</p>
+                      <p className="text-lg font-medium text-gray-900 leading-snug line-clamp-2">{p.name}</p>
                       <span className="text-sm font-semibold text-gray-600 tabular-nums">
                         {hasMultipleOptions ? `Desde S/ ${minPrice.toFixed(2)}` : `S/ ${p.price.toFixed(2)}`}
                       </span>
