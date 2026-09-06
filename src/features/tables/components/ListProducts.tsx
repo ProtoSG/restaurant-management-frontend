@@ -174,9 +174,20 @@ export function ListProducts({ searchTerm, setSearchTerm, selectedTable, selecte
   const isAdding = createOrderMutation.isPending || addItemTableMutation.isPending || addItemOrdersMutation.isPending;
 
   const handleQuickAdd = async (productId: number) => {
+    const product = allAvailableProducts.find((p) => p.id === productId);
+    if (!product) return;
+
+    // Con precio único, precio base = precio real: agrega directo, sin modal.
+    // Con variantes, el precio base pasa a ser un placeholder (no es seguro
+    // asumirlo) — se abre el mismo selector que un tap normal para elegir.
+    if (getPriceOptions(product).length > 1) {
+      handleAddItem(product);
+      return;
+    }
+
     try {
       if (orderId) {
-        await addItemOrdersMutation.mutateAsync({ orderId, productId, quantity: 1 });
+        await addItemOrdersMutation.mutateAsync({ orderId, productId, quantity: 1, selectedPrice: product.price });
       } else {
         if (!selectedTable.selectedTable) return;
         let currentOrderId = activeOrder?.id;
@@ -189,6 +200,7 @@ export function ListProducts({ searchTerm, setSearchTerm, selectedTable, selecte
           tableId: selectedTable.selectedTable.id,
           productId,
           quantity: 1,
+          selectedPrice: product.price,
         });
       }
     } catch (error) {
