@@ -73,9 +73,15 @@ export function buildTicket(p: TicketPrinter, order: Order): void {
   p.addTextSize(1, 1);
   p.addTextStyle(false, false, false, p.COLOR_1);
 
-  // Cabecera de la orden
+  // Cabecera de la orden — sin mesa (TAKEAWAY/DELIVERY), mostrar el tipo + cliente
+  // en su lugar en vez de "Mesa: -" (mismo criterio que buildKitchenTicket).
   p.addTextAlign(p.ALIGN_LEFT);
-  p.addText(lr(`Mesa: ${order.tableNumber ?? "-"}`, `Orden: ${order.orderCode}`) + "\n");
+  const orderLabel = order.type === OrderType.DINE_IN
+    ? `Mesa: ${order.tableNumber ?? "-"}`
+    : order.customerName
+    ? `${OrderTypeLabels[order.type]}: ${order.customerName}`
+    : OrderTypeLabels[order.type];
+  p.addText(lr(orderLabel, `Orden: ${order.orderCode}`) + "\n");
   p.addText(`Fecha: ${fecha} ${hora}\n`);
   p.addText("-".repeat(WIDTH) + "\n");
 
@@ -175,13 +181,24 @@ export function buildKitchenTicket(p: TicketPrinter, order: Order): void {
     p.addText(cat.toUpperCase().slice(0, WIDTH) + "\n");
     p.addTextStyle(false, false, false, p.COLOR_1);
     for (const item of items) {
-      // Cantidad + nombre en doble alto para legibilidad
-      p.addTextSize(1, 2);
-      p.addText(`${item.quantity}x ${item.product.name}\n`);
-      p.addTextSize(1, 1);
       // Precio del plato (unitPrice), no subtotal ni total — con variantes de precio,
       // cocina necesita saber cuál se pidió (ni cantidad ni recargo de llevar entran acá).
-      p.addText(`   S/${Number(item.unitPrice).toFixed(2)}\n`);
+      // Va al final de la misma fila que cantidad + nombre: el multiplicador de ancho
+      // (primer argumento de addTextSize) es 1 en ambos tramos, así que el ancho de
+      // carácter no cambia entre ellos y el padding en columnas de WIDTH sigue siendo válido
+      // aunque el nombre se imprima en doble alto.
+      const priceStr = `S/${Number(item.unitPrice).toFixed(2)}`;
+      const prefix = `${item.quantity}x `;
+      const maxNameLen = Math.max(1, WIDTH - prefix.length - priceStr.length - 1);
+      const name = item.product.name.length > maxNameLen
+        ? item.product.name.slice(0, Math.max(0, maxNameLen - 1)) + "."
+        : item.product.name;
+      const left = prefix + name;
+
+      p.addTextSize(1, 2);
+      p.addText(left);
+      p.addTextSize(1, 1);
+      p.addText(" ".repeat(Math.max(1, WIDTH - left.length - priceStr.length)) + priceStr + "\n");
       // Item puntual marcado "para llevar" dentro de un pedido EN MESA. Si el pedido
       // entero ya es TAKEAWAY (título de la cabecera), no repetirlo acá — es redundante.
       if (order.type === OrderType.DINE_IN && item.isTakeaway) {
