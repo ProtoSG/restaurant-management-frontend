@@ -260,10 +260,6 @@ export function ListProducts({ searchTerm, setSearchTerm, selectedTable, selecte
         ) : (
           <ul className="grid grid-cols-[repeat(auto-fill,minmax(160px,200px))] justify-center gap-2.5 overflow-y-auto flex-1 content-start pb-1 -mx-1 px-1">
             {filteredProducts.map((p: Product) => {
-              const priceOptions = getPriceOptions(p);
-              const hasMultipleOptions = priceOptions.length > 1;
-              const minPrice = Math.min(...priceOptions.map((option) => option.price));
-
               return (
                 <li key={p.id}>
                   <div
@@ -276,7 +272,7 @@ export function ListProducts({ searchTerm, setSearchTerm, selectedTable, selecte
                     <div className="flex flex-col gap-0.5 px-2 py-2">
                       <p className="text-lg font-medium text-gray-900 leading-snug line-clamp-2">{p.name}</p>
                       <span className="text-sm font-semibold text-gray-600 tabular-nums">
-                        {hasMultipleOptions ? `Desde S/ ${minPrice.toFixed(2)}` : `S/ ${p.price.toFixed(2)}`}
+                        S/ {p.price.toFixed(2)}
                       </span>
                     </div>
                   </div>
