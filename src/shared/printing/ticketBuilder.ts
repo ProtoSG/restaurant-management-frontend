@@ -73,9 +73,15 @@ export function buildTicket(p: TicketPrinter, order: Order): void {
   p.addTextSize(1, 1);
   p.addTextStyle(false, false, false, p.COLOR_1);
 
-  // Cabecera de la orden
+  // Cabecera de la orden — sin mesa (TAKEAWAY/DELIVERY), mostrar el tipo + cliente
+  // en su lugar en vez de "Mesa: -" (mismo criterio que buildKitchenTicket).
   p.addTextAlign(p.ALIGN_LEFT);
-  p.addText(lr(`Mesa: ${order.tableNumber ?? "-"}`, `Orden: ${order.orderCode}`) + "\n");
+  const orderLabel = order.type === OrderType.DINE_IN
+    ? `Mesa: ${order.tableNumber ?? "-"}`
+    : order.customerName
+    ? `${OrderTypeLabels[order.type]}: ${order.customerName}`
+    : OrderTypeLabels[order.type];
+  p.addText(lr(orderLabel, `Orden: ${order.orderCode}`) + "\n");
   p.addText(`Fecha: ${fecha} ${hora}\n`);
   p.addText("-".repeat(WIDTH) + "\n");
 
