@@ -112,14 +112,14 @@ export function ListProducts({ searchTerm, setSearchTerm, selectedTable, selecte
 
   const pendingPriceOptions = pendingItem ? getPriceOptions(pendingItem.product) : [];
 
-  // Con una sola opción de precio, se auto-selecciona (comportamiento actual sin
-  // cambios). Con más de una, se abre el modal sin precio elegido: hay que
-  // elegir explícitamente adentro (ver cabecera de precios más abajo).
+  // El precio base siempre viene preseleccionado (es una opción válida más,
+  // no un placeholder — el backend lo acepta aunque el producto tenga
+  // variantes). Si hay más de una opción, el usuario puede tocar otro chip
+  // para cambiarlo antes de confirmar.
   const handleAddItem = (product: Product) => {
-    const hasMultipleOptions = getPriceOptions(product).length > 1;
     setPendingItem({
       product,
-      selectedPrice: hasMultipleOptions ? undefined : product.price,
+      selectedPrice: product.price,
       notes: "",
       quantity: 1,
       isTakeaway: false,
@@ -177,14 +177,9 @@ export function ListProducts({ searchTerm, setSearchTerm, selectedTable, selecte
     const product = allAvailableProducts.find((p) => p.id === productId);
     if (!product) return;
 
-    // Con precio único, precio base = precio real: agrega directo, sin modal.
-    // Con variantes, el precio base pasa a ser un placeholder (no es seguro
-    // asumirlo) — se abre el mismo selector que un tap normal para elegir.
-    if (getPriceOptions(product).length > 1) {
-      handleAddItem(product);
-      return;
-    }
-
+    // El chip de acceso rápido siempre muestra el precio base (ver
+    // QuickAddItems) — el usuario ya sabe que va a agregar a ese precio,
+    // así que se manda directo sin abrir modal, tenga o no variantes.
     try {
       if (orderId) {
         await addItemOrdersMutation.mutateAsync({ orderId, productId, quantity: 1, selectedPrice: product.price });
