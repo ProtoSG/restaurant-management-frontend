@@ -112,14 +112,14 @@ export function ListProducts({ searchTerm, setSearchTerm, selectedTable, selecte
 
   const pendingPriceOptions = pendingItem ? getPriceOptions(pendingItem.product) : [];
 
-  // Con una sola opción de precio, se auto-selecciona (comportamiento actual sin
-  // cambios). Con más de una, se abre el modal sin precio elegido: hay que
-  // elegir explícitamente adentro (ver cabecera de precios más abajo).
+  // El precio base siempre viene preseleccionado (es una opción válida más,
+  // no un placeholder — el backend lo acepta aunque el producto tenga
+  // variantes). Si hay más de una opción, el usuario puede tocar otro chip
+  // para cambiarlo antes de confirmar.
   const handleAddItem = (product: Product) => {
-    const hasMultipleOptions = getPriceOptions(product).length > 1;
     setPendingItem({
       product,
-      selectedPrice: hasMultipleOptions ? undefined : product.price,
+      selectedPrice: product.price,
       notes: "",
       quantity: 1,
       isTakeaway: false,
@@ -174,9 +174,15 @@ export function ListProducts({ searchTerm, setSearchTerm, selectedTable, selecte
   const isAdding = createOrderMutation.isPending || addItemTableMutation.isPending || addItemOrdersMutation.isPending;
 
   const handleQuickAdd = async (productId: number) => {
+    const product = allAvailableProducts.find((p) => p.id === productId);
+    if (!product) return;
+
+    // El chip de acceso rápido siempre muestra el precio base (ver
+    // QuickAddItems) — el usuario ya sabe que va a agregar a ese precio,
+    // así que se manda directo sin abrir modal, tenga o no variantes.
     try {
       if (orderId) {
-        await addItemOrdersMutation.mutateAsync({ orderId, productId, quantity: 1 });
+        await addItemOrdersMutation.mutateAsync({ orderId, productId, quantity: 1, selectedPrice: product.price });
       } else {
         if (!selectedTable.selectedTable) return;
         let currentOrderId = activeOrder?.id;
@@ -189,6 +195,7 @@ export function ListProducts({ searchTerm, setSearchTerm, selectedTable, selecte
           tableId: selectedTable.selectedTable.id,
           productId,
           quantity: 1,
+          selectedPrice: product.price,
         });
       }
     } catch (error) {
@@ -203,7 +210,7 @@ export function ListProducts({ searchTerm, setSearchTerm, selectedTable, selecte
   if (isLoading) return (
     <div className="flex flex-col gap-3 flex-1 animate-pulse">
       <div className="h-10 bg-gray-100 rounded-xl" />
-      <div className="grid grid-cols-[repeat(auto-fit,minmax(200px,1fr))] gap-2.5">
+      <div className="grid grid-cols-[repeat(auto-fill,minmax(160px,200px))] justify-center gap-2.5">
         {Array.from({ length: 8 }).map((_, i) => (
           <div key={i} className="rounded-xl overflow-hidden border border-gray-100">
             <div className="w-full aspect-square bg-gray-100" />
@@ -251,7 +258,7 @@ export function ListProducts({ searchTerm, setSearchTerm, selectedTable, selecte
             </p>
           </div>
         ) : (
-          <ul className="grid grid-cols-[repeat(auto-fit,minmax(200px,1fr))] gap-2.5 overflow-y-auto flex-1 content-start pb-1 -mx-1 px-1">
+          <ul className="grid grid-cols-[repeat(auto-fill,minmax(160px,200px))] justify-center gap-2.5 overflow-y-auto flex-1 content-start pb-1 -mx-1 px-1">
             {filteredProducts.map((p: Product) => {
               const priceOptions = getPriceOptions(p);
               const hasMultipleOptions = priceOptions.length > 1;
