@@ -137,8 +137,8 @@ export function buildTicket(p: TicketPrinter, order: Order): void {
   p.addCut(p.CUT_FEED);
 }
 
-/** Comanda de cocina: solo nombre, cantidad y notas, agrupado por categoría.
- *  Sin precios ni total. Texto grande para lectura rápida en cocina. */
+/** Comanda de cocina: nombre, cantidad, precio de línea y notas, agrupado por
+ *  categoría. Texto grande para lectura rápida en cocina. */
 export function buildKitchenTicket(p: TicketPrinter, order: Order): void {
   const now = new Date();
   const hora = now.toLocaleTimeString("es-PE", { hour: "2-digit", minute: "2-digit", hour12: false });
@@ -179,6 +179,9 @@ export function buildKitchenTicket(p: TicketPrinter, order: Order): void {
       p.addTextSize(1, 2);
       p.addText(`${item.quantity}x ${item.product.name}\n`);
       p.addTextSize(1, 1);
+      // Precio del plato (unitPrice), no subtotal ni total — con variantes de precio,
+      // cocina necesita saber cuál se pidió (ni cantidad ni recargo de llevar entran acá).
+      p.addText(`   S/${Number(item.unitPrice).toFixed(2)}\n`);
       // Item puntual marcado "para llevar" dentro de un pedido EN MESA. Si el pedido
       // entero ya es TAKEAWAY (título de la cabecera), no repetirlo acá — es redundante.
       if (order.type === OrderType.DINE_IN && item.isTakeaway) {
