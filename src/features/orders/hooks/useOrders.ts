@@ -100,8 +100,8 @@ export function useUpdateOrderItem() {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: ({ orderId, itemId, quantity }: { orderId: number; itemId: number; quantity: number }) =>
-      orderService.updateOrderItem(orderId, itemId, quantity),
+    mutationFn: ({ orderId, itemId, quantity, notes, isTakeaway }: { orderId: number; itemId: number; quantity: number; notes?: string; isTakeaway?: boolean }) =>
+      orderService.updateOrderItem(orderId, itemId, quantity, notes, isTakeaway),
     onSuccess: (_, { orderId }) => {
       queryClient.invalidateQueries({ queryKey: ['order', orderId] });
       queryClient.invalidateQueries({ queryKey: ['active-orders'] });

@@ -40,9 +40,10 @@ export class OrderServiceImpl {
     });
   }
 
-  async updateOrderItem(orderId: number, itemId: number, quantity: number, isTakeaway?: boolean): Promise<void> {
+  async updateOrderItem(orderId: number, itemId: number, quantity: number, notes?: string, isTakeaway?: boolean): Promise<void> {
     await defaultApiClient.put(`/orders/${orderId}/items/${itemId}`, {
       quantity,
+      notes,
       isTakeaway,
     });
   }

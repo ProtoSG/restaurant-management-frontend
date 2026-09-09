@@ -1,9 +1,10 @@
-import { Button, Tag } from "@/shared/components";
+import { Button, Tag, Toggle } from "@/shared/components";
 import { cn } from "@/shared/utils/utils";
 import { useOrderActive, useUpdateOrderItem as useUpdateOrderItemTable, useRemoveOrderItem as useRemoveOrderItemTable, useSelectedTable, useOrderItemsModal } from "@/features/tables";
 import { useOrderById, useUpdateOrderItem as useUpdateOrderItemOrder, useRemoveOrderItem as useRemoveOrderItemOrder, useCancelOrder, usePrintKitchen, useMarkOrderAsReady, useFinalizeOrder } from "@/features/orders";
 import { useAuth } from "@/features/auth";
 import { useSelectedCategory } from "@/features/menu";
+import { useQuickNotes } from "@/shared/hooks/useQuickNotes";
 import { Variant } from "@/shared/enums/VariantEnum";
 import { PaymentMethodLabels } from "@/shared/enums/PaymentMethod";
 import { OrderStatus, OrderStatusLabels } from "@/shared/enums/OrderStatus";
@@ -13,6 +14,7 @@ import { MdArrowBack } from "react-icons/md";
 import { useState, useEffect, type ReactNode } from "react";
 import { ProductCatalogPanel } from "../ProductCatalogPanel";
 import { PaymentPanel } from "../PaymentPanel";
+import type { OrderItem } from "@/shared/types/OrderItem";
 
 // "menu" solo existe como paso navegable en mobile — la pestaña "Carta" es
 // lg:hidden más abajo. En desktop, carta+pedido siguen juntos como siempre
@@ -112,6 +114,62 @@ export function OrderDetailView({ orderItemsModal, selectedTable, selectedCatego
   const removeOrderItemOrder = useRemoveOrderItemOrder();
   const updateOrderItemMutation = isOrderMode ? updateOrderItemOrder : updateOrderItemTable;
   const removeOrderItemMutation = isOrderMode ? removeOrderItemOrder : removeOrderItemTable;
+
+  // Editar un item ya agregado (cantidad/nota/para llevar) — mismo patrón del modal
+  // de "agregar producto" de ListProducts.tsx, pero sin selector de precio: el precio
+  // de la línea ya quedó fijado al agregarla y el backend no admite cambiarlo acá.
+  const [editingItem, setEditingItem] = useState<OrderItem | null>(null);
+  const [editQuantity, setEditQuantity] = useState(1);
+  const [editNotes, setEditNotes] = useState("");
+  const [editIsTakeaway, setEditIsTakeaway] = useState(false);
+  const noteSuggestions = useQuickNotes();
+  const isSavingEdit = updateOrderItemOrder.isPending || updateOrderItemTable.isPending;
+
+  const handleOpenEdit = (item: OrderItem) => {
+    setEditingItem(item);
+    setEditQuantity(item.quantity);
+    setEditNotes(item.notes ?? "");
+    setEditIsTakeaway(item.isTakeaway ?? false);
+  };
+
+  const editNoteTokens = (notes: string) => notes.split(",").map((t) => t.trim()).filter(Boolean);
+
+  const toggleEditNoteSuggestion = (suggestion: string) => {
+    setEditNotes((prev) => {
+      const tokens = editNoteTokens(prev);
+      const next = tokens.includes(suggestion) ? tokens.filter((t) => t !== suggestion) : [...tokens, suggestion];
+      return next.join(", ");
+    });
+  };
+
+  const handleSaveEdit = async () => {
+    if (!editingItem) return;
+    try {
+      const notes = editNotes.trim() || undefined;
+      if (isOrderMode) {
+        await updateOrderItemOrder.mutateAsync({
+          orderId: orderId!,
+          itemId: editingItem.id,
+          quantity: editQuantity,
+          notes,
+          isTakeaway: editIsTakeaway,
+        });
+      } else {
+        await updateOrderItemTable.mutateAsync({
+          orderId: order!.id,
+          tableId: selectedTable.selectedTable!.id,
+          itemId: editingItem.id,
+          quantity: editQuantity,
+          notes,
+          isTakeaway: editIsTakeaway,
+        });
+      }
+    } catch (error) {
+      console.error('Error al editar item:', error);
+    } finally {
+      setEditingItem(null);
+    }
+  };
 
   useEffect(() => {
     if (!orderItemsModal.isOpen) {
@@ -458,7 +516,20 @@ export function OrderDetailView({ orderItemsModal, selectedTable, selectedCatego
                     {order.items && order.items.length > 0 ? (
                       <ul className="flex flex-col gap-2">
                         {order.items.map((item) => (
-                          <li key={item.id} className={`flex items-center gap-3 px-3 py-2.5 rounded-xl border ${item.isTakeaway ? "bg-orange/5 border-orange/20" : "bg-gray-50 border-gray-100"}`}>
+                          <li
+                            key={item.id}
+                            role="button"
+                            tabIndex={0}
+                            aria-label={`Editar ${item.product.name}`}
+                            onClick={() => handleOpenEdit(item)}
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter' || e.key === ' ') {
+                                e.preventDefault();
+                                handleOpenEdit(item);
+                              }
+                            }}
+                            className={`flex items-center gap-3 px-3 py-2.5 rounded-xl border cursor-pointer transition-colors ${item.isTakeaway ? "bg-orange/5 border-orange/20 hover:border-orange/40" : "bg-gray-50 border-gray-100 hover:border-gray-300"}`}
+                          >
                             <div className="flex-1 min-w-0">
                               <div className="flex items-center gap-1.5">
                                 <p className="font-semibold text-base text-gray-900 break-words">{item.product.name}</p>
@@ -472,10 +543,13 @@ export function OrderDetailView({ orderItemsModal, selectedTable, selectedCatego
                                   <span className="text-orange ml-1">+S/ {item.takeawaySurcharge.toFixed(2)} llevar</span>
                                 ) : null}
                               </p>
+                              {item.notes && (
+                                <p className="text-xs text-gray-400 italic truncate">{item.notes}</p>
+                              )}
                             </div>
                             <div className="flex items-center gap-1 flex-shrink-0">
                               <button
-                                onClick={() => handleUpdateQuantity(item.id, item.quantity, false)}
+                                onClick={(e) => { e.stopPropagation(); handleUpdateQuantity(item.id, item.quantity, false); }}
                                 disabled={updateOrderItemMutation.isPending || removeOrderItemMutation.isPending}
                                 aria-label={item.quantity === 1 ? `Eliminar ${item.product.name}` : `Reducir cantidad de ${item.product.name}`}
                                 className="min-w-[44px] min-h-[44px] flex items-center justify-center rounded-lg border border-gray-200 hover:bg-red/10 hover:border-red/40 transition-colors cursor-pointer disabled:opacity-40"
@@ -484,7 +558,7 @@ export function OrderDetailView({ orderItemsModal, selectedTable, selectedCatego
                               </button>
                               <span className="w-7 text-center font-bold text-sm">{item.quantity}</span>
                               <button
-                                onClick={() => handleUpdateQuantity(item.id, item.quantity, true)}
+                                onClick={(e) => { e.stopPropagation(); handleUpdateQuantity(item.id, item.quantity, true); }}
                                 disabled={updateOrderItemMutation.isPending}
                                 aria-label={`Aumentar cantidad de ${item.product.name}`}
                                 className="min-w-[44px] min-h-[44px] flex items-center justify-center rounded-lg border border-gray-200 hover:bg-green/10 hover:border-green/40 transition-colors cursor-pointer disabled:opacity-40"
@@ -627,6 +701,109 @@ export function OrderDetailView({ orderItemsModal, selectedTable, selectedCatego
           </div>
         )}
       </div>
+
+      {editingItem && (
+        <div className="fixed inset-0 z-[70] flex items-end sm:items-center justify-center bg-black/40" onClick={() => setEditingItem(null)}>
+          <div
+            className="bg-white w-full max-w-md rounded-t-2xl sm:rounded-2xl p-5 flex flex-col gap-4 animate-[slide-up_0.28s_cubic-bezier(0.4,0,0.2,1)]"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-start justify-between gap-3">
+              <div className="min-w-0">
+                <p className="font-semibold text-gray-900">{editingItem.product.name}</p>
+                <p className="text-sm text-gray-400">
+                  S/ {editingItem.unitPrice.toFixed(2)} c/u
+                  {editIsTakeaway && editingItem.takeawaySurcharge ? (
+                    <span className="ml-1 text-orange font-medium">(+S/ {editingItem.takeawaySurcharge.toFixed(2)} llevar)</span>
+                  ) : null}
+                </p>
+              </div>
+              <div className="flex items-center gap-2 shrink-0">
+                <button
+                  onClick={() => setEditQuantity((q) => Math.max(1, q - 1))}
+                  className="w-11 h-11 flex items-center justify-center rounded-xl border-2 border-gray-200 text-gray-600 active:bg-gray-50 transition-colors cursor-pointer"
+                  aria-label="Disminuir cantidad"
+                >
+                  <FaMinus className="text-xs" />
+                </button>
+                <span className="w-6 text-center text-base font-semibold text-gray-900 tabular-nums">
+                  {editQuantity}
+                </span>
+                <button
+                  onClick={() => setEditQuantity((q) => q + 1)}
+                  className="w-11 h-11 flex items-center justify-center rounded-xl bg-green text-white active:opacity-75 transition-opacity cursor-pointer"
+                  aria-label="Aumentar cantidad"
+                >
+                  <FaPlus className="text-xs" />
+                </button>
+              </div>
+            </div>
+
+            <div className={`flex items-center gap-2.5 w-full px-3.5 py-2.5 rounded-xl border-2 transition-colors text-sm font-medium ${
+              editIsTakeaway
+                ? "border-orange bg-orange/10 text-orange"
+                : "border-gray-200 text-gray-500"
+            }`}>
+              <FaShoppingBag className="text-sm shrink-0" />
+              <Toggle
+                checked={editIsTakeaway}
+                onChange={setEditIsTakeaway}
+                label="Para llevar"
+              />
+            </div>
+
+            <div className="flex flex-col gap-1.5">
+              <label className="text-sm font-medium text-gray-700">Nota (opcional)</label>
+              {noteSuggestions.length > 0 && (
+                <div className="flex flex-wrap gap-1.5 pb-0.5">
+                  {noteSuggestions.map((suggestion) => {
+                    const active = editNoteTokens(editNotes).includes(suggestion);
+                    return (
+                      <button
+                        key={suggestion}
+                        type="button"
+                        onClick={() => toggleEditNoteSuggestion(suggestion)}
+                        className={`px-3 py-1.5 rounded-full border-2 text-xs font-medium whitespace-nowrap transition-all cursor-pointer select-none ${
+                          active
+                            ? "border-orange bg-orange/10 text-orange"
+                            : "border-gray-200 text-gray-600 hover:border-orange hover:bg-orange/5 hover:text-orange"
+                        }`}
+                      >
+                        {suggestion}
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
+              <input
+                type="text"
+                placeholder="Ej: sin ají, poco sal…"
+                maxLength={255}
+                className="border-2 border-gray-200 rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:border-orange transition-colors"
+                value={editNotes}
+                onChange={(e) => setEditNotes(e.target.value)}
+                onKeyDown={(e) => e.key === "Enter" && handleSaveEdit()}
+              />
+            </div>
+
+            <div className="flex gap-3">
+              <button
+                onClick={() => setEditingItem(null)}
+                className="flex-1 py-3 rounded-xl border-2 border-gray-200 text-sm font-semibold text-gray-600 cursor-pointer"
+              >
+                Cancelar
+              </button>
+              <button
+                onClick={handleSaveEdit}
+                disabled={isSavingEdit}
+                className="flex-1 py-3 rounded-xl bg-green text-white text-sm font-semibold disabled:opacity-40 cursor-pointer"
+              >
+                {isSavingEdit ? "Guardando…" : "Guardar"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
