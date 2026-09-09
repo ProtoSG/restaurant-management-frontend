@@ -13,7 +13,7 @@ export interface ITableService {
   getOrderActive(tableId: number): Promise<Order | null>;
   
   addItemToOrder(orderId: number, productId: number, quantity?: number): Promise<OrderItem>;
-  updateOrderItem(orderId: number, itemId: number, quantity: number): Promise<void>;
+  updateOrderItem(orderId: number, itemId: number, quantity: number, notes?: string, isTakeaway?: boolean): Promise<void>;
   removeOrderItem(orderId: number, itemId: number): Promise<void>;
   
   payOrder(orderId: number, paymentMethod: string, idempotencyKey?: string): Promise<Order>;

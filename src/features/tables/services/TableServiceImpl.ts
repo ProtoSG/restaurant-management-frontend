@@ -53,8 +53,8 @@ export class TableServiceImpl implements ITableService {
     return data;
   }
 
-  async updateOrderItem(orderId: number, itemId: number, quantity: number, notes?: string): Promise<void> {
-    await defaultApiClient.put(`/orders/${orderId}/items/${itemId}`, { quantity, notes });
+  async updateOrderItem(orderId: number, itemId: number, quantity: number, notes?: string, isTakeaway?: boolean): Promise<void> {
+    await defaultApiClient.put(`/orders/${orderId}/items/${itemId}`, { quantity, notes, isTakeaway });
   }
 
   async removeOrderItem(orderId: number, itemId: number): Promise<void> {
