@@ -1,7 +1,7 @@
 import { Button, Tag, Toggle } from "@/shared/components";
 import { cn } from "@/shared/utils/utils";
-import { useOrderActive, useUpdateOrderItem as useUpdateOrderItemTable, useRemoveOrderItem as useRemoveOrderItemTable, useSelectedTable, useOrderItemsModal } from "@/features/tables";
-import { useOrderById, useUpdateOrderItem as useUpdateOrderItemOrder, useRemoveOrderItem as useRemoveOrderItemOrder, useCancelOrder, usePrintKitchen, useMarkOrderAsReady, useFinalizeOrder } from "@/features/orders";
+import { useOrderActive, useUpdateOrderItem as useUpdateOrderItemTable, useRemoveOrderItem as useRemoveOrderItemTable, useAddItemToOrder as useAddItemToOrderTable, useSelectedTable, useOrderItemsModal } from "@/features/tables";
+import { useOrderById, useUpdateOrderItem as useUpdateOrderItemOrder, useRemoveOrderItem as useRemoveOrderItemOrder, useAddItemToOrder as useAddItemToOrderOrders, useCancelOrder, usePrintKitchen, useMarkOrderAsReady, useFinalizeOrder } from "@/features/orders";
 import { useAuth } from "@/features/auth";
 import { useSelectedCategory } from "@/features/menu";
 import { useQuickNotes } from "@/shared/hooks/useQuickNotes";
@@ -114,6 +114,8 @@ export function OrderDetailView({ orderItemsModal, selectedTable, selectedCatego
   const removeOrderItemOrder = useRemoveOrderItemOrder();
   const updateOrderItemMutation = isOrderMode ? updateOrderItemOrder : updateOrderItemTable;
   const removeOrderItemMutation = isOrderMode ? removeOrderItemOrder : removeOrderItemTable;
+  const addItemTableMutation = useAddItemToOrderTable();
+  const addItemOrdersMutation = useAddItemToOrderOrders();
 
   // Editar un item ya agregado (cantidad/nota/para llevar) — mismo patrón del modal
   // de "agregar producto" de ListProducts.tsx, pero sin selector de precio: el precio
@@ -122,14 +124,23 @@ export function OrderDetailView({ orderItemsModal, selectedTable, selectedCatego
   const [editQuantity, setEditQuantity] = useState(1);
   const [editNotes, setEditNotes] = useState("");
   const [editIsTakeaway, setEditIsTakeaway] = useState(false);
+  // Split: "a cuántas unidades de la línea aplica esta nota" — null = todas (el
+  // caso normal, edita la línea entera). Un número < cantidad parte la línea:
+  // esa cantidad se va a una línea nueva con la nota, el resto queda como estaba.
+  // Sin esto, agregar una nota a 1 de 3 tríos ya pedidos obligaba a restar 1 del
+  // trío y agregarlo de nuevo aparte — dos pasos manuales por cada corrección.
+  const [splitCount, setSplitCount] = useState<number | null>(null);
   const noteSuggestions = useQuickNotes();
-  const isSavingEdit = updateOrderItemOrder.isPending || updateOrderItemTable.isPending;
+  const isSavingEdit =
+    updateOrderItemOrder.isPending || updateOrderItemTable.isPending ||
+    addItemOrdersMutation.isPending || addItemTableMutation.isPending;
 
   const handleOpenEdit = (item: OrderItem) => {
     setEditingItem(item);
     setEditQuantity(item.quantity);
     setEditNotes(item.notes ?? "");
     setEditIsTakeaway(item.isTakeaway ?? false);
+    setSplitCount(null);
   };
 
   const editNoteTokens = (notes: string) => notes.split(",").map((t) => t.trim()).filter(Boolean);
@@ -146,7 +157,38 @@ export function OrderDetailView({ orderItemsModal, selectedTable, selectedCatego
     if (!editingItem) return;
     try {
       const notes = editNotes.trim() || undefined;
-      if (isOrderMode) {
+
+      if (splitCount !== null && splitCount < editingItem.quantity) {
+        // Baja la línea original en `splitCount`, sin tocar su nota/llevar
+        // actuales — esas unidades no cambiaron. Después agrega una línea nueva
+        // con `splitCount` unidades y la nota nueva (el fix de merge por notas
+        // se encarga de no mezclarla con la línea original ni con otra distinta).
+        const remaining = editingItem.quantity - splitCount;
+        if (isOrderMode) {
+          await updateOrderItemOrder.mutateAsync({ orderId: orderId!, itemId: editingItem.id, quantity: remaining });
+          await addItemOrdersMutation.mutateAsync({
+            orderId: orderId!,
+            productId: editingItem.product.id,
+            quantity: splitCount,
+            notes,
+            isTakeaway: editIsTakeaway,
+            selectedPrice: editingItem.unitPrice,
+          });
+        } else {
+          await updateOrderItemTable.mutateAsync({
+            orderId: order!.id, tableId: selectedTable.selectedTable!.id, itemId: editingItem.id, quantity: remaining,
+          });
+          await addItemTableMutation.mutateAsync({
+            orderId: order!.id,
+            tableId: selectedTable.selectedTable!.id,
+            productId: editingItem.product.id,
+            quantity: splitCount,
+            notes,
+            isTakeaway: editIsTakeaway,
+            selectedPrice: editingItem.unitPrice,
+          });
+        }
+      } else if (isOrderMode) {
         await updateOrderItemOrder.mutateAsync({
           orderId: orderId!,
           itemId: editingItem.id,
@@ -718,7 +760,7 @@ export function OrderDetailView({ orderItemsModal, selectedTable, selectedCatego
                   ) : null}
                 </p>
               </div>
-              <div className="flex items-center gap-2 shrink-0">
+              <div className={`flex items-center gap-2 shrink-0 ${splitCount !== null ? "opacity-40 pointer-events-none" : ""}`}>
                 <button
                   onClick={() => setEditQuantity((q) => Math.max(1, q - 1))}
                   className="w-11 h-11 flex items-center justify-center rounded-xl border-2 border-gray-200 text-gray-600 active:bg-gray-50 transition-colors cursor-pointer"
@@ -738,6 +780,46 @@ export function OrderDetailView({ orderItemsModal, selectedTable, selectedCatego
                 </button>
               </div>
             </div>
+
+            {editingItem.quantity > 1 && (
+              <div className="flex flex-col gap-1.5">
+                <label className="text-sm font-medium text-gray-700">¿A cuántas aplica la nota?</label>
+                <div className="flex flex-wrap gap-1.5">
+                  {Array.from({ length: editingItem.quantity - 1 }, (_, i) => i + 1).map((n) => (
+                    <button
+                      key={n}
+                      type="button"
+                      onClick={() => setSplitCount(n)}
+                      aria-pressed={splitCount === n}
+                      className={`w-11 h-11 rounded-xl border-2 text-sm font-bold transition-all cursor-pointer select-none ${
+                        splitCount === n
+                          ? "border-orange bg-orange text-white"
+                          : "border-gray-200 text-gray-700 hover:border-orange hover:bg-orange/5"
+                      }`}
+                    >
+                      {n}
+                    </button>
+                  ))}
+                  <button
+                    type="button"
+                    onClick={() => setSplitCount(null)}
+                    aria-pressed={splitCount === null}
+                    className={`px-4 h-11 rounded-xl border-2 text-sm font-semibold transition-all cursor-pointer select-none ${
+                      splitCount === null
+                        ? "border-orange bg-orange text-white"
+                        : "border-gray-200 text-gray-700 hover:border-orange hover:bg-orange/5"
+                    }`}
+                  >
+                    Todas
+                  </button>
+                </div>
+                {splitCount !== null && (
+                  <p className="text-xs text-gray-400">
+                    {splitCount} con nota nueva · {editingItem.quantity - splitCount} sin cambios
+                  </p>
+                )}
+              </div>
+            )}
 
             <div className={`flex items-center gap-2.5 w-full px-3.5 py-2.5 rounded-xl border-2 transition-colors text-sm font-medium ${
               editIsTakeaway
