@@ -183,10 +183,10 @@ export function buildKitchenTicket(p: TicketPrinter, order: Order): void {
     for (const item of items) {
       // Precio del plato (unitPrice), no subtotal ni total — con variantes de precio,
       // cocina necesita saber cuál se pidió (ni cantidad ni recargo de llevar entran acá).
-      // Va al final de la misma fila que cantidad + nombre: el multiplicador de ancho
-      // (primer argumento de addTextSize) es 1 en ambos tramos, así que el ancho de
-      // carácter no cambia entre ellos y el padding en columnas de WIDTH sigue siendo válido
-      // aunque el nombre se imprima en doble alto.
+      // Va al final de la misma fila que cantidad + nombre, mismo tamaño (doble alto) que
+      // el nombre para que se lea igual de fácil. El multiplicador de ancho (primer
+      // argumento de addTextSize) es 1 en ambos tramos, así que el ancho de carácter no
+      // cambia entre ellos y el padding en columnas de WIDTH sigue siendo válido.
       const priceStr = `S/${Number(item.unitPrice).toFixed(2)}`;
       const prefix = `${item.quantity}x `;
       // Código de carta (si el producto tiene uno) antepuesto al nombre, ej. "P01 - TRIO MARINO":
@@ -202,8 +202,8 @@ export function buildKitchenTicket(p: TicketPrinter, order: Order): void {
 
       p.addTextSize(1, 2);
       p.addText(left);
-      p.addTextSize(1, 1);
       p.addText(" ".repeat(Math.max(1, WIDTH - left.length - priceStr.length)) + priceStr + "\n");
+      p.addTextSize(1, 1);
       // Item puntual marcado "para llevar" dentro de un pedido EN MESA. Si el pedido
       // entero ya es TAKEAWAY (título de la cabecera), no repetirlo acá — es redundante.
       if (order.type === OrderType.DINE_IN && item.isTakeaway) {
