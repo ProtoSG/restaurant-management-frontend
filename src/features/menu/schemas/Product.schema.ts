@@ -9,6 +9,7 @@ export const productVariantSchema = z.object({
 
 export const createProductRequestSchema = z.object({
   name: z.string().min(1, "El nombre del producto es obligatorio"),
+  code: z.string().max(20, "El código no puede exceder 20 caracteres").optional(),
   price: z.string().min(1, "El precio es obligatorio"),
   categoryId: z.string().min(1, "La categoría es obligatoria"),
   variants: z.array(productVariantSchema).optional(),

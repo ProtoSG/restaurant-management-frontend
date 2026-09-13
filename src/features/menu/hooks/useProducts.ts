@@ -75,6 +75,7 @@ export function useProducts(categoryId: number | null = null) {
 
       const productData: Omit<Product, 'id' | 'variants'> = {
         name: data.name,
+        code: data.code || undefined,
         price: parseFloat(data.price),
         categoryId: parseInt(data.categoryId),
         active: true,
@@ -103,6 +104,7 @@ export function useProducts(categoryId: number | null = null) {
 
       const productData: Partial<Product> = {
         name: data.name,
+        code: data.code || undefined,
         price: parseFloat(data.price),
         categoryId: parseInt(data.categoryId)
       };

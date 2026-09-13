@@ -505,7 +505,9 @@ export function OrderDetailView({ orderItemsModal, selectedTable, selectedCatego
                           <li key={item.id} className={`flex items-center gap-3 px-3 py-2.5 rounded-xl border ${item.isTakeaway ? "bg-orange/5 border-orange/20" : "bg-gray-50 border-gray-100"}`}>
                             <div className="flex-1 min-w-0">
                               <div className="flex items-center gap-1.5">
-                                <p className="font-semibold text-base text-gray-900 break-words">{item.product.name}</p>
+                                <p className="font-semibold text-base text-gray-900 break-words">
+                                  {item.product.code ? `${item.product.code} - ${item.product.name}` : item.product.name}
+                                </p>
                                 {item.isTakeaway && (
                                   <FaShoppingBag className="text-orange text-[10px] shrink-0" title="Para llevar" />
                                 )}
@@ -574,7 +576,9 @@ export function OrderDetailView({ orderItemsModal, selectedTable, selectedCatego
                           >
                             <div className="flex-1 min-w-0">
                               <div className="flex items-center gap-1.5">
-                                <p className="font-semibold text-base text-gray-900 break-words">{item.product.name}</p>
+                                <p className="font-semibold text-base text-gray-900 break-words">
+                                  {item.product.code ? `${item.product.code} - ${item.product.name}` : item.product.name}
+                                </p>
                                 {item.isTakeaway && (
                                   <FaShoppingBag className="text-orange text-[10px] shrink-0" title="Para llevar" />
                                 )}
@@ -752,7 +756,9 @@ export function OrderDetailView({ orderItemsModal, selectedTable, selectedCatego
           >
             <div className="flex items-start justify-between gap-3">
               <div className="min-w-0">
-                <p className="font-semibold text-gray-900">{editingItem.product.name}</p>
+                <p className="font-semibold text-gray-900">
+                  {editingItem.product.code ? `${editingItem.product.code} - ${editingItem.product.name}` : editingItem.product.name}
+                </p>
                 <p className="text-sm text-gray-400">
                   S/ {editingItem.unitPrice.toFixed(2)} c/u
                   {editIsTakeaway && editingItem.takeawaySurcharge ? (

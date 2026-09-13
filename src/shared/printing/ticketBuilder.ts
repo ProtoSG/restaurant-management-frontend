@@ -189,10 +189,15 @@ export function buildKitchenTicket(p: TicketPrinter, order: Order): void {
       // aunque el nombre se imprima en doble alto.
       const priceStr = `S/${Number(item.unitPrice).toFixed(2)}`;
       const prefix = `${item.quantity}x `;
-      const maxNameLen = Math.max(1, WIDTH - prefix.length - priceStr.length - 1);
-      const name = item.product.name.length > maxNameLen
-        ? item.product.name.slice(0, Math.max(0, maxNameLen - 1)) + "."
+      // Código de carta (si el producto tiene uno) antepuesto al nombre, ej. "P01 - TRIO MARINO":
+      // permite a cocina ubicar el plato en la carta física sin leer el nombre completo.
+      const fullName = item.product.code
+        ? `${item.product.code} - ${item.product.name}`
         : item.product.name;
+      const maxNameLen = Math.max(1, WIDTH - prefix.length - priceStr.length - 1);
+      const name = fullName.length > maxNameLen
+        ? fullName.slice(0, Math.max(0, maxNameLen - 1)) + "."
+        : fullName;
       const left = prefix + name;
 
       p.addTextSize(1, 2);

@@ -4,6 +4,7 @@ export function ProductAdapter(product: ProductResponse): Product {
   return {
     id: product.id,
     name: product.name,
+    code: product.code ?? undefined,
     categoryId: product.category?.id ?? 0,
     categoryName: product.category?.name,
     price: product.price,

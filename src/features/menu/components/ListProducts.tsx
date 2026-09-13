@@ -75,7 +75,9 @@ export function ListProducts({ products, isLoading, onEdit, onToggleActive, isAd
                 }`}
               >
                 <td className="px-4 py-3">
-                  <span className="font-medium text-gray-900">{p.name}</span>
+                  <span className="font-medium text-gray-900">
+                    {p.code ? `${p.code} - ${p.name}` : p.name}
+                  </span>
                 </td>
                 <td className="px-4 py-3 hidden sm:table-cell">
                   <span className="text-xs text-gray-500">{p.categoryName ?? p.categoryId}</span>

@@ -1,6 +1,7 @@
 export interface OrderProduct {
   id: number;
   name: string;
+  code?: string;
   price: number;
   category: {
     id: number;
@@ -11,6 +12,7 @@ export interface OrderProduct {
 export interface OrderProductResponse {
   id: number;
   name: string;
+  code?: string;
   price: number;
   category: {
     id: number;
