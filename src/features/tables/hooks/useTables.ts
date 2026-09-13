@@ -2,6 +2,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { TableServiceImpl } from "../services/TableServiceImpl";
 import { getApiErrorMessage } from "@/shared/utils/apiError";
+import { printOrderTicket } from "@/shared/printing/printer";
 import type { CreateTableRequest, UpdateTableRequest } from "../schemas/Table.schema";
 
 const tableService = new TableServiceImpl();
@@ -91,6 +92,18 @@ export function useOrderActive(id: number, enabled = false) {
   });
 
   return { order, isLoading, error };
+}
+
+/** Imprime la cuenta de una mesa sin pasar por la vista de pago — trae el pedido
+ *  activo de la mesa y lo manda directo a la impresora de comprobantes. */
+export function usePrintTableTicket() {
+  return useMutation({
+    mutationFn: async (tableId: number) => {
+      const order = await tableService.getOrderActive(tableId);
+      if (!order) throw new Error("Esta mesa no tiene un pedido activo.");
+      await printOrderTicket(order);
+    },
+  });
 }
 
 export function useAddItemToOrder() {

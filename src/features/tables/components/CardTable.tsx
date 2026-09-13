@@ -1,4 +1,4 @@
-import { FaRegEdit } from "react-icons/fa"
+import { FaRegEdit, FaPrint } from "react-icons/fa"
 import { MdLockOpen } from "react-icons/md"
 import type { Table } from "@/features/tables/types/Table"
 import { Button, Tag, ConfirmDialog } from "@/shared/components"
@@ -7,7 +7,8 @@ import { Variant } from "@/shared/enums/VariantEnum"
 import { useEffect, useState } from "react"
 import type { MouseEvent } from "react"
 import { FaRegShareFromSquare } from "react-icons/fa6"
-import { useTableModal, useOrderItemsModal, useProductListModal, useChangeTableModal, useSelectedTable, useReleaseTable } from "@/features/tables"
+import { toast } from "sonner"
+import { useTableModal, useOrderItemsModal, useProductListModal, useChangeTableModal, useSelectedTable, useReleaseTable, usePrintTableTicket } from "@/features/tables"
 import { useAuth } from "@/features/auth"
 
 interface Props {
@@ -29,6 +30,7 @@ export function CardTable( { table, tableModal, orderItemsModal, productListModa
   const { user } = useAuth();
   const isAdmin = user?.role === 'ADMIN';
   const releaseTableMutation = useReleaseTable();
+  const printTicketMutation = usePrintTableTicket();
 
   useEffect(() => {
     switch(table.status) {
@@ -95,12 +97,34 @@ export function CardTable( { table, tableModal, orderItemsModal, productListModa
     }
   };
 
+  const handlePrintTicket = (e: MouseEvent<HTMLButtonElement>) => {
+    e.stopPropagation();
+    toast.promise(printTicketMutation.mutateAsync(table.id), {
+      loading: "Imprimiendo ticket…",
+      success: "Ticket impreso",
+      error: (err) => (err instanceof Error ? err.message : "Error al imprimir ticket"),
+    });
+  };
+
   return (
     <div className={`flex flex-col gap-4 rounded-lg p-3 bg-white shadow-[12px_12px_5px_1px] ${shadowColor}`}>
       <div>
         <div className="flex items-center justify-between font-semibold text-xl">
           <p>Mesa {table.number}</p>
           <div className="flex items-center ">
+            {table.status === TableStatus.OCCUPIED && (
+              <button
+                onClick={handlePrintTicket}
+                disabled={printTicketMutation.isPending}
+                aria-label="Imprimir cuenta"
+                title="Imprimir cuenta"
+                className="
+                  flex items-center justify-center min-w-[44px] min-h-[44px] rounded-lg
+                  transition-colors cursor-pointer hover:bg-green hover:text-foreground
+                  disabled:opacity-40 disabled:cursor-not-allowed
+                "
+              ><FaPrint className={printTicketMutation.isPending ? "animate-pulse" : ""} /></button>
+            )}
             {table.status === TableStatus.OCCUPIED && (
               <button
                 onClick={handleChangeOrderOtherTable}
