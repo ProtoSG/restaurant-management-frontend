@@ -19,6 +19,7 @@ interface Props {
 
 const EMPTY_FORM: CreateProductRequest = {
   name: "",
+  code: "",
   price: "",
   categoryId: "",
   variants: [],
@@ -56,6 +57,7 @@ export function ModalProductForm({ modal, productsHook }: Props) {
       modal.isEdit && modal.selectedProduct
         ? {
             name: modal.selectedProduct.name,
+            code: modal.selectedProduct.code ?? "",
             price: modal.selectedProduct.price.toString(),
             categoryId: modal.selectedProduct.categoryId.toString(),
             variants: (modal.selectedProduct.variants ?? []).map((v) => ({
@@ -153,6 +155,14 @@ export function ModalProductForm({ modal, productsHook }: Props) {
             inputRef.current = e;
           }}
           {...registerProps}
+        />
+
+        <Input
+          type="text"
+          placeholder="P01"
+          label="Código (opcional)"
+          error={errors.code?.message}
+          {...register("code")}
         />
 
         <Input

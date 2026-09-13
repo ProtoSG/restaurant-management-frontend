@@ -270,7 +270,9 @@ export function ListProducts({ searchTerm, setSearchTerm, selectedTable, selecte
                   >
                     <ProductThumbnail product={p} />
                     <div className="flex flex-col gap-0.5 px-2 py-2">
-                      <p className="text-lg font-medium text-gray-900 leading-snug line-clamp-2">{p.name}</p>
+                      <p className="text-lg font-medium text-gray-900 leading-snug line-clamp-2">
+                        {p.code ? `${p.code} - ${p.name}` : p.name}
+                      </p>
                       <span className="text-sm font-semibold text-gray-600 tabular-nums">
                         S/ {p.price.toFixed(2)}
                       </span>
@@ -295,7 +297,9 @@ export function ListProducts({ searchTerm, setSearchTerm, selectedTable, selecte
           >
             <div className="flex items-start justify-between gap-3">
               <div className="min-w-0">
-                <p className="font-semibold text-gray-900">{pendingItem.product.name}</p>
+                <p className="font-semibold text-gray-900">
+                  {pendingItem.product.code ? `${pendingItem.product.code} - ${pendingItem.product.name}` : pendingItem.product.name}
+                </p>
                 {pendingPriceOptions.length <= 1 && (
                   <p className="text-sm text-gray-400">
                     S/ {getUnitPrice(pendingItem, surcharge).toFixed(2)} c/u

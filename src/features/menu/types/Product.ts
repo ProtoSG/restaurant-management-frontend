@@ -9,6 +9,7 @@ export interface ProductVariant {
 export interface Product {
   id: number;
   name: string;
+  code?: string;
   price: number;
   categoryId: number;
   categoryName?: string;
@@ -29,6 +30,7 @@ export interface ProductVariantResponse {
 export interface ProductResponse {
   id: number;
   name: string;
+  code?: string | null;
   price: number;
   category?: { id: number; name: string };
   isAvailable?: boolean;
