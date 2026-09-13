@@ -1,7 +1,9 @@
 import { useState, useCallback, useEffect } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
+import { toast } from "sonner";
+import { FaPrint } from "react-icons/fa";
 import { HeaderSection, Tag, SkeletonCard, ErrorState, EmptyState } from "@/shared/components";
-import { useActiveOrders } from "./hooks/useOrders";
+import { useActiveOrders, usePrintThermal } from "./hooks/useOrders";
 import { useOrderModal } from "./hooks/useOrderModal";
 import { ModalCreateOrder } from "./components/sections/ModalCreateOrder";
 import { useOrderItemsModal, useProductListModal, useSelectedTable, OrderDetailView, ModalProductList } from "@/features/tables";
@@ -31,6 +33,8 @@ function getStatusVariant(status: OrderStatus): Variant {
 
 export function Orders() {
   const { orders, isLoading, error } = useActiveOrders();
+  const printThermalMutation = usePrintThermal();
+  const [printingOrderId, setPrintingOrderId] = useState<number | null>(null);
   const [selectedOrderId, setSelectedOrderId] = useState<number | null>(null);
   const orderModal = useOrderModal();
   const orderItemsModal = useOrderItemsModal();
@@ -51,6 +55,18 @@ export function Orders() {
     navigate(location.pathname, { replace: true, state: null });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [location.state]);
+
+  const handlePrintTicket = (e: React.MouseEvent, order: Order) => {
+    e.stopPropagation();
+    setPrintingOrderId(order.id);
+    const task = printThermalMutation.mutateAsync({ order });
+    toast.promise(task, {
+      loading: "Imprimiendo ticket…",
+      success: "Ticket impreso",
+      error: (err) => (err instanceof Error ? err.message : "Error al imprimir ticket"),
+    });
+    task.finally(() => setPrintingOrderId(null)).catch(() => {});
+  };
 
   const handleOrderCreated = useCallback((order: Order) => {
     setSelectedOrderId(order.id);
@@ -115,9 +131,20 @@ export function Orders() {
                     )}
                   </div>
                 </div>
-                <Tag variant={getStatusVariant(order.status)}>
-                  {OrderStatusLabels[order.status]}
-                </Tag>
+                <div className="flex flex-col items-end gap-1.5 shrink-0">
+                  <Tag variant={getStatusVariant(order.status)}>
+                    {OrderStatusLabels[order.status]}
+                  </Tag>
+                  <button
+                    onClick={(e) => handlePrintTicket(e, order)}
+                    disabled={!order.items?.length || printingOrderId === order.id}
+                    title="Imprimir cuenta"
+                    aria-label="Imprimir cuenta"
+                    className="w-8 h-8 flex items-center justify-center rounded-lg text-gray-400 hover:text-orange hover:bg-orange/5 transition-colors cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
+                  >
+                    <FaPrint className={`text-sm ${printingOrderId === order.id ? "animate-pulse" : ""}`} />
+                  </button>
+                </div>
               </div>
 
               <div className="flex-1">
